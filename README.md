@@ -1,8 +1,10 @@
-# @CGS - Ontology
+# @CGS — Axiomatic Foundation
 
-@CGS is a key-controlled deterministic Graph × Graph Interpreter.
+License: Apache-2.0
 
-It instantiates an ontological state-space, `.PUBLIC` or `.PRIVATE`, that lives in the Ontology Existence Memory System (OEMS), where it is accessible through `@OMEGA`.
+@CGS is an ALPHA-controlled deterministic Graph × Graph Interpreter.
+
+It instantiates an Ontological Space-State, `.PUBLIC` or `.PRIVATE`, that lives in the Ontology Existence Memory System (OEMS), where it is accessible through `@OMEGA`.
 
 ---
 
@@ -26,7 +28,7 @@ Instantiation is a deterministic parse.
 
 ---
 
-# Mathematical Logic
+# Definition and Axioms
 
 ```text
 Α := ALPHA IMPRINT
@@ -75,17 +77,17 @@ Instantiation is a deterministic parse.
 ```text
 @CGS(.)
 
-    → .seed@ := .seed0
+    → .Χ.seed@ := .seed0
 ```
 
 ```text
-Χ(Α)
+@CGS(.Χ, Α)
 
-    → .seed@ := Α
+    → .Χ.seed@ := Α
 ```
 
 ```text
-Χ.Α = .seed@
+Χ.Α := .Χ.seed@
 ```
 
 ---
@@ -93,7 +95,17 @@ Instantiation is a deterministic parse.
 # Recursive Evaluation
 
 ```text
+<list> ::= ε | Α <tail>
+
+where
+
+ε := void
+```
+
+```text
 @CGS(., <list>)
+
+    := @CGS(@CGS(.), <list>)
 ```
 
 is defined as
@@ -103,9 +115,9 @@ is defined as
 
 for i in <list>
 
-    .Χ := @CGS(i)
+    .Χ := @CGS(.Χ, i)
 
-RETURN .Χ
+return .Χ
 ```
 
 ---
@@ -121,14 +133,6 @@ PARSE
 
 ↓
 
-SEED
-
-↓
-
-OPTIONAL IMPRINT
-
-↓
-
 GRAPH × GRAPH INTERPRETATION
 
 ↓
@@ -137,7 +141,7 @@ ONTOLOGICAL EXISTENCE
 
 ↓
 
-PERSISTENCE
+PERSIST IN OEMS
 ```
 
 ---
@@ -147,14 +151,14 @@ PERSISTENCE
 ```text
 LAUNCH      @CGS(.)
 
-SET         .seed0 := .PUBLIC := 1
-SET         .seed@ := .seed0
+SET         .Χ.seed0 := .PUBLIC := 1
+SET         .Χ.seed@ := .Χ.seed0
 
 PARSE       .
 
 FOR i IN <list>
 
-    EXEC    @CGS(i)
+    .Χ := @CGS(.Χ, i)
 
 END
 
@@ -166,10 +170,10 @@ RETURN      .Χ
 # OEMS
 
 ```text
-@OMEGA(Δ, ∇)
+@OMEGA(.) → .Χ
 ```
 
-returns an Ontological Existence.
+retrieves an Ontological Existence.
 
 ```text
 Ω := { ΩΧ }
@@ -179,7 +183,7 @@ OEMS is the distributed persistence of Ontological Existences.
 
 ---
 
-# MUXMU
+# ALPHA-tech Principles
 
 One Root.
 
