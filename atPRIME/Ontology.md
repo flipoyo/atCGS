@@ -41,6 +41,12 @@ X := LOCAL
 Local instantiated value.
 
 ```text
+.X := Self
+```
+
+Self reference.
+
+```text
 @X := LIVING
 ```
 
@@ -394,3 +400,7 @@ PRIME($HI)
 
 GAMMA
 ```
+
+---
+
+@ := 2026-07-11T14:38:10+02:00

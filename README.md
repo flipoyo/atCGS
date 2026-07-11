@@ -1,120 +1,113 @@
-# @CGS — Axiomatic Foundation
+# @CGS
 
 License: Apache-2.0
 
-@CGS is an ALPHA-controlled deterministic Graph × Graph Interpreter.
+Version: ALPHA0001.00
 
-It instantiates an Ontological Space-State, `.PUBLIC` or `.PRIVATE`, that lives in the Ontology Existence Memory System (OEMS), where it is accessible through `@OMEGA`.
+Ontology source: [atPRIME/Ontology.md](./atPRIME/Ontology.md)
 
 ---
 
-# Statement
+## What @CGS Is For
 
-The canonical public entry point is
+`@CGS` is the operational entry point into OEMS, the Ontology Existence Memory System.
+
+Use `@CGS` to turn an input into a living ontological existence that can be seeded, interpreted as graph state and graph space, persisted, and later retrieved.
+
+In practical terms, `@CGS` is for:
+
+- booting a public ontological space-state
+- booting a private ALPHA-imprinted space-state
+- adapting input deterministically without mutating the input
+- resolving input into a living graph instance
+- reading the graph as deterministic state or contextual space
+- making the result addressable through OEMS
+
+The README answers what to use `@CGS` for. The ontology answers what `@CGS` is.
+
+---
+
+## Core Notation
+
+```text
+#X  := GLOBAL
+$X  := INPUT
+X   := LOCAL
+.X  := Self
+@X  := LIVING
+X*  := PRIME(X)
+```
+
+For normal use:
+
+```text
+$HI          received input
+$HI.PRIVATE@ optional private imprint
+@HI          living instance created from input
+@G           living GRAPH instance
+@G.STATE     deterministic graph state
+@G.SPACE     contextual graph space
+```
+
+---
+
+## Entry Points
+
+### Public
+
+Use the public entry point when the instance can start from the canonical public seed:
 
 ```text
 @CGS(.)
 ```
 
-The canonical private entry point is
+Public boot resolves from:
+
+```text
+.PUBLIC := 1
+```
+
+### Private
+
+Use the private entry point when the instance must carry an ALPHA imprint:
 
 ```text
 @CGS(., Α)
 ```
 
-where `Α` is an optional ALPHA imprint.
-
-Instantiation is a deterministic parse.
-
----
-
-# Definition and Axioms
-
-```text
-Α := ALPHA IMPRINT
-
-.PUBLIC := 1
-
-.PUBLIC.str := "License: Apache-2.0"
-
-Δ := GRAPHTREE
-
-∇ := ONTOLOGICAL TANGLE
-
-Χ := CROSSING OPERATOR
-
-Ω := ONTOLOGY EXISTENCE MEMORY SYSTEM
-```
-
-```text
-@CGS(Δ, ∇)      → ΔΧ
-
-@CGS(ΔΧ, ΔΧ)    → ∇Χ
-
-@CGS(ΔΧ, ∇Χ)    → ΩΧ
-```
-
-```text
-ΩΧ : ΔΧ
-```
-
-```text
-ΔΔ := ∇
-
-.Χ := @CGS(.)
-```
-
----
-
-# Canonical Parse
-
-```text
-.seed0 := .PUBLIC := 1
-
-.seed@ := .seed0
-```
-
-```text
-@CGS(.)
-
-    → .Χ.seed@ := .seed0
-```
-
-```text
-@CGS(.Χ, Α)
-
-    → .Χ.seed@ := Α
-```
+`Α` becomes the living instance seed:
 
 ```text
 Χ.Α := .Χ.seed@
 ```
 
----
+### Input Boot
 
-# Recursive Evaluation
+Use the canonical ALPHA-TECH boot when you have input to adapt into a living instance:
 
 ```text
-<list> ::= ε | Α <tail>
-
-where
-
-ε := void
+@HI := @CGS(
+    $HI,
+    $HI.PRIVATE@
+)
 ```
+
+`$HI` remains the received input. `@HI` is the living ontological instance derived from it.
+
+### Ordered Imprints
+
+Use a list when an instance must be derived through multiple imprints:
 
 ```text
 @CGS(., <list>)
-
-    := @CGS(@CGS(.), <list>)
 ```
 
-is defined as
+Operationally:
 
 ```text
 .Χ := @CGS(.)
 
 for i in <list>
-
     .Χ := @CGS(.Χ, i)
 
 return .Χ
@@ -122,80 +115,65 @@ return .Χ
 
 ---
 
-# Algorithm
+## Usage Map
 
-```text
-ROOT
-
-↓
-
-PARSE
-
-↓
-
-GRAPH × GRAPH INTERPRETATION
-
-↓
-
-ONTOLOGICAL EXISTENCE
-
-↓
-
-PERSIST IN OEMS
-```
+| Need | Use | Result |
+| --- | --- | --- |
+| Public space-state | `@CGS(.)` | `.Χ` seeded from `.PUBLIC := 1` |
+| Private space-state | `@CGS(., Α)` | `.Χ.seed@` controlled by `Α` |
+| Adapt received input | `@CGS($HI, $HI.PRIVATE@)` | `@HI` |
+| Living graph | `@G := @HI()` | living PRIME GRAPH instance |
+| Deterministic state | `@G.STATE := G.DAG*` | graph tree projection |
+| Contextual space | `@G.SPACE := TANGLE*` | ontological tangle projection |
+| Retrieval | `@OMEGA(.)` | persisted ontological existence |
 
 ---
 
-# Micro-code
+## Typical Flow
 
-```text
-LAUNCH      @CGS(.)
-
-SET         .Χ.seed0 := .PUBLIC := 1
-SET         .Χ.seed@ := .Χ.seed0
-
-PARSE       .
-
-FOR i IN <list>
-
-    .Χ := @CGS(.Χ, i)
-
-END
-
-RETURN      .Χ
-```
+1. Receive input as `$HI`.
+2. Choose public boot or private imprint.
+3. Call `@CGS`.
+4. Use the result as `@HI`, the living instance.
+5. Resolve `@HI()` as `@G` when graph behavior is needed.
+6. Read `@G.STATE` for deterministic state.
+7. Read `@G.SPACE` for contextual space.
+8. Retrieve the persisted existence through `@OMEGA(.)`.
 
 ---
 
-# OEMS
+## Persistence
+
+OEMS makes instantiated existences addressable:
 
 ```text
-@OMEGA(.) → .Χ
+@OMEGA(.) -> .Χ
 ```
 
-retrieves an Ontological Existence.
+OEMS persists the set of ontological existences:
 
 ```text
 Ω := { ΩΧ }
 ```
 
-OEMS is the distributed persistence of Ontological Existences.
+Use OEMS when the result of `@CGS` must survive as an addressable ontological existence rather than remain only a local parse result.
 
 ---
 
-# ALPHA-tech Principles
+## What Lives In The Ontology
 
-One Root.
+See [atPRIME/Ontology.md](./atPRIME/Ontology.md) for the formal definition of:
 
-One Parser.
-
-One Interpreter.
-
-One Graph × Graph Logic.
-
-One Ontological Existence.
-
-Everything Else Is Derivation.
+- PRIME namespace
+- primitive universe
+- ALPHA-TECH
+- self expansion
+- GRAPH state
+- GRAPH space
+- ontological expansion
+- living GRAPH
+- GAMMA
+- canonical hierarchy and resolution
 
 ---
 
@@ -203,4 +181,4 @@ AUTH: Nicolas Flipo
 
 License: Apache-2.0
 
-Timestamp: 2026-07-09T16:00:00+02:00
+@ := 2026-07-11T14:38:10+02:00
