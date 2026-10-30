@@ -20,7 +20,7 @@ pixi run test
 
 - `@cgs` does **not** create or verify Merkle roots, `.gts` proofs or PoE.
 - It does **not** implement CGS-BETA, GX4G or `*G` requestability.
-- The four OpFrontier tuples are named contracts, **not** GitRepo mounts or `.cgs` grammar.
+- PRIME G is `{NAME, NODE, EDGE, OP*}`. The ALPHA adapter does not copy CGS-BETA frontier tuples or introduce GitRepo mounts or `.cgs` grammar. Existing CGS-ALPHA `Op` remains authoritative.
 - `cgitsync release freeze` tags `<project-name>-<version>`, where the version
   comes from the **target GitTree root's** `pixi.toml`, not `atCGS/pixi.toml`.
   `--force-tag` is an existing CGS-ALPHA override, never set by the adapter.
