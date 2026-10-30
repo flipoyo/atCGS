@@ -12,13 +12,8 @@ from functools import wraps
 from typing import Callable, Sequence
 
 
-# Ontological frontier, not Git repositories or additions to the .cgs schema.
-FRONTIER: tuple[tuple[str, tuple[str, ...]], ...] = (
-    (".opx", ("GG4G", "DELTA", "PoE", "PRIVATE")),
-    (".dev", ("GX4G", "DELTA", ".opx", ".distant")),
-    (".usr", ("GX4G", "DELTA", ".opx", ".local")),
-    (".gts", ("CGS", "ALPHA", ".cgs", ".cgitsync")),
-)
+# PRIME G is an ontology, not an alternate implementation of CGS invariants.
+PRIME_G: tuple[str, ...] = ("NAME", "NODE", "EDGE", "OP*")
 
 
 @dataclass(frozen=True, slots=True)
