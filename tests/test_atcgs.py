@@ -5,17 +5,12 @@ import types
 import unittest
 from unittest.mock import Mock, patch
 
-from atcgs import FRONTIER, OpFrontier, cgs, main
+from atcgs import PRIME_G, OpFrontier, cgs, main
 
 
 class FrontierTests(unittest.TestCase):
-    def test_exact_frontier_tuple_order_and_case(self):
-        self.assertEqual(FRONTIER, (
-            (".opx", ("GG4G", "DELTA", "PoE", "PRIVATE")),
-            (".dev", ("GX4G", "DELTA", ".opx", ".distant")),
-            (".usr", ("GX4G", "DELTA", ".opx", ".local")),
-            (".gts", ("CGS", "ALPHA", ".cgs", ".cgitsync")),
-        ))
+    def test_prime_g_without_duplicating_engine_protocol(self):
+        self.assertEqual(PRIME_G, ("NAME", "NODE", "EDGE", "OP*"))
 
     def test_pass_through_preserves_all_arguments(self):
         args = ["release", "freeze", "alpha release", "--dry-run", "--force-tag", "8.5.0"]
