@@ -1,0 +1,10 @@
+# SPDX-License-Identifier: Apache-2.0
+# POEX 0000 — minimal PUBLIC root Operating Space for @cgs.
+# Ontological tuples are defined separately in POEX.0000.toml.
+# No fictitious .opx/.dev/.usr/.computo/.omniscience GitRepo mounts.
+# Prepare against the merged main branch; DO NOT freeze from this draft PR.
+project = { name = "POEX", default_branch = "main", fallback_branch = "main" }
+
+repos = [
+  { repository = "github:flipoyo/atCGS", relative_path = ".", default_branch = "main", fallback_branch = "main", nested_config = "disabled", access_protocol = "https" },
+]
