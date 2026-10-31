@@ -7,7 +7,7 @@ Its `OpFrontier` accepts exactly four case-sensitive System Layer selectors,
 selector, then passed unchanged to `ComplexGitSync.cli.main`, which routes
 mutating operations via `RoutedClient -> Op`.
 
-Inner version: `0.2.3-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
+Inner version: `1.0.0-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
 prerelease). Its single source is `atcgs.__version__`; `@cgs --version` prints it.
 
 **Build name.** The project is `CGS`; its build is the executable in the Pixi
@@ -26,7 +26,7 @@ rules, so `@cgs` and `cgitsync` share one environment. Every command is a task:
 ```bash
 pixi install
 pixi run '@cgs' --help
-pixi run '@cgs' --version    # ComplexGraphSync 0.2.3-alpha (local, no cgitsync)
+pixi run '@cgs' --version    # ComplexGraphSync 1.0.0-alpha (local, no cgitsync)
 pixi run '@cgs' OPX          # emits .gts OPX DEV .cgs (evidence: unverified)
 pixi run '@cgs' DEV          # emits .cgs DEV USR .toml
 pixi run '@cgs' USR          # emits .toml USR PUB .omniscience
@@ -36,7 +36,7 @@ pixi run '@cgs' USR .omniscience   # resolve the PUBLIC mount
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX bootstrap example.cgs
 ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV status
 ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV release freeze "ALPHA release" --dry-run
-ATCGS_AUTHORIZE=OPX,DEV pixi run '@cgs' DEV .computo   # resolve the PRIVATE mount
+ATCGS_AUTHORIZE=OPX,DEV pixi run '@cgs' DEV .cgitsync   # resolve the PRIVATE mount
 ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV env check --cgs examples/cgs_dev.cgs
 pixi run test
 pixi run lint
@@ -44,14 +44,14 @@ pixi run lint
 
 Exit codes: `0` success, `2` rejected request (unknown selector, raw verb,
 override such as `level=PUBLIC`), `3` unauthorized (missing grant, or `USR`/`PUB`
-asking for `.computo`).
+asking for `.cgitsync`).
 
 ## Selectors
 
 | Selector | Without argument | With argument |
 | --- | --- | --- |
-| `OPX` | emit `.gts OPX DEV .cgs` | authorized `cgitsync` verb, or `.computo`/`.omniscience` |
-| `DEV` | emit `.cgs DEV USR .toml` | authorized `cgitsync` verb, or `.computo`/`.omniscience` |
+| `OPX` | emit `.gts OPX DEV .cgs` | authorized `cgitsync` verb, or `.cgitsync`/`.omniscience` |
+| `DEV` | emit `.cgs DEV USR .toml` | authorized `cgitsync` verb, or `.cgitsync`/`.omniscience` |
 | `USR` | emit `.toml USR PUB .omniscience` | `.omniscience` only |
 | `PUB` | PUBLIC answer (terminal layer) | `.omniscience` only |
 
@@ -59,7 +59,7 @@ asking for `.computo`).
   edges are refused by `OpFrontier.emit`.
 - `ATCGS_AUTHORIZE` is operator configuration, never read from the request
   arguments. It may grant only `OPX` and/or `DEV`; `USR` cannot be elevated
-  and is always denied `.computo`.
+  and is always denied `.cgitsync`.
 - `PUB` never imports ComplexGitSync, needs no `cgitsync` bootstrap and never
   mutates a GitRepo.
 - Emitted transitions and mount views report `evidence: unverified`, or
@@ -83,7 +83,7 @@ gate pattern of `gx4g-*.cgs`. Every level is project `cgs` on `CGS-ALPHA`, falli
 
 | Mount | OPX | DEV | USR |
 | --- | --- | --- | --- |
-| `.computo`: ComplexGitSync, with `complexgitsync-<level>.cgs` nested | yes | yes | yes |
+| `.cgitsync`: ComplexGitSync, with `complexgitsync-<level>.cgs` nested | yes | yes | yes |
 | `.omniscience`: `codeberg:gx4g/.omniscience`, atCGS ledger, branch `cgs_CGS-ALPHA`: written by DEV, read by OPX | read-only | writable | never |
 | `.agent/.distant`: `.ticketing`, `DevSpec`, `DocSpec` | read-only | read-only | no |
 | `.agent/.local`: `.dev`, `.localSpec`, `.claude`, branch `cgs_CGS-ALPHA`, written by DEV, read by OPX | read-only | writable | no |
@@ -92,14 +92,14 @@ gate pattern of `gx4g-*.cgs`. Every level is project `cgs` on `CGS-ALPHA`, falli
 pixi run cgitsync bootstrap examples/cgs_dev.cgs cgs
 ```
 
-`.computo` holds the computational engine, and `.omniscience` the ledger, at the
+`.cgitsync` holds the computational engine, and `.omniscience` the ledger, at the
 tree's root, the way the gate holds the register in a GX4G Operating Space. The
 mount points are separate Git repositories and are listed in `.gitignore`.
 
 ## @cgs mounts
 
-`@cgs` mounts are **unrelated** to `@cgitsync` GitTree/Memory mounts and to
-`.cgitsync`, which stay unchanged. They are declared in an operator TOML file
+`@cgs` mounts are **unrelated** to `@cgitsync` GitTree/Memory mounts. The
+PRIVATE mount is `.cgitsync` (formerly `.computo`). They are declared in an operator TOML file
 named by `ATCGS_MOUNTS`:
 
 ```toml
@@ -111,7 +111,7 @@ commit = "<full 40- or 64-hex commit id>"
 policy = "PUBLIC"
 
 [[mount]]
-name = ".computo"             # PRIVATE, OPX/DEV with ATCGS_AUTHORIZE only
+name = ".cgitsync"             # PRIVATE, OPX/DEV with ATCGS_AUTHORIZE only
 repository = "github:<owner>/<private-repo>"
 ref = "main"
 commit = "<full commit id>"
@@ -119,7 +119,7 @@ policy = "PRIVATE"
 writable = true
 ```
 
-Refused: any name other than `.omniscience`/`.computo`, a policy that differs
+Refused: any name other than `.omniscience`/`.cgitsync`, a policy that differs
 from the frozen binding, a writable PUBLIC mount, a ref not pinned to a full
 commit, local paths, `file:`/`ssh:` URLs, path traversal, unknown fields,
 duplicate names and one GitRepo backing both PUBLIC and PRIVATE. Error

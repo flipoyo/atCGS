@@ -25,7 +25,7 @@ from typing import Callable, Mapping, MutableMapping, Sequence
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "0.2.3-alpha"
+__version__ = "1.0.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -45,7 +45,7 @@ TRANSITIONS: tuple[tuple[str, str, str, str], ...] = (
 # CGS-owned frontiers, not @cgitsync GitTree mounts; `*G` is kept literally.
 FRONTIERS: tuple[tuple[str, tuple[str, str, str]], ...] = (
     (".poe", (".omniscience", ".cgs", "*G")),
-    (".opx", (".computo", ".omniscience", ".gts")),
+    (".opx", (".cgitsync", ".omniscience", ".gts")),
 )
 
 
@@ -61,11 +61,11 @@ def build_name(manifest: Path | None = None) -> str:
 
 
 def commit_subject(summary: str) -> str:
-    """Commit subject <build-name>-<version> <summary>, as in cgs-0.2.3-alpha."""
+    """Commit subject <build-name>-<version> <summary>, as in cgs-1.0.0-alpha."""
     return f"{build_name()}-{__version__} {summary}"
 
 
-PUBLIC, PRIVATE = ".omniscience", ".computo"
+PUBLIC, PRIVATE = ".omniscience", ".cgitsync"
 MOUNT_POLICY: Mapping[str, str] = {PUBLIC: "PUBLIC", PRIVATE: "PRIVATE"}
 PRIVATE_LAYERS = frozenset({"OPX", "DEV"})
 
@@ -92,7 +92,7 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
   USR                  emit the USR -> PUB transition
   PUB                  serve the read-only PUBLIC answer (.poe frontier)
   <layer> .omniscience resolve the PUBLIC mount
-  OPX | DEV .computo   resolve the PRIVATE mount (requires ATCGS_AUTHORIZE)
+  OPX | DEV .cgitsync   resolve the PRIVATE mount (requires ATCGS_AUTHORIZE)
   OPX | DEV env show|check  observe or check the shared environment (requires ATCGS_AUTHORIZE)
 
 Run it as: pixi run '@cgs' ..."""

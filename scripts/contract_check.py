@@ -74,7 +74,7 @@ FIXTURES = {
 }
 FRONTIERS = (
     (".poe", (".omniscience", ".cgs", "*G")),
-    (".opx", (".computo", ".omniscience", ".gts")),
+    (".opx", (".cgitsync", ".omniscience", ".gts")),
 )
 
 
@@ -92,8 +92,8 @@ def inspect(path=SPEC):
     demand(c["prime_cgs"] == ["OPX", "DEV", "USR", "PUB"], "incorrect PRIME CGS")
     demand(
         c["public"] == ".omniscience"
-        and c["private"] == ".computo"
-        and c["internal"] == ".cgitsync",
+        and c["private"] == ".cgitsync"
+        and "internal" not in c,
         "incorrect system spaces",
     )
     for section, group in FIXTURES.items():

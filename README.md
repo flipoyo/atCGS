@@ -1,4 +1,4 @@
-# atCGS — ComplexGraphSync 0.2.3-alpha
+# atCGS — ComplexGraphSync 1.0.0-alpha
 
 **Canonical README — USR / PUB / BIOS / POEX / OpFrontier.**
 
@@ -49,11 +49,11 @@ X in PoE      OpFrontier request ComplexGraphSync -> ComplexGitSync
 
 `hash(SEED)` is the unique ID of NAME, and the only value crossing the frontier.
 The pair `(hash(SEED), hash(GLYPH))` is known by OPX only.
-POEX never stores the GLYPH, and nobody does; `.omniscience` and `.computo` report only its hash.
+POEX never stores the GLYPH, and nobody does; `.omniscience` and `.cgitsync` report only its hash.
 The compression always runs, so `hash(GLYPH)` never equals `hash(SEED)`.
 The DEV ssh key is temporary: it uses the `ssh-keygen` core of
 [sshKeyGen](https://github.com/flipoyo/sshKeyGen) and is destroyed after the request.
-`.computo` belongs to the PRIVATE domain of ComplexGraphSync.
+`.cgitsync` belongs to the PRIVATE domain of ComplexGraphSync.
 `.omniscience` denotes its PUBLIC frontier, limited to publishable proofs.
 Character strings are not implicit execution commands.
 
@@ -108,9 +108,8 @@ The last quartet is kept logically; no Rust pointer is simulated.
 ## 6. Spaces and publication
 
 ```text
-ComplexGraphSync PRIVATE = .computo
-ComplexGraphSync PUBLIC  = .omniscience
-ComplexGitSync INTERNAL  = .cgitsync
+PRIVATE = .cgitsync       (ComplexGitSync)
+PUBLIC  = .omniscience    (ComplexGraphSync)
 ```
 
 A candidate manifest is not an authenticated checkpoint.
@@ -133,7 +132,7 @@ pixi run test
 The `inspect` option validates the tuples of `spec/contracts.toml`.
 The sequencer uses a deterministic demonstration matrix by default.
 `candidate` must display `NOT_PUBLISHED` and `poex_verified=false`.
-None of it bootstraps a tree or accesses a real `.computo`.
+None of it bootstraps a tree or accesses a real `.cgitsync`.
 
 ## 8. TUTORIALS, 150 lines each
 

@@ -76,9 +76,8 @@ The compression runs even on a 256×256 SEED, so `hash(GLYPH) != hash(SEED)`.
 The DEV key uses the `ssh-keygen` core of [sshKeyGen](https://github.com/flipoyo/sshKeyGen).
 
 ```text
-.computo       PRIVATE  (ComplexGraphSync)
+.cgitsync      PRIVATE  (ComplexGitSync)
 .omniscience   PUBLIC   (ComplexGraphSync)
-.cgitsync      INTERNAL (ComplexGitSync)
 ```
 
 No tuple is a declaration of access rights.

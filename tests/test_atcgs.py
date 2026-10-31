@@ -47,7 +47,7 @@ commit = "{PUBLIC_COMMIT}"
 policy = "PUBLIC"
 
 [[mount]]
-name = ".computo"
+name = ".cgitsync"
 repository = "{PRIVATE_REPO}"
 ref = "private-branch"
 commit = "{PRIVATE_COMMIT}"
@@ -55,7 +55,7 @@ policy = "PRIVATE"
 writable = true
 provenance = "/home/operator/private/ledger"
 """
-PRIVATE_MARKERS = (PRIVATE_REPO, "secret-computo-repo", PRIVATE_COMMIT, "private-branch", "/home/operator", ".computo")
+PRIVATE_MARKERS = (PRIVATE_REPO, "secret-computo-repo", PRIVATE_COMMIT, "private-branch", "/home/operator", ".cgitsync")
 
 
 def public_mount(**overrides):
@@ -64,7 +64,7 @@ def public_mount(**overrides):
 
 
 def private_mount(**overrides):
-    fields = dict(name=".computo", repository=PRIVATE_REPO, ref="main", commit=PRIVATE_COMMIT, policy="PRIVATE")
+    fields = dict(name=".cgitsync", repository=PRIVATE_REPO, ref="main", commit=PRIVATE_COMMIT, policy="PRIVATE")
     return CgsMount(**{**fields, **overrides})
 
 
@@ -112,7 +112,7 @@ class ContractTests(unittest.TestCase):
     def test_exact_frontier_tuples(self):
         self.assertEqual(FRONTIERS, (
             (".poe", (".omniscience", ".cgs", "*G")),
-            (".opx", (".computo", ".omniscience", ".gts")),
+            (".opx", (".cgitsync", ".omniscience", ".gts")),
         ))
 
 
@@ -170,14 +170,14 @@ class SelectorTests(unittest.TestCase):
 
     def test_no_invented_operation(self):
         for args in (["DEV", "push"], ["OPX", "release"], ["OPX", "release", "publish"],
-                     ["DEV", "gx4g"], ["OPX", ".poe"], ["USR", "*G"], ["OPX", ".computo", "status"]):
+                     ["DEV", "gx4g"], ["OPX", ".poe"], ["USR", "*G"], ["OPX", ".cgitsync", "status"]):
             with self.subTest(args=args), self.assertRaises(ValueError):
                 OpFrontier().accept(args)
 
     def test_level_public_override_rejected(self):
         for layer in PRIME_CGS:
-            for args in (["level=PUBLIC"], ["--level", "PUBLIC"], [".computo", "level=PUBLIC"],
-                         ["level=PUBLIC", ".computo"]):
+            for args in (["level=PUBLIC"], ["--level", "PUBLIC"], [".cgitsync", "level=PUBLIC"],
+                         ["level=PUBLIC", ".cgitsync"]):
                 with self.subTest(layer=layer, args=args), self.assertRaises(ValueError):
                     OpFrontier().accept([layer, *args])
 
@@ -260,12 +260,12 @@ class MountTests(unittest.TestCase):
     def test_private_resolution_requires_authorized_opx_or_dev(self):
         table = MountTable((public_mount(), private_mount()))
         granted = Authorization(frozenset({"OPX", "DEV"}))
-        self.assertEqual(table.resolve(".computo", "OPX", granted), private_mount())
+        self.assertEqual(table.resolve(".cgitsync", "OPX", granted), private_mount())
         with self.assertRaises(Unauthorized):
-            table.resolve(".computo", "DEV", Authorization())
+            table.resolve(".cgitsync", "DEV", Authorization())
         for layer in ("USR", "PUB"):
             with self.subTest(layer=layer), self.assertRaises(Unauthorized):
-                table.resolve(".computo", layer, granted)
+                table.resolve(".cgitsync", layer, granted)
 
     def test_public_resolution_never_falls_back_to_private(self):
         table = MountTable((private_mount(),))
@@ -307,7 +307,7 @@ class EntryPointTests(unittest.TestCase):
     def test_no_public_output_leaks_private_material(self):
         cli = Cli(self, authorize="OPX,DEV")
         for argv in (["PUB"], ["USR"], ["PUB", ".omniscience"], ["USR", ".omniscience"],
-                     ["PUB", ".computo"], ["USR", ".computo"], ["PUB", "level=PUBLIC"]):
+                     ["PUB", ".cgitsync"], ["USR", ".cgitsync"], ["PUB", "level=PUBLIC"]):
             with self.subTest(argv=argv):
                 _, out, err = cli(*argv)
                 for marker in PRIVATE_MARKERS:
@@ -319,15 +319,15 @@ class EntryPointTests(unittest.TestCase):
         cli = Cli(self, authorize="OPX,DEV")
         for layer in ("USR", "PUB"):
             with self.subTest(layer=layer):
-                code, out, _ = cli(layer, ".computo")
+                code, out, _ = cli(layer, ".cgitsync")
                 self.assertEqual((code, out), (3, ""))
 
     def test_private_mount_for_authorized_operator(self):
-        code, out, _ = Cli(self, authorize="DEV")("DEV", ".computo")
+        code, out, _ = Cli(self, authorize="DEV")("DEV", ".cgitsync")
         self.assertEqual(code, 0)
         self.assertEqual(json.loads(out)["repository"], PRIVATE_REPO)
         self.assertEqual(json.loads(out)["evidence"], "unverified")
-        self.assertEqual(Cli(self, authorize="DEV")("OPX", ".computo")[0], 3)
+        self.assertEqual(Cli(self, authorize="DEV")("OPX", ".cgitsync")[0], 3)
 
     def test_core_delegation_requires_authorization(self):
         core, modules = fake_core()

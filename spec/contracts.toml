@@ -1,13 +1,12 @@
-# atCGS 0.2.3-alpha — ordered literal tuples; not .cgs grammar.
+# atCGS 1.0.0-alpha — ordered literal tuples; not .cgs grammar.
 [contract]
 project = "ComplexGraphSync"
-version = "0.2.3-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.0.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 state = "DECLARED_ONLY"
 prime_g = ["NAME", "NODE", "EDGE", "OP"]
 prime_cgs = ["OPX", "DEV", "USR", "PUB"]
 public = ".omniscience"
-private = ".computo"
-internal = ".cgitsync"
+private = ".cgitsync"
 [boot]
 identity = ["atCGS", "ALPHA", "BIOS", "ComplexGitSync", "M.m.p"]
 current = [
@@ -46,7 +45,7 @@ sequence = [
 ]
 [frontiers]
 ".poe" = [".omniscience", ".cgs", "*G"]
-".opx" = [".computo", ".omniscience", ".gts"]
+".opx" = [".cgitsync", ".omniscience", ".gts"]
 [public_boundary]
 sequence = [
  ["README", "atCGS", "USR", "PUB"],

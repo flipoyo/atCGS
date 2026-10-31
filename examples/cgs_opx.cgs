@@ -1,8 +1,8 @@
 # The OPX tree for atCGS (ComplexGraphSync), one of cgs_{opx,dev,usr}.cgs.
 # Each file is named for the level it installs; the project is cgs, on CGS-ALPHA,
 # falling back to main where a repository has no such branch. POEX.cgs at the root is the PUB install.
-# OPX: the operational frontier .opx {.computo, .omniscience, .gts}, read-only.
-#   .computo      ComplexGitSync, mounted with its own OPX tree (complexgitsync-opx.cgs)
+# OPX: the operational frontier .opx {.cgitsync, .omniscience, .gts}, read-only.
+#   .cgitsync      ComplexGitSync, mounted with its own OPX tree (complexgitsync-opx.cgs)
 #   .omniscience  the atCGS ledger, read-only at OPX, on the branch DEV writes (cgs_CGS-ALPHA)
 #   .agent/.distant  .ticketing, DevSpec, DocSpec, shared and read-only
 #   .agent/.local    .dev, .localSpec, .claude, private and read-only (no writable repo at OPX)
@@ -16,7 +16,7 @@ project = { name = "cgs", default_branch = "CGS-ALPHA", fallback_branch = "main"
 
 repos = [
     { repository = "github:flipoyo/atCGS", fallback_branch = "main", nested_config = "disabled" },
-    { repository = "github:flipoyo/ComplexGitSync", relative_path = ".computo", fallback_branch = "main", nested_config = "examples/complexgitsync-opx.cgs" },
+    { repository = "github:flipoyo/ComplexGitSync", relative_path = ".cgitsync", fallback_branch = "main", nested_config = "examples/complexgitsync-opx.cgs" },
     { repository = "codeberg:gx4g/.omniscience", relative_path = ".omniscience", default_branch = "cgs_CGS-ALPHA", fallback_branch = "main", private = true, nested_config = "disabled" },
 
     # .distant — shared, read-only, the same for every conforming project

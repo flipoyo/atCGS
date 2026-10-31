@@ -1,4 +1,4 @@
-# atCGS 0.2.3-alpha — POEX monolithic C microcode
+# atCGS 1.0.0-alpha — POEX monolithic C microcode
 
 ## Owner-defined interface
 
@@ -39,4 +39,4 @@ pixi run microcode-test           # compiler + 7 deterministic regression tests
 
 ## Boundary and limitations
 
-`PRIME CGS = {OPX, DEV, USR, PUB}` remains a **separate** execution frontier. A real ".poe" output at Layer 0 must be checked and anchored before any publication in `.omniscience`. PRIVATE `.computo` may handle `.bit` bytes; the C microcode merely counts and compares them. A zero count or a quartet XOR cannot serve as a cryptographic identity or resistance claim.
+`PRIME CGS = {OPX, DEV, USR, PUB}` remains a **separate** execution frontier. A real ".poe" output at Layer 0 must be checked and anchored before any publication in `.omniscience`. PRIVATE `.cgitsync` may handle `.bit` bytes; the C microcode merely counts and compares them. A zero count or a quartet XOR cannot serve as a cryptographic identity or resistance claim.

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """atCGS (ComplexGraphSync SemVer): deterministic POEX 256x256 -> 64 x (4x256) simulator.
 
-This is an *offline simulation*. It never writes to real .computo/.omniscience,
+This is an *offline simulation*. It never writes to real .cgitsync/.omniscience,
 never executes cgitsync, never publishes or certifies a Proof of Existence.
 A POEX Merkle commitment is not a signed existence checkpoint.
 """

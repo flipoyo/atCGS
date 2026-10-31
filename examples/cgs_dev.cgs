@@ -2,7 +2,7 @@
 # Each file is named for the level it installs; the project is cgs, on CGS-ALPHA,
 # falling back to main where a repository has no such branch. POEX.cgs at the root is the PUB install.
 # DEV: everything OPX mounts, plus what atCGS writes.
-#   .computo      ComplexGitSync, mounted with its own developer tree (complexgitsync-dev.cgs)
+#   .cgitsync      ComplexGitSync, mounted with its own developer tree (complexgitsync-dev.cgs)
 #   .omniscience  the atCGS ledger, writable, on the computed branch cgs_CGS-ALPHA (register appends)
 #   .agent/.distant  .ticketing, DevSpec, DocSpec, shared and read-only
 #   .agent/.local    .dev, .localSpec, .claude, atCGS's own, writable, on the branch ComplexGitSync computes (cgs_CGS-ALPHA)
@@ -16,7 +16,7 @@ project = { name = "cgs", default_branch = "CGS-ALPHA", fallback_branch = "main"
 
 repos = [
     { repository = "github:flipoyo/atCGS", fallback_branch = "main", nested_config = "disabled" },
-    { repository = "github:flipoyo/ComplexGitSync", relative_path = ".computo", fallback_branch = "main", nested_config = "examples/complexgitsync-dev.cgs" },
+    { repository = "github:flipoyo/ComplexGitSync", relative_path = ".cgitsync", fallback_branch = "main", nested_config = "examples/complexgitsync-dev.cgs" },
     { repository = "codeberg:gx4g/.omniscience", relative_path = ".omniscience", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
 
     # .distant — shared, read-only, the same for every conforming project

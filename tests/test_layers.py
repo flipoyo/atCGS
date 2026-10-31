@@ -54,14 +54,14 @@ class LayerTreeTests(unittest.TestCase):
                 self.assertEqual(root["repository"], "github:flipoyo/atCGS")
                 self.assertEqual(root["nested_config"], "disabled")
 
-    def test_computo_mounts_complexgitsync_at_the_same_level(self):
+    def test_cgitsync_mounts_complexgitsync_at_the_same_level(self):
         for layer in LAYERS:
             _, data = load(layer)
             with self.subTest(layer=layer):
-                computo = by_path(data)[".computo"]
-                self.assertEqual(computo["repository"], "github:flipoyo/ComplexGitSync")
-                self.assertEqual(computo["nested_config"], f"examples/complexgitsync-{layer}.cgs")
-                self.assertFalse(computo.get("private", False) or computo.get("writable", False))
+                cgitsync = by_path(data)[".cgitsync"]
+                self.assertEqual(cgitsync["repository"], "github:flipoyo/ComplexGitSync")
+                self.assertEqual(cgitsync["nested_config"], f"examples/complexgitsync-{layer}.cgs")
+                self.assertFalse(cgitsync.get("private", False) or cgitsync.get("writable", False))
 
     def test_omniscience_is_the_poex_ledger_and_never_a_user_mount(self):
         expected = {"repository": "codeberg:gx4g/.omniscience", "default_branch": "cgs_CGS-ALPHA",

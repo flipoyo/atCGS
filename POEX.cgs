@@ -2,8 +2,8 @@
 # POEX 0000 — the install.cgs of atCGS: the minimal PUB root Operating Space.
 # Ontological tuples are defined separately in POEX.0000.toml.
 #     pixi run cgitsync bootstrap POEX.cgs cgs
-# A PUB install mounts nothing private: no .computo and no .omniscience. The
-# levels that do are examples/cgs_{opx,dev,usr}.cgs (.computo = ComplexGitSync,
+# A PUB install mounts nothing private: no .cgitsync and no .omniscience. The
+# levels that do are examples/cgs_{opx,dev,usr}.cgs (.cgitsync = ComplexGitSync,
 # .omniscience = the register's POEX branch, the atCGS ledger).
 project = { name = "cgs", default_branch = "main", fallback_branch = "main" }
 

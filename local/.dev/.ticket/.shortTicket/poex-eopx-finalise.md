@@ -37,7 +37,11 @@ Open points, not decided here:
 - KEY: [key] says holder = POEX, but the pair is now OPX only.
 - Public boundary: the chain breaks after README atCGS USR PUB (next is GLYPH)
   and after HASH DELTA CGS OPX (next is .cgs). Keep both rows or drop them?
-- microcode/README.md:42 lets .computo handle .bit bytes, which conflicts
+- microcode/README.md:42 lets .cgitsync handle .bit bytes, which conflicts
   with the GLYPH never being exposed.
 - Pixi: cc and ssh-keygen come from the system; add a C compiler and openssh?
 - No @cgs selector calls POEX yet.
+- 1.0.0-alpha: .computo is now .cgitsync (ComplexGitSync); the Operating Space reads
+  .omniscience and .cgitsync. Still open: whether .agent becomes a third space
+  of the contract (the trees mount it, the contract does not name it), and
+  POEX.0000.toml, whose .opx frontier still says .computo (left unchanged).

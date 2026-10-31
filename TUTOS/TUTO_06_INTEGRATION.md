@@ -17,8 +17,7 @@ The new tuples describe the README/USR/PUB frontier.
 ComplexGraphSync = interface and controlled public answer
 ComplexGitSync = GitTree, Memory, State and Integrity engine
 PUBLIC = .omniscience
-PRIVATE = .computo
-INTERNAL = .cgitsync
+PRIVATE = .cgitsync
 ```
 
 Do not reimplement the Git/Merkle engine in the decorator.
@@ -81,7 +80,7 @@ The PR status must be observed, not guessed.
 
 ## 8. Out of scope
 
-No forced switch from `.cgitsync` to `.computo`.
+`.computo` is gone: the PRIVATE mount is `.cgitsync`.
 No remote GX4G service claimed to be operational.
 No fictitious PoE signer or invented timestamp.
 No data migration without documented proof and rollback.

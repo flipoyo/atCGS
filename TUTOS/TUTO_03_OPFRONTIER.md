@@ -32,13 +32,12 @@ These quadruples are descriptions, never automatic `cp` commands.
 
 ```text
 PUBLIC  = .omniscience
-PRIVATE = .computo
-INTERNAL = .cgitsync
+PRIVATE = .cgitsync
 ```
 
-The first two spaces are ComplexGraphSync domains.
-The third is the operational memory of the ComplexGitSync engine.
-`.cgitsync` must not be renamed to `.computo`.
+`.omniscience` is the ComplexGraphSync PUBLIC domain.
+`.cgitsync` is the PRIVATE one: the ComplexGitSync mount, its operational memory.
+`.computo` no longer exists; it is `.cgitsync`.
 
 ## 4. Role of OpFrontier
 
@@ -79,7 +78,7 @@ Changes of case, order or field must be refused.
 
 ## 8. Security scenarios
 
-A `USR` request cannot write to `.computo` by default.
+A `USR` request cannot write to `.cgitsync` by default.
 The `PUB` answer must not include infrastructure secrets.
 A valid hash does not certify the scope of rights.
 A missing proof is different from a forged proof.
