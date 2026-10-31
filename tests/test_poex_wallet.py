@@ -126,55 +126,67 @@ class POEXTests(Microcodes):
 
 
 class SessionTests(Microcodes):
+    REFUSED = {"OPX": 0b1000, "DEV": 0b1100, "USR": 0b1110, "PUB": 0b1111}
+
     def setUp(self):
         super().setUp()
         self.eopx.birth("X", SEED)
 
     def test_ladder(self):
         self.assertEqual({k: format(v, "04b") for k, v in POE_CODES.items()},
-                         {"POE": "0000", "OPX": "0000", "DEV": "1000", "USR": "1100", "PUB": "1111"})
+                         {"POE": "0000", "OPX": "1000", "DEV": "1100", "USR": "1110", "PUB": "1111"})
 
-    def test_left_equals_right_is_poe(self):
+    def test_granted_is_0000_for_every_requester(self):
         with self.wallet.session() as session:
-            self.assertEqual(session.prove("X", SEED, SEED), 0b0000)
-            self.assertEqual(session.poe("X"), 0b0000)
+            for requester in PRIME_CGS:
+                with self.subTest(requester=requester):
+                    self.assertEqual(session.prove("X", SEED, SEED, requester), 0b0000)
+                    self.assertEqual(session.poe("X"), 0b0000)
 
-    def test_unknown_name_is_born_then_proven_to_become_opx(self):
+    def test_left_differs_from_right_keeps_the_requesters_code(self):
         with self.wallet.session() as session:
-            self.assertEqual(session.prove("Y", BIG_SEED, BIG_SEED), POE_CODES["OPX"])
-        self.assertEqual(self.opx["Y"], (sha256(BIG_SEED), sha256(glyph_of(BIG_SEED))))
+            for requester, code in self.REFUSED.items():
+                with self.subTest(requester=requester):
+                    self.assertEqual(session.prove("X", SEED, BIG_SEED, requester), code)
 
-    def test_unknown_name_born_but_not_proven(self):
-        with self.wallet.session() as session:
-            self.assertEqual(session.prove("Y", BIG_SEED, SEED[::-1]), 0b1111)
-
-    def test_failed_control_is_dev(self):
+    def test_failed_control_keeps_the_requesters_code(self):
         # BIG_SEED is not X's SEED: GLYPH(left) does not match OPX's hash(GLYPH).
         with self.wallet.session() as session:
-            self.assertEqual(session.prove("X", BIG_SEED, BIG_SEED), 0b1000)
+            for requester, code in self.REFUSED.items():
+                with self.subTest(requester=requester):
+                    self.assertEqual(session.prove("X", BIG_SEED, BIG_SEED, requester), code)
 
-    def test_left_differs_from_right_is_pub(self):
+    def test_only_opx_gives_birth_to_an_unknown_name(self):
         with self.wallet.session() as session:
-            self.assertEqual(session.prove("X", SEED, BIG_SEED), 0b1111)
+            for requester in ("DEV", "USR", "PUB"):
+                with self.subTest(requester=requester):
+                    self.assertEqual(session.prove("Y", BIG_SEED, BIG_SEED, requester), self.REFUSED[requester])
+                    self.assertFalse(self.wallet.exists("Y"))
+            self.assertEqual(session.prove("Y", BIG_SEED, BIG_SEED, "OPX"), 0b0000)
+        self.assertEqual(self.opx["Y"], (sha256(BIG_SEED), sha256(glyph_of(BIG_SEED))))
+
+    def test_unknown_requester_is_refused(self):
+        with self.wallet.session() as session, self.assertRaises(ValueError):
+            session.prove("X", SEED, SEED, "ROOT")
 
     def test_poe_holds_only_for_the_session(self):
         session = self.wallet.session()
-        session.prove("X", SEED, SEED)
+        session.prove("X", SEED, SEED, "DEV")
         glyph = session._glyphs["X"]
         session.close()
         self.assertEqual(bytes(glyph), bytes(8192))
         with self.assertRaises(ValueError):
             session.poe("X")
         with self.assertRaises(ValueError):
-            session.prove("X", SEED, SEED)
+            session.prove("X", SEED, SEED, "DEV")
         with self.wallet.session() as fresh, self.assertRaises(ValueError):
             fresh.poe("X")
 
-    def test_only_a_proven_glyph_is_decorated_and_never_shown(self):
+    def test_only_a_granted_glyph_is_decorated_and_never_shown(self):
         with self.wallet.session() as session:
-            session.prove("X", SEED, BIG_SEED)
+            session.prove("X", SEED, BIG_SEED, "USR")
             self.assertEqual(session._glyphs, {})
-            session.prove("X", SEED, SEED)
+            session.prove("X", SEED, SEED, "USR")
             self.assertEqual(bytes(session._glyphs["X"]), glyph_of(SEED))
             self.assertNotIn(glyph_of(SEED).hex(), repr(session))
 

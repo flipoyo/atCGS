@@ -20,10 +20,9 @@ Open points, not decided here:
 - POEX.0000.toml: its .opx frontier still says .computo (left unchanged).
 - USR: the cgitsync message asked for .agent/.local writable at every level;
   the USR tree mounts nothing private, so USR has none.
-- .poe ladder (1.2.1-alpha): POE 0000, OPX 0000, DEV 1000, USR 1100, PUB 1111.
-  OPX only through POE: OPX is EOPX. Session.prove gives birth to an unknown
-  NAME from left, then 0000 for left = right, 1111 for left != right, and 1000
-  for a failed control (assumed from the earlier "mismatch goes to DEV" flow;
-  owner to confirm). No case gives 1100 (USR) yet.
+- .poe (1.2.2-alpha), settled by the owner: POEX knows who asks and only asks
+  whether poe can be granted. Granted is 0000; refused keeps the requester's
+  code, OPX 1000, DEV 1100, USR 1110, PUB 1111. Assumed from "OPX is EOPX":
+  only an OPX requester gives birth to an unknown NAME.
 - Naming: .poe is now the 4-bit decorator, but PoeVector, the 4 x 256-bit
   credential vector returned by POEX.poe(), is also called .poe in the docs.

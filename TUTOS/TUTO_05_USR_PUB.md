@@ -63,14 +63,14 @@ If not, EOPX runs the birth protocol:
 
 `POEX.compare(seed_a, seed_b)` rebuilds both GLYPHs with eopx;
 `poex` reads them and answers equal if and only if `A XOR B` has 65 536 zeros.
-A session proves left = right and decorates the GLYPH, `*GLYPH = (.poe, GLYPH)`:
+POEX knows who asks; a session says whether poe is granted, `*GLYPH = (.poe, GLYPH)`:
 
 ```text
-POE 0000 left = right    OPX 0000 only through POE: OPX is EOPX
-DEV 1000 control fails   USR 1100 no case yet   PUB 1111 left != right
+granted   0000  the control passed and poex proved left = right
+refused   the requester's code: OPX 1000  DEV 1100  USR 1110  PUB 1111
 ```
 
-An unknown X is born through EOPX from `left`; the control runs before poex; `.poe` dies with the session.
+Only OPX gives birth to an unknown X, through EOPX from `left`; `.poe` dies with the session.
 
 If yes, the request is an OpFrontier request ComplexGraphSync -> ComplexGitSync.
 POEX then delivers `.poe`, one 4×256-bit POEX packet:

@@ -24,7 +24,7 @@ from typing import Callable, Mapping, MutableMapping, Sequence
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.2.1-alpha"
+__version__ = "1.2.2-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -60,7 +60,7 @@ def build_name(manifest: Path | None = None) -> str:
 
 
 def commit_subject(summary: str) -> str:
-    """Commit subject <build-name>-<version> <summary>, as in cgs-1.2.1-alpha."""
+    """Commit subject <build-name>-<version> <summary>, as in cgs-1.2.2-alpha."""
     return f"{build_name()}-{__version__} {summary}"
 
 
@@ -316,8 +316,9 @@ _COMPARED = re.compile(
     r"POEX COMPARED: 64 packets x 4x256 bits; quartets=16384; zeros=(\d+); equal=(yes|no); evidence=UNVERIFIED"
 )
 # .poe: the 4-bit decorator in front of a GLYPH, *GLYPH = (.poe, GLYPH).
-# OPX is 0000 too: the only way to become OPX is POE, so OPX is EOPX.
-POE_CODES: Mapping[str, int] = {"POE": 0b0000, "OPX": 0b0000, "DEV": 0b1000, "USR": 0b1100, "PUB": 0b1111}
+# POEX knows who asks: 0000 when poe is granted, else the requester's own code.
+POE_CODES: Mapping[str, int] = {"POE": 0b0000, "OPX": 0b1000, "DEV": 0b1100, "USR": 0b1110, "PUB": 0b1111}
+POE_TRUE, POE_FALSE = 0b0000, 0b1111  # poex's answer, as POEX takes it back
 
 
 def sha256(data: bytes) -> str:
@@ -404,11 +405,11 @@ class POEX:
         compared = _COMPARED.search(result.stdout.decode())
         if result.returncode not in (0, 1) or compared is None:
             raise ValueError(f"poex microcode refused the GLYPHs: {result.stderr.decode().strip()}")
-        return POE_CODES["POE"] if compared.group(2) == "yes" else POE_CODES["PUB"]
+        return POE_TRUE if compared.group(2) == "yes" else POE_FALSE
 
     def compare(self, seed_a: bytes, seed_b: bytes) -> bool:
         """Rebuild two unknown GLYPHs, then let poex compare them: equal iff zeros = 65536."""
-        return self.verdict(self.eopx.glyph(seed_a), self.eopx.glyph(seed_b)) == POE_CODES["POE"]
+        return self.verdict(self.eopx.glyph(seed_a), self.eopx.glyph(seed_b)) == POE_TRUE
 
     def session(self) -> Session:
         """A local session; every .poe it issues holds only until it closes."""
@@ -465,29 +466,32 @@ class Session:
         self._poe.clear()
         self._open = False
 
-    def prove(self, name: str, left: bytes, right: bytes) -> int:
-        """Prove left = right for NAME and return its .poe.
+    def prove(self, name: str, left: bytes, right: bytes, requester: str) -> int:
+        """Can poe be granted to `requester` (OPX, DEV, USR or PUB) for NAME?
 
-        Is NAME known? If not, EOPX gives it birth from `left`. Then control
-        GLYPH(left) against OPX's hash(GLYPH) before poex; a mismatch is 1000
-        (DEV). Then poex compares GLYPH(left) and GLYPH(right): 0000 (POE, and
-        so OPX) if equal, else 1111 (PUB).
-        Only a proven GLYPH is decorated, *GLYPH = (0000, GLYPH), for this session.
+        Is NAME known? If not, only OPX can give it birth, through EOPX, from
+        `left`. Then control GLYPH(left) against OPX's hash(GLYPH) before poex,
+        and let poex prove left = right. Granted, the .poe is 0000, and the
+        GLYPH is decorated *GLYPH = (0000, GLYPH) for this session; refused, the
+        .poe stays the requester's own code: OPX 1000, DEV 1100, USR 1110, PUB 1111.
         """
         if not self._open:
             raise ValueError("POEX session is closed")
+        if requester not in PRIME_CGS:
+            raise ValueError(f"unsupported PRIME CGS layer: {requester!r}")
+        refused = POE_CODES[requester]
         if not self._wallet.exists(name):
+            if requester != "OPX":
+                return self._issue(name, refused)
             self._wallet.eopx.birth(name, left)
         glyph = bytearray(self._wallet.eopx.glyph(left))
-        if sha256(glyph) != self._wallet.eopx.opx[name][1]:
+        granted = (sha256(glyph) == self._wallet.eopx.opx[name][1]
+                   and self._wallet.verdict(bytes(glyph), self._wallet.eopx.glyph(right)) == POE_TRUE)
+        if not granted:
             glyph[:] = bytes(len(glyph))
-            return self._issue(name, POE_CODES["DEV"])
-        poe = self._wallet.verdict(bytes(glyph), self._wallet.eopx.glyph(right))
-        if poe == POE_CODES["POE"]:
-            self._glyphs[name] = glyph
-        else:
-            glyph[:] = bytes(len(glyph))
-        return self._issue(name, poe)
+            return self._issue(name, refused)
+        self._glyphs[name] = glyph
+        return self._issue(name, POE_CODES["POE"])
 
     def _issue(self, name: str, poe: int) -> int:
         self._poe[name] = poe
