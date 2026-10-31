@@ -54,28 +54,24 @@ class LayerTreeTests(unittest.TestCase):
                 self.assertEqual(root["repository"], "github:flipoyo/atCGS")
                 self.assertEqual(root["nested_config"], "disabled")
 
-    def test_cgitsync_mounts_complexgitsync_at_the_same_level(self):
+    def test_no_tree_mounts_complexgitsync(self):
+        # .cgitsync is cgitsync's own directory, never a mount point of the tree.
         for layer in LAYERS:
-            _, data = load(layer)
+            mounts = by_path(load(layer)[1])
             with self.subTest(layer=layer):
-                cgitsync = by_path(data)[".cgitsync"]
-                self.assertEqual(cgitsync["repository"], "github:flipoyo/ComplexGitSync")
-                self.assertEqual(cgitsync["nested_config"], f"examples/complexgitsync-{layer}.cgs")
-                self.assertFalse(cgitsync.get("private", False) or cgitsync.get("writable", False))
+                self.assertNotIn(".cgitsync", mounts)
+                self.assertNotIn(".computo", mounts)
+                self.assertFalse(any(r["repository"] == "github:flipoyo/ComplexGitSync" for r in mounts.values()))
 
-    def test_omniscience_is_the_poex_ledger_and_never_a_user_mount(self):
-        expected = {"repository": "codeberg:gx4g/.omniscience", "default_branch": "cgs_CGS-ALPHA",
-                    "fallback_branch": "main", "private": True, "nested_config": "disabled"}
-        for layer, writable in (("opx", False), ("dev", True)):
-            _, data = load(layer)
+    def test_omniscience_is_the_gx4g_ledger_written_at_opx_only(self):
+        ledger = dict(by_path(load("opx")[1])[".omniscience"])
+        ledger.pop("relative_path")
+        # A writable repository takes cgs_<branch> from the project, never a fixed branch.
+        self.assertEqual(ledger, {"repository": "codeberg:GX4G/.omniscience", "fallback_branch": "main",
+                                  "private": True, "writable": True, "nested_config": "disabled"})
+        for layer in ("dev", "usr"):
             with self.subTest(layer=layer):
-                ledger = dict(by_path(data)[".omniscience"])
-                self.assertIs(ledger.pop("writable", False), writable)
-                ledger.pop("relative_path")
-                # A writable repository takes cgs_<branch> from the project, never a fixed branch.
-                self.assertEqual(ledger, expected if not writable else {
-                    k: v for k, v in expected.items() if k != "default_branch"})
-        self.assertNotIn(".omniscience", by_path(load("usr")[1]))
+                self.assertNotIn(".omniscience", by_path(load(layer)[1]))
 
     def test_agentic_structure_follows_complexgitsync(self):
         distant = {".agent/.distant/ticket", ".agent/.distant/dev-sync", ".agent/.distant/documentation"}
@@ -90,15 +86,15 @@ class LayerTreeTests(unittest.TestCase):
                     self.assertNotIn("writable", mounts[path])
                 for path in agent & local:
                     self.assertTrue(mounts[path]["private"])
-                    self.assertIs(mounts[path].get("writable", False), layer == "dev")
-                    self.assertEqual(mounts[path].get("default_branch"), None if layer == "dev" else "cgs_CGS-ALPHA")
+                    self.assertIs(mounts[path]["writable"], True)
+                    self.assertNotIn("default_branch", mounts[path])
 
-    def test_only_dev_writes_and_usr_mounts_nothing_private(self):
+    def test_opx_and_dev_write_and_usr_mounts_nothing_private(self):
         for layer in LAYERS:
             repos = load(layer)[1]["repos"]
             with self.subTest(layer=layer):
                 writes = any(repo.get("writable") for repo in repos)
-                self.assertEqual(writes, layer == "dev")
+                self.assertEqual(writes, layer != "usr")
         self.assertFalse(any(repo.get("private") for repo in load("usr")[1]["repos"]))
 
 

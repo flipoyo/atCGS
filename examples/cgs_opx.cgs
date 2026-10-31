@@ -1,11 +1,11 @@
 # The OPX tree for atCGS (ComplexGraphSync), one of cgs_{opx,dev,usr}.cgs.
 # Each file is named for the level it installs; the project is cgs, on CGS-ALPHA,
 # falling back to main where a repository has no such branch. POEX.cgs at the root is the PUB install.
-# OPX: the operational frontier .opx {.cgitsync, .omniscience, .gts}, read-only.
-#   .cgitsync      ComplexGitSync, mounted with its own OPX tree (complexgitsync-opx.cgs)
-#   .omniscience  the atCGS ledger, read-only at OPX, on the branch DEV writes (cgs_CGS-ALPHA)
+# OPX: the operational frontier .opx {.cgitsync, .omniscience, .gts}. .cgitsync is
+# cgitsync's own directory, not a mount.
+#   .omniscience  codeberg:GX4G/.omniscience, the ledger, writable at OPX only (cgs_CGS-ALPHA)
 #   .agent/.distant  .ticketing, DevSpec, DocSpec, shared and read-only
-#   .agent/.local    .dev, .localSpec, .claude, private and read-only (no writable repo at OPX)
+#   .agent/.local    .dev, .localSpec, .claude, private and writable (cgs_CGS-ALPHA)
 #     pixi run cgitsync bootstrap examples/cgs_opx.cgs cgs
 # A nested request the tree already holds is denied before cloning (IntegrityMount).
 
@@ -16,16 +16,15 @@ project = { name = "cgs", default_branch = "CGS-ALPHA", fallback_branch = "main"
 
 repos = [
     { repository = "github:flipoyo/atCGS", fallback_branch = "main", nested_config = "disabled" },
-    { repository = "github:flipoyo/ComplexGitSync", relative_path = ".cgitsync", fallback_branch = "main", nested_config = "examples/complexgitsync-opx.cgs" },
-    { repository = "codeberg:gx4g/.omniscience", relative_path = ".omniscience", default_branch = "cgs_CGS-ALPHA", fallback_branch = "main", private = true, nested_config = "disabled" },
+    { repository = "codeberg:GX4G/.omniscience", relative_path = ".omniscience", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
 
     # .distant — shared, read-only, the same for every conforming project
     { repository = "github:flipoyo/.ticketing", relative_path = ".agent/.distant/ticket", default_branch = "main", fallback_branch = "main", private = true },
     { repository = "github:flipoyo/DevSpec", relative_path = ".agent/.distant/dev-sync", default_branch = "main", fallback_branch = "main", nested_config = "disabled", private = true },
     { repository = "github:flipoyo/DocSpec", relative_path = ".agent/.distant/documentation", default_branch = "main", fallback_branch = "main", nested_config = "disabled", private = true },
 
-    # .local — this project's own, private and read-only at OPX
-    { repository = "github:flipoyo/.dev", relative_path = ".agent/.local/.dev", default_branch = "cgs_CGS-ALPHA", fallback_branch = "main", private = true },
-    { repository = "github:flipoyo/.localSpec", relative_path = ".agent/.local/.localSpec", default_branch = "cgs_CGS-ALPHA", fallback_branch = "main", private = true },
-    { repository = "github:flipoyo/.claude", relative_path = ".agent/.local/.claude", default_branch = "cgs_CGS-ALPHA", fallback_branch = "main", private = true },
+    # .local — this project's own, writable
+    { repository = "github:flipoyo/.dev", relative_path = ".agent/.local/.dev", fallback_branch = "main", private = true, writable = true },
+    { repository = "github:flipoyo/.localSpec", relative_path = ".agent/.local/.localSpec", fallback_branch = "main", private = true, writable = true },
+    { repository = "github:flipoyo/.claude", relative_path = ".agent/.local/.claude", fallback_branch = "main", private = true, writable = true },
 ]
