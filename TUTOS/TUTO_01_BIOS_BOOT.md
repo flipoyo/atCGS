@@ -1,25 +1,25 @@
 # TUTO 01 — BIOS / BOOT / CGS ALPHA
 
-**But :** reproduire l'ancrage initial sans modifier ComplexGitSync.
-**Prérequis :** Python 3.11+ ; terminal ; aucun token GitHub.
-**Durée indicative du TP :** selon l'environnement, non garantie.
-**Livrable :** table BIOS contrôlée et statut `DECLARED_ONLY`.
+**Goal:** reproduce the initial anchoring without modifying ComplexGitSync.
+**Prerequisites:** Python 3.11+; a terminal; no GitHub token.
+**Indicative lab duration:** depends on the environment, not guaranteed.
+**Deliverable:** a checked BIOS table and the `DECLARED_ONLY` status.
 
-## A. Identifier le noyau
+## A. Identify the kernel
 
-L'entrée utilisateur est `atCGS`, la version de protocole `ALPHA 0.0.0`.
-Le moteur est `ComplexGitSync M.m.p`, à verrouiller lors d'une intégration.
-L'invariant initial proposé dans le fil était :
+The user entry is `atCGS`, the protocol version `ALPHA 0.0.0`.
+The engine is `ComplexGitSync M.m.p`, to be pinned during an integration.
+The initial invariant proposed in the thread was:
 
 ```text
 BIOS BOOT CGS M.m.p
 CGS L0 TIME POEX
 ```
 
-Cette notation historique ne définit pas de format de timestamp ou de signature.
-Ne substituez pas une horloge locale à une preuve d'existence vérifiée.
+This historical notation defines no timestamp or signature format.
+Do not substitute a local clock for a verified proof of existence.
 
-## B. Étape BIOS canonique
+## B. Canonical BIOS step
 
 ```text
 atCGS ALPHA BIOS ComplexGitSync M.m.p
@@ -30,12 +30,12 @@ DEV HWX TWX USR
 USR TWX G .cgs
 ```
 
-La première ligne possède cinq jetons : c'est l'identité d'amorçage.
-Les cinq suivantes ont exactement quatre jetons selon PRIME G.
-La graphie `M.m.p` n'est pas remplacée dans le document canonique.
-`POEX` est un symbole de frontière, pas une attestation signée.
+The first line has five tokens: it is the boot identity.
+The next five have exactly four tokens, per PRIME G.
+The spelling `M.m.p` is not replaced in the canonical document.
+`POEX` is a frontier symbol, not a signed attestation.
 
-## C. Versions antérieures conservées
+## C. Earlier versions kept
 
 ```text
 BIOS ENV HWX TWX
@@ -47,21 +47,21 @@ USR TWX GTS TWX
 OPX HWX ENV TWX
 ```
 
-Ces tuples sont conservés pour la reproductibilité de la conception.
-Le dernier `TWX` du tuple `USR` n'est pas une erreur de duplication.
-Une révision future devra préciser comment le BIOS appelle le BOOT.
+These tuples are kept for design reproducibility.
+The last `TWX` of the `USR` tuple is not a duplication error.
+A future revision must specify how the BIOS calls the BOOT.
 
-## D. Contrôler les fixtures
+## D. Check the fixtures
 
 ```bash
 python3 scripts/contract_check.py inspect
 ```
 
-Cherchez `bios_new_rows = 5` et `bios_history_rows = 7`.
-Le contrôle rejette toute mutation des tuples présents dans le TOML.
-Aucune opération Git distante n'est lancée par cette commande.
+Look for `bios_new_rows = 5` and `bios_history_rows = 7`.
+The check rejects any mutation of the tuples present in the TOML.
+This command launches no remote Git operation.
 
-## E. Examiner les données normatives
+## E. Examine the normative data
 
 ```bash
 python3 - <<'PY'
@@ -75,76 +75,76 @@ for row in spec['boot']['current']:
 PY
 ```
 
-Cette inspection est locale : elle n'ouvre ni GitRepo ni socket.
+This inspection is local: it opens neither a GitRepo nor a socket.
 
-## Validation complémentaire : cas à automatiser
+## Additional validation: cases to automate
 
-- **ALPHA** `ComplexGitSync G POEX .gts` : vérifier la séquence littérale.
-- **ALPHA** `ComplexGitSync G POEX .gts` : supprimer un champ et attendre un refus.
-- **ALPHA** `ComplexGitSync G POEX .gts` : permuter les champs 2 et 3 et attendre un refus.
-- **ALPHA** `ComplexGitSync G POEX .gts` : changer la casse et attendre un refus.
-- **ALPHA** `.gts G OPX TWX` : vérifier la séquence littérale.
-- **ALPHA** `.gts G OPX TWX` : supprimer un champ et attendre un refus.
-- **ALPHA** `.gts G OPX TWX` : permuter les champs 2 et 3 et attendre un refus.
-- **ALPHA** `.gts G OPX TWX` : changer la casse et attendre un refus.
-- **ALPHA** `TWX ENV HWX DEV` : vérifier la séquence littérale.
-- **ALPHA** `TWX ENV HWX DEV` : supprimer un champ et attendre un refus.
-- **ALPHA** `TWX ENV HWX DEV` : permuter les champs 2 et 3 et attendre un refus.
-- **ALPHA** `TWX ENV HWX DEV` : changer la casse et attendre un refus.
-- **ALPHA** `DEV HWX TWX USR` : vérifier la séquence littérale.
-- **ALPHA** `DEV HWX TWX USR` : supprimer un champ et attendre un refus.
-- **ALPHA** `DEV HWX TWX USR` : permuter les champs 2 et 3 et attendre un refus.
-- **ALPHA** `DEV HWX TWX USR` : changer la casse et attendre un refus.
-- **ALPHA** `USR TWX G .cgs` : vérifier la séquence littérale.
-- **ALPHA** `USR TWX G .cgs` : supprimer un champ et attendre un refus.
-- **ALPHA** `USR TWX G .cgs` : permuter les champs 2 et 3 et attendre un refus.
-- **ALPHA** `USR TWX G .cgs` : changer la casse et attendre un refus.
-- **BIOS** `BIOS ENV HWX TWX` : vérifier la séquence littérale.
-- **BIOS** `BIOS ENV HWX TWX` : supprimer un champ et attendre un refus.
-- **BIOS** `BIOS ENV HWX TWX` : permuter les champs 2 et 3 et attendre un refus.
-- **BIOS** `BIOS ENV HWX TWX` : changer la casse et attendre un refus.
-- **BIOS** `BOOT TWX POEX CGS` : vérifier la séquence littérale.
-- **BIOS** `BOOT TWX POEX CGS` : supprimer un champ et attendre un refus.
-- **BIOS** `BOOT TWX POEX CGS` : permuter les champs 2 et 3 et attendre un refus.
-- **BIOS** `BOOT TWX POEX CGS` : changer la casse et attendre un refus.
-- **BIOS** `CGS POEX TWX GTS` : vérifier la séquence littérale.
-- **BIOS** `CGS POEX TWX GTS` : supprimer un champ et attendre un refus.
-- **BIOS** `CGS POEX TWX GTS` : permuter les champs 2 et 3 et attendre un refus.
-- **BIOS** `CGS POEX TWX GTS` : changer la casse et attendre un refus.
-- **BIOS** `GTS TWX OPX DEV` : vérifier la séquence littérale.
-- **BIOS** `GTS TWX OPX DEV` : supprimer un champ et attendre un refus.
-- **BIOS** `GTS TWX OPX DEV` : permuter les champs 2 et 3 et attendre un refus.
-- **BIOS** `GTS TWX OPX DEV` : changer la casse et attendre un refus.
-- **BIOS** `DEV HWX ENV USR` : vérifier la séquence littérale.
-- **BIOS** `DEV HWX ENV USR` : supprimer un champ et attendre un refus.
-- **BIOS** `DEV HWX ENV USR` : permuter les champs 2 et 3 et attendre un refus.
-- **BIOS** `DEV HWX ENV USR` : changer la casse et attendre un refus.
-- **BIOS** `USR TWX GTS TWX` : vérifier la séquence littérale.
-- **BIOS** `USR TWX GTS TWX` : supprimer un champ et attendre un refus.
-- **BIOS** `USR TWX GTS TWX` : permuter les champs 2 et 3 et attendre un refus.
-- **BIOS** `USR TWX GTS TWX` : changer la casse et attendre un refus.
-- **BIOS** `OPX HWX ENV TWX` : vérifier la séquence littérale.
-- **BIOS** `OPX HWX ENV TWX` : supprimer un champ et attendre un refus.
-- **BIOS** `OPX HWX ENV TWX` : permuter les champs 2 et 3 et attendre un refus.
-- **BIOS** `OPX HWX ENV TWX` : changer la casse et attendre un refus.
-- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p` : vérifier la séquence littérale.
-- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p` : supprimer un champ et attendre un refus.
-- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p` : permuter les champs 2 et 3 et attendre un refus.
-- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p` : changer la casse et attendre un refus.
-- Vérifier le BOOT : aucun chemin privé n’est publié.
-- Vérifier le BOOT : aucun checkpoint n’est fabriqué.
-- Vérifier le BOOT : aucun GitRepo n’est cloné.
-- Vérifier le BOOT : aucune commande n’est interprétée comme tuple.
-- Vérifier le BOOT : aucune transition n’est exécutée.
-- Vérifier le BOOT : la source conserve le format TOML.
-- `M.m.p` doit être épinglée avant un boot réel.
-- La fixture du BOOT ne contient pas de secret.
-- Un champ vide rend l’identité non conforme.
-- La preuve L0 reste séparée de l’horloge locale.
-- La table courante compte cinq tuples à quatre champs.
-- La table antérieure en compte sept.
-- `GTS` reste distinct de `.gts`.
-- La répétition de TWX est normative.
-- Les droits PRIVATE ne dérivent pas de la forme des tuples.
-- Aucun clone de dépôt n’est exécuté.
-- Une nouvelle version nécessite un changement documenté.
+- **ALPHA** `ComplexGitSync G POEX .gts`: check the literal sequence.
+- **ALPHA** `ComplexGitSync G POEX .gts`: remove a field and expect a refusal.
+- **ALPHA** `ComplexGitSync G POEX .gts`: swap fields 2 and 3 and expect a refusal.
+- **ALPHA** `ComplexGitSync G POEX .gts`: change the case and expect a refusal.
+- **ALPHA** `.gts G OPX TWX`: check the literal sequence.
+- **ALPHA** `.gts G OPX TWX`: remove a field and expect a refusal.
+- **ALPHA** `.gts G OPX TWX`: swap fields 2 and 3 and expect a refusal.
+- **ALPHA** `.gts G OPX TWX`: change the case and expect a refusal.
+- **ALPHA** `TWX ENV HWX DEV`: check the literal sequence.
+- **ALPHA** `TWX ENV HWX DEV`: remove a field and expect a refusal.
+- **ALPHA** `TWX ENV HWX DEV`: swap fields 2 and 3 and expect a refusal.
+- **ALPHA** `TWX ENV HWX DEV`: change the case and expect a refusal.
+- **ALPHA** `DEV HWX TWX USR`: check the literal sequence.
+- **ALPHA** `DEV HWX TWX USR`: remove a field and expect a refusal.
+- **ALPHA** `DEV HWX TWX USR`: swap fields 2 and 3 and expect a refusal.
+- **ALPHA** `DEV HWX TWX USR`: change the case and expect a refusal.
+- **ALPHA** `USR TWX G .cgs`: check the literal sequence.
+- **ALPHA** `USR TWX G .cgs`: remove a field and expect a refusal.
+- **ALPHA** `USR TWX G .cgs`: swap fields 2 and 3 and expect a refusal.
+- **ALPHA** `USR TWX G .cgs`: change the case and expect a refusal.
+- **BIOS** `BIOS ENV HWX TWX`: check the literal sequence.
+- **BIOS** `BIOS ENV HWX TWX`: remove a field and expect a refusal.
+- **BIOS** `BIOS ENV HWX TWX`: swap fields 2 and 3 and expect a refusal.
+- **BIOS** `BIOS ENV HWX TWX`: change the case and expect a refusal.
+- **BIOS** `BOOT TWX POEX CGS`: check the literal sequence.
+- **BIOS** `BOOT TWX POEX CGS`: remove a field and expect a refusal.
+- **BIOS** `BOOT TWX POEX CGS`: swap fields 2 and 3 and expect a refusal.
+- **BIOS** `BOOT TWX POEX CGS`: change the case and expect a refusal.
+- **BIOS** `CGS POEX TWX GTS`: check the literal sequence.
+- **BIOS** `CGS POEX TWX GTS`: remove a field and expect a refusal.
+- **BIOS** `CGS POEX TWX GTS`: swap fields 2 and 3 and expect a refusal.
+- **BIOS** `CGS POEX TWX GTS`: change the case and expect a refusal.
+- **BIOS** `GTS TWX OPX DEV`: check the literal sequence.
+- **BIOS** `GTS TWX OPX DEV`: remove a field and expect a refusal.
+- **BIOS** `GTS TWX OPX DEV`: swap fields 2 and 3 and expect a refusal.
+- **BIOS** `GTS TWX OPX DEV`: change the case and expect a refusal.
+- **BIOS** `DEV HWX ENV USR`: check the literal sequence.
+- **BIOS** `DEV HWX ENV USR`: remove a field and expect a refusal.
+- **BIOS** `DEV HWX ENV USR`: swap fields 2 and 3 and expect a refusal.
+- **BIOS** `DEV HWX ENV USR`: change the case and expect a refusal.
+- **BIOS** `USR TWX GTS TWX`: check the literal sequence.
+- **BIOS** `USR TWX GTS TWX`: remove a field and expect a refusal.
+- **BIOS** `USR TWX GTS TWX`: swap fields 2 and 3 and expect a refusal.
+- **BIOS** `USR TWX GTS TWX`: change the case and expect a refusal.
+- **BIOS** `OPX HWX ENV TWX`: check the literal sequence.
+- **BIOS** `OPX HWX ENV TWX`: remove a field and expect a refusal.
+- **BIOS** `OPX HWX ENV TWX`: swap fields 2 and 3 and expect a refusal.
+- **BIOS** `OPX HWX ENV TWX`: change the case and expect a refusal.
+- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p`: check the literal sequence.
+- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p`: remove a field and expect a refusal.
+- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p`: swap fields 2 and 3 and expect a refusal.
+- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p`: change the case and expect a refusal.
+- Check the BOOT: no private path is published.
+- Check the BOOT: no checkpoint is fabricated.
+- Check the BOOT: no GitRepo is cloned.
+- Check the BOOT: no command is interpreted as a tuple.
+- Check the BOOT: no transition is executed.
+- Check the BOOT: the source keeps the TOML format.
+- `M.m.p` must be pinned before a real boot.
+- The BOOT fixture contains no secret.
+- An empty field makes the identity non-compliant.
+- The L0 proof stays separate from the local clock.
+- The current table has five four-field tuples.
+- The earlier table has seven.
+- `GTS` stays distinct from `.gts`.
+- The repetition of TWX is normative.
+- PRIVATE rights do not derive from the shape of the tuples.
+- No repository clone is executed.
+- A new version requires a documented change.

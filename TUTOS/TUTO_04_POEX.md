@@ -1,77 +1,77 @@
-# TUTO 04 — POEX : matrice 256×256 et paquets 4×256
+# TUTO 04 — POEX: 256×256 matrix and 4×256 packets
 
-**Objectif :** générer et vérifier un engagement binaire ordonné.
+**Goal:** generate and verify an ordered binary commitment.
 
-## 1. Matrice de départ
+## 1. Starting matrix
 
 ```text
 M = 256 × 256 bits
-M = 65 536 bits = 8 192 octets
-1 ligne = 256 bits = 32 octets
+M = 65 536 bits = 8 192 bytes
+1 row = 256 bits = 32 bytes
 ```
 
-Le binaire est interprété par lignes et par bits de poids fort en premier.
-Un fichier `.bit` du laboratoire est un fichier de 8 192 octets bruts.
-Il n'est ni un PNG ni une clé publique attestée.
+The binary is read row by row, most significant bit first.
+A lab `.bit` file is a raw 8 192-byte file.
+It is neither a PNG nor an attested public key.
 
-## 2. Séquencement POEX
+## 2. POEX sequencing
 
 ```text
 POEX[k] = (W[4k], W[4k+1], W[4k+2], W[4k+3])
 0 <= k < 64
-1 paquet = 4 × 256 bits = 128 octets
-64 × 128 = 8 192 octets
+1 packet = 4 × 256 bits = 128 bytes
+64 × 128 = 8 192 bytes
 ```
 
-La recomposition dans l'ordre des indices donne exactement la matrice.
-Un paquet tronqué, supplémentaire ou échangé doit être refusé.
+Reassembly in index order yields exactly the matrix.
+A truncated, extra or swapped packet must be refused.
 
-## 3. Invariant `.poe`
+## 3. `.poe` invariant
 
-Un rapport est émis après chaque quartet de quatre bits.
-Un paquet contient 256 quartets ; la matrice en contient 16 384.
-Le compteur enregistre le nombre de zéros rencontrés.
-La référence logique au dernier quartet est conservée dans la simulation.
-Le pointeur mémoire Rust `.poe` n'est pas implémenté dans ce TP.
+A report is emitted after each four-bit quartet.
+A packet contains 256 quartets; the matrix contains 16 384.
+The counter records the number of zeros encountered.
+The logical reference to the last quartet is kept in the simulation.
+The Rust `.poe` memory pointer is not implemented in this lab.
 
-## 4. Lancer le démonstrateur
+## 4. Run the demonstrator
 
 ```bash
 python3 scripts/poex_4x256_simulator.py --output candidate.json
 ```
 
-Le mode sans `--input` produit une matrice synthétique déterministe.
-La sortie contient une racine candidate mais aucune signature d'existence.
+Without `--input`, it produces a deterministic synthetic matrix.
+The output contains a candidate root but no existence signature.
 
-## 5. Tester avec une matrice réelle du laboratoire
+## 5. Test with a real lab matrix
 
 ```bash
 python3 scripts/poex_4x256_simulator.py \
   --input fixtures/demo_256x256.bit --output from_bit.json
 ```
 
-Les racines des deux commandes doivent coïncider.
-Le fichier `.bit` est synthétique, non issu d'un GitTree réel.
+The roots of both commands must match.
+The `.bit` file is synthetic, not taken from a real GitTree.
 
-## 6. Vérification des preuves
+## 6. Proof verification
 
 ```bash
 python3 -m unittest discover -s tests -v
 ```
 
-Les tests contrôlent la recomposition des 64 paquets.
-Les 64 preuves d'inclusion Merkle sont vérifiées.
-Une inversion de bit est détectée ; la permutation d'indice aussi.
-L'index figure dans l'engagement d'une feuille de paquet.
+The tests check the reassembly of the 64 packets.
+All 64 Merkle inclusion proofs are verified.
+A bit flip is detected; so is an index permutation.
+The index is part of the commitment of a packet leaf.
 
-## 7. Interprétation cryptographique
+## 7. Cryptographic interpretation
 
-Une racine Merkle engage la suite choisie de paquets.
-Elle n'établit ni l'identité de leur auteur ni leur date d'existence.
-Une preuve d'inclusion n'est pas une autorisation de publication.
-Le domaine SHA-256 POEX est distinct de celui du `.gts` GitTree.
+A Merkle root commits to the chosen sequence of packets.
+It establishes neither the identity of their author nor their date of existence.
+An inclusion proof is not a publication authorisation.
+The POEX SHA-256 domain is distinct from that of the `.gts` GitTree.
 
-## 8. Sortie attendue
+## 8. Expected output
 
 ```text
 matrix_bits: 65536
@@ -81,70 +81,70 @@ nibble_reports: 16384
 published: false
 ```
 
-Le tutoriel 05 place l'engagement à la frontière USR/PUB.
+Tutorial 05 places the commitment at the USR/PUB frontier.
 
-## Validation complémentaire : cas à automatiser
+## Additional validation: cases to automate
 
-- Paquet 0: index encodé et authentifié dans la feuille.
-- Paquet 0: taille de 128 octets requise.
-- Paquet 0: 256 rapports quartets attendus.
-- Paquet 0: premier rang = 0.
-- Paquet 0: dernier rang = 3.
-- Paquet 1: index encodé et authentifié dans la feuille.
-- Paquet 1: taille de 128 octets requise.
-- Paquet 1: 256 rapports quartets attendus.
-- Paquet 1: premier rang = 4.
-- Paquet 1: dernier rang = 7.
-- Paquet 2: index encodé et authentifié dans la feuille.
-- Paquet 2: taille de 128 octets requise.
-- Paquet 2: 256 rapports quartets attendus.
-- Paquet 2: premier rang = 8.
-- Paquet 2: dernier rang = 11.
-- Paquet 7: index encodé et authentifié dans la feuille.
-- Paquet 7: taille de 128 octets requise.
-- Paquet 7: 256 rapports quartets attendus.
-- Paquet 7: premier rang = 28.
-- Paquet 7: dernier rang = 31.
-- Paquet 15: index encodé et authentifié dans la feuille.
-- Paquet 15: taille de 128 octets requise.
-- Paquet 15: 256 rapports quartets attendus.
-- Paquet 15: premier rang = 60.
-- Paquet 15: dernier rang = 63.
-- Paquet 31: index encodé et authentifié dans la feuille.
-- Paquet 31: taille de 128 octets requise.
-- Paquet 31: 256 rapports quartets attendus.
-- Paquet 31: premier rang = 124.
-- Paquet 31: dernier rang = 127.
-- Paquet 32: index encodé et authentifié dans la feuille.
-- Paquet 32: taille de 128 octets requise.
-- Paquet 32: 256 rapports quartets attendus.
-- Paquet 32: premier rang = 128.
-- Paquet 32: dernier rang = 131.
-- Paquet 47: index encodé et authentifié dans la feuille.
-- Paquet 47: taille de 128 octets requise.
-- Paquet 47: 256 rapports quartets attendus.
-- Paquet 47: premier rang = 188.
-- Paquet 47: dernier rang = 191.
-- Paquet 62: index encodé et authentifié dans la feuille.
-- Paquet 62: taille de 128 octets requise.
-- Paquet 62: 256 rapports quartets attendus.
-- Paquet 62: premier rang = 248.
-- Paquet 62: dernier rang = 251.
-- Paquet 63: index encodé et authentifié dans la feuille.
-- Paquet 63: taille de 128 octets requise.
-- Paquet 63: 256 rapports quartets attendus.
-- Paquet 63: premier rang = 252.
-- Paquet 63: dernier rang = 255.
-- Cas all-zero: calculer ou refuser le résultat attendu.
-- Cas all-one: calculer ou refuser le résultat attendu.
-- Cas single-bit: calculer ou refuser le résultat attendu.
-- Cas swapped-index: calculer ou refuser le résultat attendu.
-- Cas truncated: calculer ou refuser le résultat attendu.
-- Cas extra-packet: calculer ou refuser le résultat attendu.
-- Cas changed-root: calculer ou refuser le résultat attendu.
-- Cas wrong-branch: calculer ou refuser le résultat attendu.
-- Cas wrong-digest: calculer ou refuser le résultat attendu.
-- Le fichier `.bit` comprend exactement 8 192 octets.
-- Le paquet 0 commence à la ligne 0.
-- Le paquet 63 termine à la ligne 255.
-- Chaque feuille engage l’indice du paquet.
+- Packet 0: index encoded and authenticated in the leaf.
+- Packet 0: a size of 128 bytes is required.
+- Packet 0: 256 quartet reports expected.
+- Packet 0: first row = 0.
+- Packet 0: last row = 3.
+- Packet 1: index encoded and authenticated in the leaf.
+- Packet 1: a size of 128 bytes is required.
+- Packet 1: 256 quartet reports expected.
+- Packet 1: first row = 4.
+- Packet 1: last row = 7.
+- Packet 2: index encoded and authenticated in the leaf.
+- Packet 2: a size of 128 bytes is required.
+- Packet 2: 256 quartet reports expected.
+- Packet 2: first row = 8.
+- Packet 2: last row = 11.
+- Packet 7: index encoded and authenticated in the leaf.
+- Packet 7: a size of 128 bytes is required.
+- Packet 7: 256 quartet reports expected.
+- Packet 7: first row = 28.
+- Packet 7: last row = 31.
+- Packet 15: index encoded and authenticated in the leaf.
+- Packet 15: a size of 128 bytes is required.
+- Packet 15: 256 quartet reports expected.
+- Packet 15: first row = 60.
+- Packet 15: last row = 63.
+- Packet 31: index encoded and authenticated in the leaf.
+- Packet 31: a size of 128 bytes is required.
+- Packet 31: 256 quartet reports expected.
+- Packet 31: first row = 124.
+- Packet 31: last row = 127.
+- Packet 32: index encoded and authenticated in the leaf.
+- Packet 32: a size of 128 bytes is required.
+- Packet 32: 256 quartet reports expected.
+- Packet 32: first row = 128.
+- Packet 32: last row = 131.
+- Packet 47: index encoded and authenticated in the leaf.
+- Packet 47: a size of 128 bytes is required.
+- Packet 47: 256 quartet reports expected.
+- Packet 47: first row = 188.
+- Packet 47: last row = 191.
+- Packet 62: index encoded and authenticated in the leaf.
+- Packet 62: a size of 128 bytes is required.
+- Packet 62: 256 quartet reports expected.
+- Packet 62: first row = 248.
+- Packet 62: last row = 251.
+- Packet 63: index encoded and authenticated in the leaf.
+- Packet 63: a size of 128 bytes is required.
+- Packet 63: 256 quartet reports expected.
+- Packet 63: first row = 252.
+- Packet 63: last row = 255.
+- Case all-zero: compute or refuse the expected result.
+- Case all-one: compute or refuse the expected result.
+- Case single-bit: compute or refuse the expected result.
+- Case swapped-index: compute or refuse the expected result.
+- Case truncated: compute or refuse the expected result.
+- Case extra-packet: compute or refuse the expected result.
+- Case changed-root: compute or refuse the expected result.
+- Case wrong-branch: compute or refuse the expected result.
+- Case wrong-digest: compute or refuse the expected result.
+- The `.bit` file is exactly 8 192 bytes.
+- Packet 0 starts at row 0.
+- Packet 63 ends at row 255.
+- Each leaf commits to the packet index.

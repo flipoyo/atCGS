@@ -1,30 +1,30 @@
-# TUTO 06 — Intégration ALPHA et roadmap de 24 h
+# TUTO 06 — ALPHA integration and 24 h roadmap
 
-**Objectif :** exécuter le laboratoire de bout en bout, sans fausse release.
+**Goal:** run the lab end to end, without a fake release.
 
-## 1. Contrats actifs
+## 1. Active contracts
 
-`BIOS` est un protocole d'amorçage en cours de formalisation.
-`PRIME G` fixe quatre champs stricts par tuple.
-`PRIME CGS` fixe les quatre layers OPX, DEV, USR, PUB.
-`OpFrontier` décrit trois transitions d'artefacts.
-`POEX` séquence les matrices 256×256 en 64 paquets 4×256.
-Les nouveaux tuples décrivent la frontière README/USR/PUB.
+`BIOS` is a boot protocol still being formalised.
+`PRIME G` fixes four strict fields per tuple.
+`PRIME CGS` fixes the four layers OPX, DEV, USR, PUB.
+`OpFrontier` describes three artifact transitions.
+`POEX` sequences 256×256 matrices into 64 packets of 4×256.
+The new tuples describe the README/USR/PUB frontier.
 
-## 2. Moteur et espaces
+## 2. Engine and spaces
 
 ```text
-ComplexGraphSync = interface et réponse publique contrôlée
-ComplexGitSync = moteur GitTree, Memory, State et Integrity
+ComplexGraphSync = interface and controlled public answer
+ComplexGitSync = GitTree, Memory, State and Integrity engine
 PUBLIC = .omniscience
 PRIVATE = .computo
 INTERNAL = .cgitsync
 ```
 
-Ne pas réimplémenter le moteur Git/Merkle dans le décorateur.
-Ne pas transformer un suffixe de fichier en ordre de mutation.
+Do not reimplement the Git/Merkle engine in the decorator.
+Do not turn a file suffix into a mutation order.
 
-## 3. Démonstration hors réseau
+## 3. Offline demonstration
 
 ```bash
 python3 scripts/contract_check.py inspect
@@ -33,29 +33,29 @@ python3 scripts/contract_check.py candidate candidate.json
 python3 -m unittest discover -s tests -v
 ```
 
-L'ensemble produit un rapport local, pas une publication réelle.
-Les sorties sont reproductibles avec Python 3.11+.
+The whole run produces a local report, not a real publication.
+The outputs are reproducible with Python 3.11+.
 
-## 4. Roadmap P0
+## 4. P0 roadmap
 
-| Étape | Fenêtre | Livrable |
-|---|---|---|
-| BIOS | H0–H4 | Figer les tuples, version et identité |
-| POEX | H4–H10 | Paquets, Merkle, émetteur OpFrontier |
-| `@cgs` | H10–H16 | 4 sélecteurs System Layers |
-| Sécurité | H16–H21 | Refus de fuite PRIVATE et preuve invalide |
-| Release candidate | H21–H24 | PR, tests CI et décision de promotion |
+| Step | Window | Deliverable |
+| --- | --- | --- |
+| BIOS | H0–H4 | Freeze the tuples, version and identity |
+| POEX | H4–H10 | Packets, Merkle, OpFrontier emitter |
+| `@cgs` | H10–H16 | 4 System Layer selectors |
+| Security | H16–H21 | Refusal of PRIVATE leaks and invalid proofs |
+| Release candidate | H21–H24 | PR, CI tests and promotion decision |
 
-Ce découpage est un objectif de développement, pas une promesse horaire.
+This breakdown is a development target, not a time-bound promise.
 
-## 5. État GitHub constaté
+## 5. Observed GitHub state
 
-La PR #1 de `atCGS` est fusionnée.
-Le décorateur n'accepte plus que les sélecteurs `OPX DEV USR PUB`.
-La vérification réelle des preuves `.omniscience` reste à implémenter.
-La validation de ce paquet ne modifie aucun repository GitHub.
+`atCGS` PR #1 is merged.
+The decorator now accepts only the `OPX DEV USR PUB` selectors.
+Real verification of `.omniscience` proofs remains to be implemented.
+Validating this package modifies no GitHub repository.
 
-## 6. Exécuter l'ancien prototype en option
+## 6. Optionally run the former prototype
 
 ```bash
 git clone --branch feature/alpha-pixi-opfrontier \
@@ -66,85 +66,85 @@ pixi run '@cgs' --help
 pixi run test
 ```
 
-Cette séquence nécessite Git, Pixi et un réseau accessible.
-Elle est distincte du TP Python autonome de ce dossier.
-Ne lancez pas de `release freeze` sur un projet réel sans contexte.
+This sequence requires Git, Pixi and a reachable network.
+It is separate from the standalone Python lab in this folder.
+Do not run `release freeze` on a real project without context.
 
-## 7. Critères de validation
+## 7. Validation criteria
 
-Les fixtures doivent préserver tous les champs et leurs positions.
-Les paquets POEX doivent être complets, ordonnés et reconstructibles.
-Le candidat doit rester `NOT_PUBLISHED` sans checkpoint fiable.
-La publication doit être indépendante des droits du GitTree interne.
-L'intégration ne doit pas modifier les hash schema-1 historiques.
-Le statut de la PR doit être observé, pas deviné.
+Fixtures must preserve all fields and their positions.
+POEX packets must be complete, ordered and reconstructible.
+The candidate must stay `NOT_PUBLISHED` without a reliable checkpoint.
+Publication must be independent of the internal GitTree's rights.
+Integration must not modify historical schema-1 hashes.
+The PR status must be observed, not guessed.
 
-## 8. Hors périmètre
+## 8. Out of scope
 
-Pas de passage forcé de `.cgitsync` à `.computo`.
-Pas de service GX4G distant prétendu opérationnel.
-Pas de signataire PoE fictif ni d'horodatage inventé.
-Pas de migration de données sans preuve et rollback documentés.
+No forced switch from `.cgitsync` to `.computo`.
+No remote GX4G service claimed to be operational.
+No fictitious PoE signer or invented timestamp.
+No data migration without documented proof and rollback.
 
-## 9. Suivi
+## 9. Tracking
 
-ComplexGitSync : https://github.com/flipoyo/ComplexGitSync/issues/193
-atCGS : https://github.com/flipoyo/atCGS/issues/2
-Prototype : https://github.com/flipoyo/atCGS/pull/1
+ComplexGitSync: https://github.com/flipoyo/ComplexGitSync/issues/193
+atCGS: https://github.com/flipoyo/atCGS/issues/2
+Prototype: https://github.com/flipoyo/atCGS/pull/1
 
-Le résultat attendu est un démonstrateur contrôlé, pas un serveur PUBLIC.
+The expected result is a controlled demonstrator, not a PUBLIC server.
 
-## Validation complémentaire : cas à automatiser
+## Additional validation: cases to automate
 
-- H0–H4 BIOS: vérifier fixture exacte.
-- H0–H4 BIOS: vérifier sortie reproductible.
-- H0–H4 BIOS: vérifier erreur non nulle si échec.
-- H0–H4 BIOS: vérifier aucun accès non autorisé.
-- H0–H4 BIOS: vérifier résultat de test consigné.
-- H0–H4 BIOS: vérifier stade réalisé/simulé distingué.
-- H0–H4 BIOS: vérifier possibilité de revue du PR.
-- H0–H4 BIOS: vérifier dépendance moteur inchangée.
-- H4–H10 POEX: vérifier fixture exacte.
-- H4–H10 POEX: vérifier sortie reproductible.
-- H4–H10 POEX: vérifier erreur non nulle si échec.
-- H4–H10 POEX: vérifier aucun accès non autorisé.
-- H4–H10 POEX: vérifier résultat de test consigné.
-- H4–H10 POEX: vérifier stade réalisé/simulé distingué.
-- H4–H10 POEX: vérifier possibilité de revue du PR.
-- H4–H10 POEX: vérifier dépendance moteur inchangée.
-- H10–H16 @cgs: vérifier fixture exacte.
-- H10–H16 @cgs: vérifier sortie reproductible.
-- H10–H16 @cgs: vérifier erreur non nulle si échec.
-- H10–H16 @cgs: vérifier aucun accès non autorisé.
-- H10–H16 @cgs: vérifier résultat de test consigné.
-- H10–H16 @cgs: vérifier stade réalisé/simulé distingué.
-- H10–H16 @cgs: vérifier possibilité de revue du PR.
-- H10–H16 @cgs: vérifier dépendance moteur inchangée.
-- H16–H21 Sécurité: vérifier fixture exacte.
-- H16–H21 Sécurité: vérifier sortie reproductible.
-- H16–H21 Sécurité: vérifier erreur non nulle si échec.
-- H16–H21 Sécurité: vérifier aucun accès non autorisé.
-- H16–H21 Sécurité: vérifier résultat de test consigné.
-- H16–H21 Sécurité: vérifier stade réalisé/simulé distingué.
-- H16–H21 Sécurité: vérifier possibilité de revue du PR.
-- H16–H21 Sécurité: vérifier dépendance moteur inchangée.
-- H21–H24 Release candidate: vérifier fixture exacte.
-- H21–H24 Release candidate: vérifier sortie reproductible.
-- H21–H24 Release candidate: vérifier erreur non nulle si échec.
-- H21–H24 Release candidate: vérifier aucun accès non autorisé.
-- H21–H24 Release candidate: vérifier résultat de test consigné.
-- H21–H24 Release candidate: vérifier stade réalisé/simulé distingué.
-- H21–H24 Release candidate: vérifier possibilité de revue du PR.
-- H21–H24 Release candidate: vérifier dépendance moteur inchangée.
-- Critère de clôture : pas de preuve d’existence inventée.
-- Critère de clôture : compatibilité Merkle conservée.
-- Critère de clôture : aucun chemin PRIVATE exposé.
-- Critère de clôture : résolution de version.
-- Critère de clôture : CI vérifiée.
-- Critère de clôture : état de publication exact.
-- Les résultats de tests sont attachés à la PR.
-- Les commandes de production ne sont pas lancées par le laboratoire.
-- Les ACL PRIVATE sont évaluées séparément.
-- La release est bloquée sans publication attestée.
-- Les hash schema-1 historiques restent inchangés.
-- Les régressions interplateformes restent à contrôler.
+- H0–H4 BIOS: check exact fixture.
+- H0–H4 BIOS: check reproducible output.
+- H0–H4 BIOS: check non-zero exit on failure.
+- H0–H4 BIOS: check no unauthorised access.
+- H0–H4 BIOS: check test result recorded.
+- H0–H4 BIOS: check achieved/simulated stage distinguished.
+- H0–H4 BIOS: check the PR can be reviewed.
+- H0–H4 BIOS: check engine dependency unchanged.
+- H4–H10 POEX: check exact fixture.
+- H4–H10 POEX: check reproducible output.
+- H4–H10 POEX: check non-zero exit on failure.
+- H4–H10 POEX: check no unauthorised access.
+- H4–H10 POEX: check test result recorded.
+- H4–H10 POEX: check achieved/simulated stage distinguished.
+- H4–H10 POEX: check the PR can be reviewed.
+- H4–H10 POEX: check engine dependency unchanged.
+- H10–H16 @cgs: check exact fixture.
+- H10–H16 @cgs: check reproducible output.
+- H10–H16 @cgs: check non-zero exit on failure.
+- H10–H16 @cgs: check no unauthorised access.
+- H10–H16 @cgs: check test result recorded.
+- H10–H16 @cgs: check achieved/simulated stage distinguished.
+- H10–H16 @cgs: check the PR can be reviewed.
+- H10–H16 @cgs: check engine dependency unchanged.
+- H16–H21 Security: check exact fixture.
+- H16–H21 Security: check reproducible output.
+- H16–H21 Security: check non-zero exit on failure.
+- H16–H21 Security: check no unauthorised access.
+- H16–H21 Security: check test result recorded.
+- H16–H21 Security: check achieved/simulated stage distinguished.
+- H16–H21 Security: check the PR can be reviewed.
+- H16–H21 Security: check engine dependency unchanged.
+- H21–H24 Release candidate: check exact fixture.
+- H21–H24 Release candidate: check reproducible output.
+- H21–H24 Release candidate: check non-zero exit on failure.
+- H21–H24 Release candidate: check no unauthorised access.
+- H21–H24 Release candidate: check test result recorded.
+- H21–H24 Release candidate: check achieved/simulated stage distinguished.
+- H21–H24 Release candidate: check the PR can be reviewed.
+- H21–H24 Release candidate: check engine dependency unchanged.
+- Closing criterion: no invented proof of existence.
+- Closing criterion: Merkle compatibility preserved.
+- Closing criterion: no PRIVATE path exposed.
+- Closing criterion: version resolution.
+- Closing criterion: CI verified.
+- Closing criterion: exact publication state.
+- Test results are attached to the PR.
+- Production commands are not launched by the lab.
+- PRIVATE ACLs are evaluated separately.
+- The release is blocked without attested publication.
+- Historical schema-1 hashes remain unchanged.
+- Cross-platform regressions remain to be checked.

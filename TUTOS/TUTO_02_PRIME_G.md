@@ -1,15 +1,15 @@
 # TUTO 02 — PRIME G, *G, DELTA / NABLA
 
-**Objectif :** interpréter les tuples sans en changer les quatre champs.
+**Goal:** interpret the tuples without changing their four fields.
 
-## 1. Grammaire
+## 1. Grammar
 
 `PRIME G = {NAME, NODE, EDGE, OP}`.
-Une ligne est un enregistrement, pas une instruction de clonage.
-Les majuscules et les points initiaux sont significatifs.
-Une chaîne peut apparaître plusieurs fois et dans des colonnes différentes.
+A line is a record, not a cloning instruction.
+Capital letters and leading dots are significant.
+A string may appear several times and in different columns.
 
-## 2. BIOS initial (sept lignes)
+## 2. Initial BIOS (seven lines)
 
 ```text
 BIOS ENV HWX TWX
@@ -21,19 +21,19 @@ USR TWX GTS TWX
 OPX HWX ENV TWX
 ```
 
-La répétition du dernier `TWX` du tuple `USR` est préservée.
-Ces lignes ne remplacent pas la variante BIOS ALPHA du tutoriel 01.
+The repetition of the last `TWX` of the `USR` tuple is preserved.
+These lines do not replace the ALPHA BIOS variant of tutorial 01.
 
-## 3. Extension de la topologie
+## 3. Topology extension
 
 ```text
 *G XGTS GX4G TWX
 CGS-ALPHA GX4G CGS TWX
 ```
 
-Le `*` indique une identité requestable, pas une connexion effective.
-`XGTS` et `GX4G` demeurent des symboles sans service distant associé.
-Une référence non résolue doit être indiquée comme non résolue.
+The `*` indicates a requestable identity, not an actual connection.
+`XGTS` and `GX4G` remain symbols with no associated remote service.
+An unresolved reference must be reported as unresolved.
 
 ## 4. DELTA / NABLA
 
@@ -44,11 +44,11 @@ DELTA ENV PRIME NABLA
 NABLA EDGE POEX OPX
 ```
 
-`DELTA` figure deux fois, avec des valeurs différentes.
-Une table indexée uniquement par NAME perdrait l'une de ces définitions.
-La fixture conserve une **liste ordonnée**, jamais un dict par NAME.
+`DELTA` appears twice, with different values.
+A table indexed only by NAME would lose one of these definitions.
+The fixture keeps an **ordered list**, never a dict keyed by NAME.
 
-## 5. Schéma du cycle déclaré
+## 5. Diagram of the declared cycle
 
 ```mermaid
 flowchart LR
@@ -58,41 +58,41 @@ flowchart LR
     N -->|OP| O
 ```
 
-Le cycle est une propriété symbolique, pas une boucle exécutable certifiée.
+The cycle is a symbolic property, not a certified executable loop.
 
-## 6. Vérifier la fixture
+## 6. Check the fixture
 
 ```bash
 python3 scripts/contract_check.py inspect
 ```
 
-Exiger sept lignes BIOS, deux extensions et quatre lignes DELTA/NABLA.
-Le nombre seul ne suffit pas : ordre et contenus doivent aussi concorder.
+Require seven BIOS lines, two extensions and four DELTA/NABLA lines.
+The count alone is not enough: order and contents must also match.
 
-## 7. Cas de figure
+## 7. Edge cases
 
-La chaîne `GTS` est différente de l'extension `.gts`.
-Le symbolique `PUB` désigne un layer, pas l'ouverture d'un dépôt Git.
-`TWX` n'implique aucune horloge, permission ou protocole par défaut.
-`HWX` n'implique aucun matériel particulier sans nouvelle spécification.
+The string `GTS` is different from the `.gts` extension.
+The symbol `PUB` denotes a layer, not the opening of a Git repository.
+`TWX` implies no clock, permission or protocol by default.
+`HWX` implies no particular hardware without a new specification.
 
-## 8. Expérience contrôlée
+## 8. Controlled experiment
 
-Sur une copie, échanger les champs EDGE et OP d'une ligne DELTA.
-Attendre un refus par le validateur de fixture.
-Rétablir l'ordre canonique et relancer l'inspection.
-Refaire l'essai en supprimant la seconde ligne DELTA.
-Elle doit être considérée comme une suppression de contrat.
+On a copy, swap the EDGE and OP fields of a DELTA line.
+Expect a refusal from the fixture validator.
+Restore the canonical order and rerun the inspection.
+Repeat the test by deleting the second DELTA line.
+It must be treated as a contract deletion.
 
-## 9. Limites
+## 9. Limits
 
-Le graphe n'authentifie pas un détenteur de clé.
-Le graphe ne prouve pas que ses GitRepos existent encore.
-Le graphe ne définit pas un protocole UDP de résolution.
-Le graphe n'identifie pas automatiquement un checkpoint L0.
-La validation garantit ici seulement une représentation fidèle.
+The graph does not authenticate a key holder.
+The graph does not prove that its GitRepos still exist.
+The graph does not define a UDP resolution protocol.
+The graph does not automatically identify an L0 checkpoint.
+Here, validation only guarantees a faithful representation.
 
-## 10. Résultat
+## 10. Result
 
 ```text
 prime_g_fields = 4
@@ -102,49 +102,49 @@ delta_nabla = 4
 requestable_g_verified = false
 ```
 
-Passer au tutoriel 03 pour les transitions de System Layers.
+Move on to tutorial 03 for System Layer transitions.
 
-## Validation complémentaire : cas à automatiser
+## Additional validation: cases to automate
 
-- Ligne 0: `BIOS` garde ses quatre champs.
-- Ligne 0: `TWX` est OP, pas une action Git implicite.
-- Ligne 0: le tuple `BIOS ENV HWX TWX` ne doit pas changer de position.
-- Ligne 1: `BOOT` garde ses quatre champs.
-- Ligne 1: `CGS` est OP, pas une action Git implicite.
-- Ligne 1: le tuple `BOOT TWX POEX CGS` ne doit pas changer de position.
-- Ligne 2: `CGS` garde ses quatre champs.
-- Ligne 2: `GTS` est OP, pas une action Git implicite.
-- Ligne 2: le tuple `CGS POEX TWX GTS` ne doit pas changer de position.
-- Ligne 3: `GTS` garde ses quatre champs.
-- Ligne 3: `DEV` est OP, pas une action Git implicite.
-- Ligne 3: le tuple `GTS TWX OPX DEV` ne doit pas changer de position.
-- Ligne 4: `DEV` garde ses quatre champs.
-- Ligne 4: `USR` est OP, pas une action Git implicite.
-- Ligne 4: le tuple `DEV HWX ENV USR` ne doit pas changer de position.
-- Ligne 5: `USR` garde ses quatre champs.
-- Ligne 5: `TWX` est OP, pas une action Git implicite.
-- Ligne 5: le tuple `USR TWX GTS TWX` ne doit pas changer de position.
-- Ligne 6: `OPX` garde ses quatre champs.
-- Ligne 6: `TWX` est OP, pas une action Git implicite.
-- Ligne 6: le tuple `OPX HWX ENV TWX` ne doit pas changer de position.
-- Ligne 7: `*G` garde ses quatre champs.
-- Ligne 7: `TWX` est OP, pas une action Git implicite.
-- Ligne 7: le tuple `*G XGTS GX4G TWX` ne doit pas changer de position.
-- Ligne 8: `CGS-ALPHA` garde ses quatre champs.
-- Ligne 8: `TWX` est OP, pas une action Git implicite.
-- Ligne 8: le tuple `CGS-ALPHA GX4G CGS TWX` ne doit pas changer de position.
-- Ligne 9: `DELTA` garde ses quatre champs.
-- Ligne 9: `OPX` est OP, pas une action Git implicite.
-- Ligne 9: le tuple `DELTA POEX NABLA OPX` ne doit pas changer de position.
-- Ligne 10: `OPX` garde ses quatre champs.
-- Ligne 10: `DELTA` est OP, pas une action Git implicite.
-- Ligne 10: le tuple `OPX ENV PRIME DELTA` ne doit pas changer de position.
-- Ligne 11: `DELTA` garde ses quatre champs.
-- Ligne 11: `NABLA` est OP, pas une action Git implicite.
-- Ligne 11: le tuple `DELTA ENV PRIME NABLA` ne doit pas changer de position.
-- Ligne 12: `NABLA` garde ses quatre champs.
-- Ligne 12: `OPX` est OP, pas une action Git implicite.
-- Ligne 12: le tuple `NABLA EDGE POEX OPX` ne doit pas changer de position.
-- Ne jamais regrouper les tuples uniquement par NAME.
-- L’identité `*G` signale la requestability, non la preuve.
-- La table conserve le cycle DELTA/NABLA.
+- Line 0: `BIOS` keeps its four fields.
+- Line 0: `TWX` is OP, not an implicit Git action.
+- Line 0: the tuple `BIOS ENV HWX TWX` must not change position.
+- Line 1: `BOOT` keeps its four fields.
+- Line 1: `CGS` is OP, not an implicit Git action.
+- Line 1: the tuple `BOOT TWX POEX CGS` must not change position.
+- Line 2: `CGS` keeps its four fields.
+- Line 2: `GTS` is OP, not an implicit Git action.
+- Line 2: the tuple `CGS POEX TWX GTS` must not change position.
+- Line 3: `GTS` keeps its four fields.
+- Line 3: `DEV` is OP, not an implicit Git action.
+- Line 3: the tuple `GTS TWX OPX DEV` must not change position.
+- Line 4: `DEV` keeps its four fields.
+- Line 4: `USR` is OP, not an implicit Git action.
+- Line 4: the tuple `DEV HWX ENV USR` must not change position.
+- Line 5: `USR` keeps its four fields.
+- Line 5: `TWX` is OP, not an implicit Git action.
+- Line 5: the tuple `USR TWX GTS TWX` must not change position.
+- Line 6: `OPX` keeps its four fields.
+- Line 6: `TWX` is OP, not an implicit Git action.
+- Line 6: the tuple `OPX HWX ENV TWX` must not change position.
+- Line 7: `*G` keeps its four fields.
+- Line 7: `TWX` is OP, not an implicit Git action.
+- Line 7: the tuple `*G XGTS GX4G TWX` must not change position.
+- Line 8: `CGS-ALPHA` keeps its four fields.
+- Line 8: `TWX` is OP, not an implicit Git action.
+- Line 8: the tuple `CGS-ALPHA GX4G CGS TWX` must not change position.
+- Line 9: `DELTA` keeps its four fields.
+- Line 9: `OPX` is OP, not an implicit Git action.
+- Line 9: the tuple `DELTA POEX NABLA OPX` must not change position.
+- Line 10: `OPX` keeps its four fields.
+- Line 10: `DELTA` is OP, not an implicit Git action.
+- Line 10: the tuple `OPX ENV PRIME DELTA` must not change position.
+- Line 11: `DELTA` keeps its four fields.
+- Line 11: `NABLA` is OP, not an implicit Git action.
+- Line 11: the tuple `DELTA ENV PRIME NABLA` must not change position.
+- Line 12: `NABLA` keeps its four fields.
+- Line 12: `OPX` is OP, not an implicit Git action.
+- Line 12: the tuple `NABLA EDGE POEX OPX` must not change position.
+- Never group the tuples by NAME alone.
+- The `*G` identity signals requestability, not proof.
+- The table keeps the DELTA/NABLA cycle.

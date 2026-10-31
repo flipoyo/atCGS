@@ -1,18 +1,18 @@
 # atCGS — ComplexGraphSync ALPHA 0.0.0
 
-**README canonique — USR / PUB / BIOS / POEX / OpFrontier.**
+**Canonical README — USR / PUB / BIOS / POEX / OpFrontier.**
 
-Ce dépôt décrit un prototype exécutable local, non un service PUBLIC déployé.
-Il conserve le moteur de ComplexGitSync et matérialise les frontières de CGS.
-Objectif : une architecture falsifiable, reproductible et minimale en 24 h.
+This repository describes a local executable prototype, not a deployed PUBLIC service.
+It keeps the ComplexGitSync engine and materialises the CGS frontiers.
+Goal: a falsifiable, reproducible and minimal architecture within 24 h.
 
-## 1. Invariant PRIME G
+## 1. PRIME G invariant
 
-`PRIME G = {NAME, NODE, EDGE, OP}` : exactement quatre champs ordonnés.
-Les noms, extensions, répétitions et majuscules font partie du contrat.
-`*G` désigne un OperatingSpace requestable, pas une réponse déjà vérifiée.
+`PRIME G = {NAME, NODE, EDGE, OP}`: exactly four ordered fields.
+Names, extensions, repetitions and capitalisation are part of the contract.
+`*G` denotes a requestable OperatingSpace, not an already verified answer.
 
-## 2. Nouvelle frontière README / USR / PUB
+## 2. New README / USR / PUB frontier
 
 ```text
 README atCGS USR PUB
@@ -22,13 +22,13 @@ PUB 256 256 .bit
 .cgs USR PUB .toml
 ```
 
-Ces cinq lignes sont des tuples PRIME G, conservés sans normalisation.
-`PUB 256 256 .bit` fixe une représentation binaire 256×256 comme référence.
-`.bit` constitue ici une désignation d'artefact, non une permission de le publier.
-`.wth` est une étiquette opaque : aucune sémantique inventée par le tutoriel.
-`.computo` appartient au domaine PRIVATE de ComplexGraphSync.
-`.omniscience` désigne sa frontière PUBLIC, limitée aux preuves publiables.
-Les chaînes de caractères ne sont pas des commandes d'exécution implicites.
+These five lines are PRIME G tuples, kept without normalisation.
+`PUB 256 256 .bit` fixes a 256×256 binary representation as the reference.
+`.bit` is an artifact designation here, not a permission to publish it.
+`.wth` is an opaque label: the tutorial invents no semantics for it.
+`.computo` belongs to the PRIVATE domain of ComplexGraphSync.
+`.omniscience` denotes its PUBLIC frontier, limited to publishable proofs.
+Character strings are not implicit execution commands.
 
 ## 3. BIOS / BOOT
 
@@ -41,13 +41,13 @@ DEV HWX TWX USR
 USR TWX G .cgs
 ```
 
-La première ligne est l'identité d'amorçage et la version du moteur à épingler.
-`M.m.p` est un espace réservé : ne pas inventer une version installée.
-Les cinq lignes suivantes constituent des tuples stricts à quatre champs.
-`ENV`, `HWX`, `TWX` sont conservés comme symboles tant que non spécifiés.
-`BOOT` ne signifie pas preuve d'existence authentifiée.
+The first line is the boot identity and the engine version to pin.
+`M.m.p` is a placeholder: do not invent an installed version.
+The next five lines are strict four-field tuples.
+`ENV`, `HWX`, `TWX` are kept as symbols until they are specified.
+`BOOT` does not mean an authenticated proof of existence.
 
-## 4. System Layers et OpFrontier
+## 4. System Layers and OpFrontier
 
 ```text
 PRIME CGS = {OPX, DEV, USR, PUB}
@@ -56,14 +56,14 @@ PRIME CGS = {OPX, DEV, USR, PUB}
 .toml USR PUB .omniscience
 ```
 
-Les quatre System Layers ne sont pas quatre moteurs Git.
-Les trois frontières de quatre champs n'autorisent aucune copie automatique.
-`OPX` et `DEV` restent liés aux opérations privées autorisées.
-`USR` exprime la demande ; `PUB` limite ce qui peut être rendu public.
-Le décorateur `@cgs` accepte uniquement ces quatre sélecteurs (ALPHA.md).
-La CLI historique `cgitsync` demeure interne et autonome.
+The four System Layers are not four Git engines.
+The three four-field frontiers authorise no automatic copy.
+`OPX` and `DEV` remain bound to authorised private operations.
+`USR` expresses the request; `PUB` limits what may be made public.
+The `@cgs` decorator accepts only these four selectors (ALPHA.md).
+The historical `cgitsync` CLI remains internal and autonomous.
 
-## 5. POEX — transport de 256×256 bits
+## 5. POEX — transport of 256×256 bits
 
 ```text
 Matrix = 256 rows × 256 bits = 65 536 bits = 8 192 bytes
@@ -73,12 +73,12 @@ Stream = 64 indexed packets, in ascending row-major order
 Total  = 16 384 reports; 256 reports per packet
 ```
 
-Le compteur de zéros ne prouve ni identité ni existence à un instant donné.
-La racine Merkle des paquets POEX est distincte du MerkleRoot du GitTree.
-Un changement d'un bit, une permutation ou un paquet manquant sont rejetés.
-Le dernier quartet est conservé logiquement ; aucun pointeur Rust n'est simulé.
+The zero counter proves neither identity nor existence at a given instant.
+The Merkle root of POEX packets is distinct from the GitTree MerkleRoot.
+A single-bit change, a permutation or a missing packet is rejected.
+The last quartet is kept logically; no Rust pointer is simulated.
 
-## 6. Espaces et publication
+## 6. Spaces and publication
 
 ```text
 ComplexGraphSync PRIVATE = .computo
@@ -86,15 +86,15 @@ ComplexGraphSync PUBLIC  = .omniscience
 ComplexGitSync INTERNAL  = .cgitsync
 ```
 
-Un manifeste candidat n'est pas un checkpoint authentifié.
-Aucune sortie publique ne contient de secret, chemin privé ou GitTree brut.
-L'ancien registre Omniscience interne PRIVATE n'est pas rendu public de force.
-Un succès local ne signifie pas publication sur un réseau.
+A candidate manifest is not an authenticated checkpoint.
+No public output contains a secret, a private path or a raw GitTree.
+The former internal PRIVATE Omniscience register is not forcibly made public.
+A local success does not mean publication on a network.
 
-## 7. Démarrage du laboratoire hors réseau
+## 7. Starting the offline lab
 
-Requis : Python 3.11+ ; aucune dépendance externe pour ce démonstrateur.
-Depuis la racine du répertoire extrait :
+Requirements: Python 3.11+; no external dependency for this demonstrator.
+From the root of the extracted directory:
 
 ```bash
 python3 scripts/contract_check.py inspect
@@ -103,48 +103,48 @@ python3 scripts/contract_check.py candidate candidate.json
 python3 -m unittest discover -s tests -v
 ```
 
-L'option `inspect` valide les tuples du fichier `spec/contracts.toml`.
-Le séquenceur utilise par défaut une matrice de démonstration déterministe.
-`candidate` doit afficher `NOT_PUBLISHED` et `poex_verified=false`.
-L'ensemble fonctionne sans clonage de dépôt ni accès à `.computo` réel.
+The `inspect` option validates the tuples of `spec/contracts.toml`.
+The sequencer uses a deterministic demonstration matrix by default.
+`candidate` must display `NOT_PUBLISHED` and `poex_verified=false`.
+Everything runs without cloning a repository or accessing a real `.computo`.
 
-## 8. TUTORIELS 150 lignes chacun
+## 8. TUTORIALS, 150 lines each
 
 - [TUTO 01 — BIOS / BOOT](TUTOS/TUTO_01_BIOS_BOOT.md)
-- [TUTO 02 — PRIME G et DELTA/NABLA](TUTOS/TUTO_02_PRIME_G.md)
-- [TUTO 03 — System Layers et OpFrontier](TUTOS/TUTO_03_OPFRONTIER.md)
+- [TUTO 02 — PRIME G and DELTA/NABLA](TUTOS/TUTO_02_PRIME_G.md)
+- [TUTO 03 — System Layers and OpFrontier](TUTOS/TUTO_03_OPFRONTIER.md)
 - [TUTO 04 — POEX 4×256](TUTOS/TUTO_04_POEX.md)
-- [TUTO 05 — USR / PUB, .bit et .wth](TUTOS/TUTO_05_USR_PUB.md)
-- [TUTO 06 — Intégration et roadmap 24 h](TUTOS/TUTO_06_INTEGRATION.md)
+- [TUTO 05 — USR / PUB, .bit and .wth](TUTOS/TUTO_05_USR_PUB.md)
+- [TUTO 06 — Integration and 24 h roadmap](TUTOS/TUTO_06_INTEGRATION.md)
 
-## 9. Réalité du code amont
+## 9. Upstream code reality
 
-`atCGS` PR #1 (fusionnée) relayait plusieurs commandes `cgitsync` brutes.
-Elles sont désormais refusées hors d'un sélecteur `OPX`/`DEV` autorisé.
-`ComplexGitSync` fournit le moteur GitTree / State / Memory / Integrity.
-Les tutoriels du paquet sont des exemples reproductibles, non une PR fusionnée.
+`atCGS` PR #1 (merged) relayed several raw `cgitsync` commands.
+They are now refused outside an authorised `OPX`/`DEV` selector.
+`ComplexGitSync` provides the GitTree / State / Memory / Integrity engine.
+The package tutorials are reproducible examples, not a merged PR.
 
-## 10. Critères de release ALPHA
+## 10. ALPHA release criteria
 
-- [ ] Les cinq tuples README/USR/PUB sont inchangés.
-- [ ] Les six symboles BIOS nouveaux conservent leur ordre d'origine.
-- [x] Les quatre System Layers sont les seules entrées `@cgs` exposées.
-- [ ] La preuve cryptographique des paquets se vérifie indépendamment.
-- [ ] Les accès PRIVATE ne sont jamais promus par le niveau PoE.
-- [ ] `.omniscience` ne sert que des preuves autorisées et authentifiées.
-- [ ] La compatibilité Merkle schema-1 de ComplexGitSync est préservée.
-- [ ] Les tests CI documentent les échecs, pas seulement les succès.
+- [ ] The five README/USR/PUB tuples are unchanged.
+- [ ] The six new BIOS symbols keep their original order.
+- [x] The four System Layers are the only exposed `@cgs` entries.
+- [ ] The cryptographic packet proof verifies independently.
+- [ ] PRIVATE access is never promoted by the PoE level.
+- [ ] `.omniscience` serves only authorised and authenticated proofs.
+- [ ] ComplexGitSync schema-1 Merkle compatibility is preserved.
+- [ ] CI tests document failures, not only successes.
 
-## 11. Suivi
+## 11. Tracking
 
-ComplexGitSync #193 : https://github.com/flipoyo/ComplexGitSync/issues/193
-atCGS #2 : https://github.com/flipoyo/atCGS/issues/2
-atCGS PR #1 : https://github.com/flipoyo/atCGS/pull/1
+ComplexGitSync #193: https://github.com/flipoyo/ComplexGitSync/issues/193
+atCGS #2: https://github.com/flipoyo/atCGS/issues/2
+atCGS PR #1: https://github.com/flipoyo/atCGS/pull/1
 
-**Statut : modèle documentaire et démonstrateur offline ; pas de BOOT PUBLIC vérifié.**
+**Status: documentation model and offline demonstrator; no verified PUBLIC BOOT.**
 
-## Validation complémentaire : cas à automatiser
+## Additional validation: cases to automate
 
-- Toute réponse PUBLIC exige une politique de publication explicite.
-- Ne jamais inférer un clone Git depuis un symbole de tuple.
-- Un nom requestable ne signifie pas un service disponible.
+- Every PUBLIC answer requires an explicit publication policy.
+- Never infer a Git clone from a tuple symbol.
+- A requestable name does not mean an available service.
