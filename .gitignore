@@ -2,7 +2,7 @@ __pycache__/
 *.pyc
 .claude/
 .pixi/
-# Mount points of the cgs-{opx,dev,usr}.cgs trees: separate Git repositories.
+# Mount points of the cgs_{opx,dev,usr}.cgs trees: separate Git repositories.
 .computo/
 .omniscience/
 .agent/

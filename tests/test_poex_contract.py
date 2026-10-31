@@ -30,7 +30,7 @@ class PoexContractTests(unittest.TestCase):
         with (ROOT / "POEX.cgs").open("rb") as fp:
             spec = tomllib.load(fp)
         self.assertEqual(tuple(spec.keys()), ("project", "repos"))
-        self.assertEqual(spec["project"]["name"], "POEX")
+        self.assertEqual(spec["project"]["name"], "cgs")
         self.assertEqual(spec["project"]["default_branch"], "main")
         self.assertEqual(len(spec["repos"]), 1)
         root, = spec["repos"]

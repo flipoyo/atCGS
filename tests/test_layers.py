@@ -1,4 +1,4 @@
-"""cgs-{opx,dev,usr}.cgs layer trees and their agreement with ComplexGitSync.
+"""cgs_{opx,dev,usr}.cgs layer trees and their agreement with ComplexGitSync.
 
 Runs under Pixi, where the pinned ComplexGitSync is installed: every tree is
 validated by cgitsync's own parser, not by a copy of its rules.
@@ -21,7 +21,7 @@ CGS_LINT = ["E4", "E7", "E9", "F", "I", "C90"]
 
 
 def load(layer):
-    path = ROOT / "examples" / f"cgs-{layer}.cgs"
+    path = ROOT / "examples" / f"cgs_{layer}.cgs"
     with path.open("rb") as handle:
         return path, tomllib.load(handle)
 
@@ -40,13 +40,16 @@ class LayerTreeTests(unittest.TestCase):
                 self.assertEqual(validate_environment_declaration(data, data["repos"]), [])
         CgsDocument.from_toml(ROOT / "POEX.cgs").validate()
 
-    def test_one_project_on_main_for_every_level(self):
+    def test_one_project_on_the_alpha_branch_for_every_level(self):
         with (ROOT / "POEX.cgs").open("rb") as handle:
             name = tomllib.load(handle)["project"]["name"]
         for layer in LAYERS:
             _, data = load(layer)
             with self.subTest(layer=layer):
-                self.assertEqual(data["project"], {"name": name, "default_branch": "main"})
+                self.assertEqual(
+                    data["project"],
+                    {"name": name, "default_branch": "CGS-ALPHA", "fallback_branch": "main"},
+                )
                 root = by_path(data)["."]
                 self.assertEqual(root["repository"], "github:flipoyo/atCGS")
                 self.assertEqual(root["nested_config"], "disabled")
@@ -69,7 +72,9 @@ class LayerTreeTests(unittest.TestCase):
                 ledger = dict(by_path(data)[".omniscience"])
                 self.assertIs(ledger.pop("writable", False), writable)
                 ledger.pop("relative_path")
-                self.assertEqual(ledger, expected)
+                # A writable repository takes cgs_<branch> from the project, never a fixed branch.
+                self.assertEqual(ledger, expected if not writable else {
+                    k: v for k, v in expected.items() if k != "default_branch"})
         self.assertNotIn(".omniscience", by_path(load("usr")[1]))
 
     def test_agentic_structure_follows_complexgitsync(self):
@@ -86,7 +91,7 @@ class LayerTreeTests(unittest.TestCase):
                 for path in agent & local:
                     self.assertTrue(mounts[path]["private"])
                     self.assertIs(mounts[path].get("writable", False), layer == "dev")
-                    self.assertEqual(mounts[path]["default_branch"], "POEX")
+                    self.assertEqual(mounts[path].get("default_branch"), None if layer == "dev" else "POEX")
 
     def test_only_dev_writes_and_usr_mounts_nothing_private(self):
         for layer in LAYERS:

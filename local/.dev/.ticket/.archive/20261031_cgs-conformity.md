@@ -15,3 +15,14 @@ Conformity:
   examples/cgs-{opx,dev,usr}.cgs. Under this rule it should be "cgs", unless
   the owner keeps POEX as the install name (open point).
 - Branch POEX and the POEX.0000 ontology stay unchanged.
+
+Closed 2026-10-31:
+- Commit subjects: f6eca7e and 4f35cbe are on origin/main and origin/CGS-ALPHA;
+  accepted, not amended. Subjects now come from atcgs.commit_subject().
+- Executable: ALPHA.md documents @cgs and cgitsync as two names of one build.
+- Project name: cgs in POEX.cgs and the layer trees, on CGS-ALPHA, fallback main.
+  The layer files are renamed cgs_{opx,dev,usr}.cgs: ComplexGitSync reads
+  cgs-<xxx>.cgs as a contract asking for branch <xxx> and fallback CGS-BETA.
+- Writable private repos of the DEV tree take the computed branch cgs_CGS-ALPHA
+  instead of POEX. Branch POEX and the POEX.0000 ontology are untouched, but
+  DEV no longer writes branch POEX, which OPX still reads: to settle.

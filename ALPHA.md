@@ -7,7 +7,7 @@ Its `OpFrontier` accepts exactly four case-sensitive System Layer selectors,
 selector, then passed unchanged to `ComplexGitSync.cli.main`, which routes
 mutating operations via `RoutedClient -> Op`.
 
-Inner version: `0.2.1-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
+Inner version: `0.2.2-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
 prerelease). Its single source is `atcgs.__version__`; `@cgs --version` prints it.
 
 **Build name.** The project is `CGS`; its build is the executable in the Pixi
@@ -26,7 +26,7 @@ rules, so `@cgs` and `cgitsync` share one environment. Every command is a task:
 ```bash
 pixi install
 pixi run '@cgs' --help
-pixi run '@cgs' --version    # ComplexGraphSync 0.2.1-alpha (local, no cgitsync)
+pixi run '@cgs' --version    # ComplexGraphSync 0.2.2-alpha (local, no cgitsync)
 pixi run '@cgs' OPX          # emits .gts OPX DEV .cgs (evidence: unverified)
 pixi run '@cgs' DEV          # emits .cgs DEV USR .toml
 pixi run '@cgs' USR          # emits .toml USR PUB .omniscience
@@ -37,7 +37,7 @@ ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX bootstrap example.cgs
 ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV status
 ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV release freeze "ALPHA release" --dry-run
 ATCGS_AUTHORIZE=OPX,DEV pixi run '@cgs' DEV .computo   # resolve the PRIVATE mount
-ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV env check --cgs examples/cgs-dev.cgs
+ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV env check --cgs examples/cgs_dev.cgs
 pixi run test
 pixi run lint
 ```
@@ -74,22 +74,22 @@ same `[environment]` (Python from `pixi.toml`, Git, Pixi, manifest `pixi.toml`,
 `environment_root = "root"`), so the drift `env check` reports for @cgs is the
 one cgitsync reports for itself. `tests/test_layers.py` keeps them in step.
 
-## Layer trees: cgs-opx.cgs, cgs-dev.cgs, cgs-usr.cgs
+## Layer trees: cgs_opx.cgs, cgs_dev.cgs, cgs_usr.cgs
 
 `POEX.cgs` at the root is the **PUB** install, the `install.cgs` of atCGS, and
-mounts nothing private. `examples/cgs-{opx,dev,usr}.cgs` install the other
+mounts nothing private. `examples/cgs_{opx,dev,usr}.cgs` install the other
 levels, mirroring ComplexGitSync's `complexgitsync-{opx,dev,usr}.cgs` and the
-gate pattern of `gx4g-*.cgs`. Every level is project `POEX` on `main`.
+gate pattern of `gx4g-*.cgs`. Every level is project `cgs` on `CGS-ALPHA`, falling back to `main`. The files are named `cgs_<level>.cgs`, not `cgs-<level>.cgs`: ComplexGitSync reads the dashed shape as a contract that asks for the level as the branch.
 
 | Mount | OPX | DEV | USR |
 | --- | --- | --- | --- |
 | `.computo`: ComplexGitSync, with `complexgitsync-<level>.cgs` nested | yes | yes | yes |
-| `.omniscience`: `codeberg:gx4g/.omniscience`, branch `POEX` (atCGS ledger) | read-only | writable | never |
+| `.omniscience`: `codeberg:gx4g/.omniscience`, atCGS ledger: OPX reads branch `POEX`, DEV writes the computed `cgs_CGS-ALPHA` | read-only | writable | never |
 | `.agent/.distant`: `.ticketing`, `DevSpec`, `DocSpec` | read-only | read-only | no |
-| `.agent/.local`: `.dev`, `.localSpec`, `.claude`, branch `POEX` | read-only | writable | no |
+| `.agent/.local`: `.dev`, `.localSpec`, `.claude`, OPX reads branch `POEX`, DEV writes `cgs_CGS-ALPHA` | read-only | writable | no |
 
 ```bash
-pixi run cgitsync bootstrap examples/cgs-dev.cgs POEX
+pixi run cgitsync bootstrap examples/cgs_dev.cgs cgs
 ```
 
 `.computo` holds the computational engine, and `.omniscience` the ledger, at the

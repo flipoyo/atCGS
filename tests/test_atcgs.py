@@ -160,7 +160,7 @@ class SelectorTests(unittest.TestCase):
             for args in (["bootstrap", "install.cgs"], ["initialise", "../install.cgs"], ["status"],
                          ["view-tree"], ["release", "freeze", "msg", "--dry-run"], ["release", "list"],
                          ["release", "load", "8.5.0"], ["--version"], ["env", "show"],
-                         ["env", "check", "--cgs", "examples/cgs-dev.cgs"]):
+                         ["env", "check", "--cgs", "examples/cgs_dev.cgs"]):
                 with self.subTest(layer=layer, args=args):
                     self.assertEqual(OpFrontier().accept([layer, *args]), Request(layer, tuple(args)))
         for layer in ("USR", "PUB"):
@@ -368,8 +368,8 @@ class EntryPointTests(unittest.TestCase):
     def test_env_feature_reaches_cgitsync_unchanged(self):
         core, modules = fake_core(0)
         cli = Cli(self, authorize="DEV")
-        self.assertEqual(cli("DEV", "env", "check", "--cgs", "examples/cgs-dev.cgs", modules=modules)[0], 0)
-        core.assert_called_once_with(("env", "check", "--cgs", "examples/cgs-dev.cgs"))
+        self.assertEqual(cli("DEV", "env", "check", "--cgs", "examples/cgs_dev.cgs", modules=modules)[0], 0)
+        core.assert_called_once_with(("env", "check", "--cgs", "examples/cgs_dev.cgs"))
 
     def test_invalid_authorization_grant_fails_closed(self):
         core, modules = fake_core()

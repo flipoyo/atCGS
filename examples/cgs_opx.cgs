@@ -1,18 +1,18 @@
-# The OPX tree for atCGS (ComplexGraphSync), one of cgs-{opx,dev,usr}.cgs.
-# Each file is named for the level it installs; the project is still POEX, on main,
-# so no branch has to exist for any level. POEX.cgs at the root is the PUB install.
+# The OPX tree for atCGS (ComplexGraphSync), one of cgs_{opx,dev,usr}.cgs.
+# Each file is named for the level it installs; the project is cgs, on CGS-ALPHA,
+# falling back to main where a repository has no such branch. POEX.cgs at the root is the PUB install.
 # OPX: the operational frontier .opx {.computo, .omniscience, .gts}, read-only.
 #   .computo      ComplexGitSync, mounted with its own OPX tree (complexgitsync-opx.cgs)
 #   .omniscience  the register's POEX branch: the atCGS ledger, read-only at OPX
 #   .agent/.distant  .ticketing, DevSpec, DocSpec, shared and read-only
 #   .agent/.local    .dev, .localSpec, .claude, private and read-only (no writable repo at OPX)
-#     pixi run cgitsync bootstrap examples/cgs-opx.cgs POEX
+#     pixi run cgitsync bootstrap examples/cgs_opx.cgs cgs
 # A nested request the tree already holds is denied before cloning (IntegrityMount).
 
 environment_root = "root"
 environment = { tools = { python = "3.11", git = "2.30", pixi = "0.65" }, manifests = ["pixi.toml"] }
 
-project = { name = "POEX", default_branch = "main" }
+project = { name = "cgs", default_branch = "CGS-ALPHA", fallback_branch = "main" }
 
 repos = [
     { repository = "github:flipoyo/atCGS", fallback_branch = "main", nested_config = "disabled" },

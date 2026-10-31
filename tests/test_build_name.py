@@ -1,9 +1,10 @@
 """Build name: lower-case(project) by default, configurable in pixi.toml."""
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
-from atcgs import __version__, build_name, commit_subject
+from atcgs import ROOT, __version__, build_name, commit_subject
 
 
 def manifest(body):
@@ -28,6 +29,17 @@ class BuildNameTests(unittest.TestCase):
         for body in ("", '[tool.cgs]\nbuild-name = "a b"\n'):
             with self.assertRaises(ValueError):
                 build_name(manifest(body))
+
+
+class ConformityTests(unittest.TestCase):
+    def test_cgs_files_name_the_project_after_the_build(self):
+        for path in ("POEX.cgs", "examples/cgs_opx.cgs", "examples/cgs_dev.cgs", "examples/cgs_usr.cgs"):
+            with self.subTest(path=path), (ROOT / path).open("rb") as handle:
+                self.assertEqual(tomllib.load(handle)["project"]["name"], build_name())
+
+    def test_alpha_documents_both_names_of_the_one_build(self):
+        text = " ".join((ROOT / "ALPHA.md").read_text(encoding="utf-8").split())
+        self.assertIn("`@cgs` and `cgitsync` are two names for that one build", text)
 
 
 if __name__ == "__main__":
