@@ -137,7 +137,7 @@ Tutorial 06 gathers the checks and the 24 h schedule.
 - Publication: check minimal answer fields.
 - Publication: check an anchored identity.
 - Publication: check an independent root.
-- The name `.wth` is opaque in 0.1.0-alpha.
+- The name `.wth` is opaque in 0.1.1-alpha.
 - An `.omniscience` field does not publish a proof by magic.
 - The repeated 256 is fixed by contract.
 - PRIVATE content must remain inaccessible to PUB.

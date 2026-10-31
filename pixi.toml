@@ -1,6 +1,6 @@
 [workspace]
 name = "atCGS"
-version = "0.1.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "0.1.1-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 # Same channels, platforms and Python as the pinned ComplexGitSync pixi.toml,
 # so @cgs and cgitsync observe one environment (cgitsync env check).
 channels = ["conda-forge"]

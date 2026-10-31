@@ -1,4 +1,4 @@
-/* atCGS 0.1.0-alpha — monolithic POEX Layer-0 microcode, ISO C11.
+/* atCGS 0.1.1-alpha — monolithic POEX Layer-0 microcode, ISO C11.
  * A quartet is four logical bits, held in the low nibble of a uint8_t.
  * .poe is a stable pointer into SYSTEM, never a pointer to temporary memory.
  * ∆ELTA = current quartet XOR previous quartet (genesis quartet = 0000).
