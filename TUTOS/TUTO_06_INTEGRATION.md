@@ -50,9 +50,9 @@ Ce découpage est un objectif de développement, pas une promesse horaire.
 
 ## 5. État GitHub constaté
 
-La PR #1 de `atCGS` est en brouillon et non fusionnée.
-Le décorateur existant relaie plusieurs commandes `cgitsync` brutes.
-La cible à quatre sélecteurs reste un travail d'implémentation.
+La PR #1 de `atCGS` est fusionnée.
+Le décorateur n'accepte plus que les sélecteurs `OPX DEV USR PUB`.
+La vérification réelle des preuves `.omniscience` reste à implémenter.
 La validation de ce paquet ne modifie aucun repository GitHub.
 
 ## 6. Exécuter l'ancien prototype en option

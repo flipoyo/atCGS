@@ -60,7 +60,7 @@ Les quatre System Layers ne sont pas quatre moteurs Git.
 Les trois frontières de quatre champs n'autorisent aucune copie automatique.
 `OPX` et `DEV` restent liés aux opérations privées autorisées.
 `USR` exprime la demande ; `PUB` limite ce qui peut être rendu public.
-Le décorateur `@cgs` devra accepter uniquement ces quatre sélecteurs.
+Le décorateur `@cgs` accepte uniquement ces quatre sélecteurs (ALPHA.md).
 La CLI historique `cgitsync` demeure interne et autonome.
 
 ## 5. POEX — transport de 256×256 bits
@@ -119,8 +119,8 @@ L'ensemble fonctionne sans clonage de dépôt ni accès à `.computo` réel.
 
 ## 9. Réalité du code amont
 
-`atCGS` PR #1 est un prototype en brouillon et n'a pas encore ces sélecteurs.
-Il transmet actuellement plusieurs commandes `cgitsync` directement.
+`atCGS` PR #1 (fusionnée) relayait plusieurs commandes `cgitsync` brutes.
+Elles sont désormais refusées hors d'un sélecteur `OPX`/`DEV` autorisé.
 `ComplexGitSync` fournit le moteur GitTree / State / Memory / Integrity.
 Les tutoriels du paquet sont des exemples reproductibles, non une PR fusionnée.
 
@@ -128,7 +128,7 @@ Les tutoriels du paquet sont des exemples reproductibles, non une PR fusionnée.
 
 - [ ] Les cinq tuples README/USR/PUB sont inchangés.
 - [ ] Les six symboles BIOS nouveaux conservent leur ordre d'origine.
-- [ ] Les quatre System Layers sont les seules entrées `@cgs` exposées.
+- [x] Les quatre System Layers sont les seules entrées `@cgs` exposées.
 - [ ] La preuve cryptographique des paquets se vérifie indépendamment.
 - [ ] Les accès PRIVATE ne sont jamais promus par le niveau PoE.
 - [ ] `.omniscience` ne sert que des preuves autorisées et authentifiées.

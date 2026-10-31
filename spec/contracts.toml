@@ -44,6 +44,9 @@ sequence = [
  [".cgs", "DEV", "USR", ".toml"],
  [".toml", "USR", "PUB", ".omniscience"],
 ]
+[frontiers]
+".poe" = [".omniscience", ".cgs", "*G"]
+".opx" = [".computo", ".omniscience", ".gts"]
 [public_boundary]
 sequence = [
  ["README", "atCGS", "USR", "PUB"],

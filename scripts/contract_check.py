@@ -20,6 +20,7 @@ FIXTURES={
 'public_boundary':{'sequence':(('README','atCGS','USR','PUB'),('PUB','256','256','.bit'),
                                 ('.bit','.computo','.omniscience','.wth'),
                                 ('.wth','.computo','.gts','.cgs'),('.cgs','USR','PUB','.toml'))}}
+FRONTIERS=(('.poe',('.omniscience','.cgs','*G')),('.opx',('.computo','.omniscience','.gts')))
 
 def demand(ok,reason):
     if not ok:raise ValueError(reason)
@@ -34,12 +35,13 @@ def inspect(path=SPEC):
         for label,expected in group.items():
             actual=tuple(tuple(x) for x in data[section][label]) if label!='identity' else tuple(data[section][label])
             demand(actual==expected,f'noncanonical {section}.{label}')
+    demand(tuple((k,tuple(x)) for k,x in data['frontiers'].items())==FRONTIERS,'noncanonical frontiers')
     v=data['poex']
     demand(v['shape']==[256,256] and v['packet_shape']==[4,256],'incorrect matrix')
     demand(v['packets']==64 and v['packet_bytes']==128 and v['quartet_reports']==16384,'incorrect frames')
     demand(v['published'] is False,'fixture must remain NOT_PUBLISHED')
     return {'status':'VALIDATED_SYNTAX','bios_new_rows':5,'bios_history_rows':7,
-            'history_extended_rows':2,'delta_nabla_rows':4,'opfrontier_rows':3,
+            'history_extended_rows':2,'delta_nabla_rows':4,'opfrontier_rows':3,'frontier_rows':2,
             'public_rows':5,'poex_verified':False,'published':False}
 
 def candidate(path):

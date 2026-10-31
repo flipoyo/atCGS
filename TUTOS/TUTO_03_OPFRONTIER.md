@@ -48,18 +48,18 @@ Faire exécuter les mutations par les API autorisées du moteur.
 Refuser l'émission PUBLIC d'un arbre PRIVATE brut.
 Émettre un résultat non vérifié lorsqu'il manque un checkpoint.
 
-## 5. Interface cible
+## 5. Interface `@cgs`
 
 ```bash
-# Cible d'architecture, non implémentée dans atCGS PR #1.
+# Sans argument : émet la transition sortante ; PUB sert la vue PUBLIC.
 pixi run '@cgs' OPX
 pixi run '@cgs' DEV
 pixi run '@cgs' USR
 pixi run '@cgs' PUB
 ```
 
-Actuellement la PR #1 transmet encore des verbes `cgitsync` bruts.
-Ne présentez pas ces commandes cibles comme déjà opérationnelles.
+Les verbes `cgitsync` bruts sont refusés au premier niveau (code 2).
+`OPX`/`DEV` ne les délèguent qu'avec `ATCGS_AUTHORIZE` (sinon code 3).
 
 ## 6. Rôles des preuves
 
