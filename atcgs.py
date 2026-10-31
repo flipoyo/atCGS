@@ -23,6 +23,10 @@ class OpFrontier:
     source: str = "CGS"
     target: str = "CGS-ALPHA"
 
+    def serve_poex(self) -> tuple[str, str, str, str]:
+        """Serve the exact POEX frontier descriptor; no execution or proof verdict."""
+        return ("POEX", "NODE", "DELTA", "OPX")
+
     def accept(self, argv: Sequence[str]) -> tuple[str, ...]:
         request = tuple(argv)
         if not request:
