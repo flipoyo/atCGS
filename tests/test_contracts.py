@@ -24,10 +24,24 @@ class TestContracts(unittest.TestCase):
         self.assertEqual(report["opfrontier_rows"], 3)
 
     def test_public_tuples(self):
-        self.assertEqual(FIXTURES["public_boundary"]["sequence"][1], ("PUB", "256", "256", ".bit"))
         self.assertEqual(
-            FIXTURES["public_boundary"]["sequence"][3], (".wth", ".computo", ".gts", ".cgs")
+            FIXTURES["public_boundary"]["sequence"][1], ("GLYPH", "POEX", "PUB", "DELTA")
         )
+        self.assertEqual(
+            FIXTURES["public_boundary"]["sequence"][3], ("HASH", "DELTA", "CGS", "OPX")
+        )
+
+    def test_key_prototype(self):
+        self.assertEqual(inspect()["key_rows"], 2)
+        self.assertEqual(FIXTURES["key"]["prototype"][0], ("PUB", "DELTA", "POEX", "KEY"))
+
+    def test_key_must_hash_the_glyph(self):
+        text = Path(__file__).resolve().parents[1].joinpath("spec/contracts.toml").read_text()
+        with TemporaryDirectory() as d:
+            f = Path(d) / "contracts.toml"
+            f.write_text(text.replace('"sha256(GLYPH)"', '"GLYPH"'), encoding="utf-8")
+            with self.assertRaises(ValueError):
+                inspect(f)
 
     def test_packet_roundtrip(self):
         data = sample_matrix()

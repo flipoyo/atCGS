@@ -16,16 +16,43 @@ Names, extensions, repetitions and capitalisation are part of the contract.
 
 ```text
 README atCGS USR PUB
-PUB 256 256 .bit
-.bit .computo .omniscience .wth
-.wth .computo .gts .cgs
+GLYPH POEX PUB DELTA
+DELTA POEX OPX HASH
+HASH DELTA CGS OPX
 .cgs USR PUB .toml
 ```
 
 These five lines are PRIME G tuples, kept without normalisation.
-`PUB 256 256 .bit` fixes a 256×256 binary representation as the reference.
-`.bit` is an artifact designation here, not a permission to publish it.
-`.wth` is an opaque label: the tutorial invents no semantics for it.
+The GLYPH (`.bit`) is the 256×256 public key of DELTA: a POEX privilege, never exposed.
+POE is reached only through `KEY := sha256(GLYPH)`, the prototype of the class KEY:
+
+```text
+PUB DELTA POEX KEY
+KEY OPX CGS PUB
+KEY sha256(GLYPH)
+```
+
+POEX is the wallet, the Python class `atcgs.POEX`; it wraps the C `poex` microcode.
+For a NAME X it asks one question, "does X exist in PoE?", then delivers `.poe`:
+
+```text
+NAME GLYPH POEX OPX
+NAME GLYPH PUB .toml
+
+X not in PoE  ask SEED: a square .bit of at least 256x256 bits
+              GLYPH := shake_256(hash(SEED) + SEED), 256x256 bits
+              OPX registers NAME -> (hash(SEED), hash(GLYPH))
+X in PoE      OpFrontier request ComplexGraphSync -> ComplexGitSync
+.poe          (OPX, DEV, USR, PUB) = one 4x256-bit POEX packet
+              hash(GLYPH), hash(DEV ssh key), hash(NAME), hash(SEED)
+```
+
+`hash(SEED)` is the unique ID of NAME, and the only value crossing the frontier.
+The pair `(hash(SEED), hash(GLYPH))` is known by OPX only.
+POEX never stores the GLYPH, and nobody does; `.omniscience` and `.computo` report only its hash.
+The compression always runs, so `hash(GLYPH)` never equals `hash(SEED)`.
+The DEV ssh key is temporary: it uses the `ssh-keygen` core of
+[sshKeyGen](https://github.com/flipoyo/sshKeyGen) and is destroyed after the request.
 `.computo` belongs to the PRIVATE domain of ComplexGraphSync.
 `.omniscience` denotes its PUBLIC frontier, limited to publishable proofs.
 Character strings are not implicit execution commands.
@@ -114,7 +141,7 @@ None of it bootstraps a tree or accesses a real `.computo`.
 - [TUTO 02 — PRIME G and DELTA/NABLA](TUTOS/TUTO_02_PRIME_G.md)
 - [TUTO 03 — System Layers and OpFrontier](TUTOS/TUTO_03_OPFRONTIER.md)
 - [TUTO 04 — POEX 4×256](TUTOS/TUTO_04_POEX.md)
-- [TUTO 05 — USR / PUB, .bit and .wth](TUTOS/TUTO_05_USR_PUB.md)
+- [TUTO 05 — USR / PUB, GLYPH and KEY](TUTOS/TUTO_05_USR_PUB.md)
 - [TUTO 06 — Integration and 24 h roadmap](TUTOS/TUTO_06_INTEGRATION.md)
 
 ## 9. Upstream code reality

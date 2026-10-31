@@ -53,10 +53,22 @@ FIXTURES = {
     "public_boundary": {
         "sequence": (
             ("README", "atCGS", "USR", "PUB"),
-            ("PUB", "256", "256", ".bit"),
-            (".bit", ".computo", ".omniscience", ".wth"),
-            (".wth", ".computo", ".gts", ".cgs"),
+            ("GLYPH", "POEX", "PUB", "DELTA"),
+            ("DELTA", "POEX", "OPX", "HASH"),
+            ("HASH", "DELTA", "CGS", "OPX"),
             (".cgs", "USR", "PUB", ".toml"),
+        )
+    },
+    "key": {
+        "prototype": (
+            ("PUB", "DELTA", "POEX", "KEY"),
+            ("KEY", "OPX", "CGS", "PUB"),
+        )
+    },
+    "glyph": {
+        "sequence": (
+            ("NAME", "GLYPH", "POEX", "OPX"),
+            ("NAME", "GLYPH", "PUB", ".toml"),
         )
     },
 }
@@ -96,6 +108,11 @@ def inspect(path=SPEC):
         tuple((k, tuple(x)) for k, x in data["frontiers"].items()) == FRONTIERS,
         "noncanonical frontiers",
     )
+    k = data["key"]
+    demand(
+        k["holder"] == "POEX" and k["definition"] == "sha256(GLYPH)",
+        "KEY must be sha256(GLYPH), held by POEX",
+    )
     v = data["poex"]
     demand(v["shape"] == [256, 256] and v["packet_shape"] == [4, 256], "incorrect matrix")
     demand(
@@ -113,6 +130,8 @@ def inspect(path=SPEC):
         "opfrontier_rows": 3,
         "frontier_rows": 2,
         "public_rows": 5,
+        "key_rows": 2,
+        "glyph_rows": 2,
         "poex_verified": False,
         "published": False,
     }

@@ -7,16 +7,20 @@ Layer, resolves its own GitRepo frontiers and applies the PUBLIC boundary.
 
 from __future__ import annotations
 
+import hashlib
 import json
+import math
 import os
 import re
+import subprocess
 import sys
+import tempfile
 import tomllib
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
 from pathlib import Path
-from typing import Callable, Mapping, Sequence
+from typing import Callable, Mapping, MutableMapping, Sequence
 
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
@@ -288,6 +292,126 @@ def public_answer(table: MountTable) -> dict[str, object]:
         "requestable": "*G",
         PUBLIC: mount.public_view() if mount else {"evidence": Evidence.UNAVAILABLE.value},
     }
+
+
+MICROCODE = ROOT / "microcode" / "poex.c"
+GLYPH_SIDE = 256  # bits; a GLYPH is 256x256 bits
+GLYPH_BYTES = GLYPH_SIDE * GLYPH_SIDE // 8
+_FRAMED = re.compile(r"POEX FRAMED: 64 packets x 4x256 bits; quartets=16384; zeros=(\d+); evidence=UNVERIFIED")
+
+
+def sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def seed_side(seed: bytes) -> int:
+    """Side of a square SEED .bit, in bits; at least 256x256."""
+    side = math.isqrt(len(seed) * 8)
+    if side < GLYPH_SIDE or side * side != len(seed) * 8:
+        raise ValueError("SEED must be a square .bit of at least 256x256 bits")
+    return side
+
+
+def compress(seed: bytes) -> bytes:
+    """Deterministic SEED -> 256x256 GLYPH, from the initial value hash(SEED).
+
+    Always applied, even to a 256x256 SEED, so hash(GLYPH) never equals the
+    public hash(SEED); every SEED bit counts, so hash(SEED) alone is not enough.
+    """
+    seed_side(seed)
+    return hashlib.shake_256(hashlib.sha256(seed).digest() + seed).digest(GLYPH_BYTES)
+
+
+@dataclass(frozen=True, slots=True)
+class PoeVector:
+    """.poe: one 4x256-bit POEX packet, one sha256 credential per PRIME CGS layer."""
+
+    opx: str  # sha256(GLYPH); OPX only
+    dev: str  # sha256(temporary DEV ssh public key)
+    usr: str  # sha256(NAME)
+    pub: str  # sha256(SEED), the unique ID of NAME
+
+    def slot(self, layer: str) -> str:
+        """The one component a layer receives."""
+        if layer not in PRIME_CGS:
+            raise ValueError(f"unsupported PRIME CGS layer: {layer!r}")
+        return getattr(self, layer.lower())
+
+    def packet(self) -> bytes:
+        """4 x 256 bits = 128 bytes, in PRIME CGS order."""
+        return b"".join(bytes.fromhex(self.slot(layer)) for layer in PRIME_CGS)
+
+
+@dataclass(frozen=True, slots=True)
+class POEX:
+    """The wallet: wraps the C poex microcode and delivers .poe for a NAME.
+
+    It holds a GLYPH only while integrating it; POEX never stores a GLYPH, and
+    nobody does. `opx` maps NAME -> (hash(SEED), hash(GLYPH)), known by OPX only.
+    """
+
+    binary: Path
+    opx: MutableMapping[str, tuple[str, str]]
+
+    @staticmethod
+    def build(directory: Path, compiler: str = "cc") -> Path:
+        """Compile microcode/poex.c with the flags of microcode/README.md."""
+        binary = directory / "poex"
+        subprocess.run(
+            [compiler, "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror", "-pedantic",
+             "-o", str(binary), str(MICROCODE)],
+            check=True,
+        )
+        return binary
+
+    def exists(self, name: str) -> bool:
+        """Does NAME exist in PoE? The only question POEX asks."""
+        return name in self.opx
+
+    def frame(self, glyph: bytes) -> int:
+        """Run the microcode on a GLYPH; it refuses anything but 256x256 bits."""
+        result = subprocess.run([str(self.binary), "--packet"], input=glyph, capture_output=True)
+        if result.returncode != 0:
+            raise ValueError(f"poex microcode refused the GLYPH: {result.stderr.decode().strip()}")
+        framed = _FRAMED.search(result.stdout.decode())
+        if framed is None:
+            raise ValueError("poex microcode output is not framed")
+        return int(framed.group(1))
+
+    def integrate(self, name: str, seed: bytes) -> None:
+        """GLYPH integration: compress SEED, frame the GLYPH, register its pair with OPX."""
+        if self.exists(name):
+            raise ValueError(f"{name!r} already exists in PoE")
+        seed_id = sha256(seed)
+        if any(registered == seed_id for registered, _ in self.opx.values()):
+            raise ValueError("hash(SEED) is already the ID of another NAME")
+        glyph = compress(seed)
+        self.frame(glyph)
+        self.opx[name] = (seed_id, sha256(glyph))
+
+    def poe(
+        self, name: str, ask_seed: Callable[[], bytes], send: Callable[[Path, str], None]
+    ) -> PoeVector:
+        """Deliver .poe for NAME, integrating its GLYPH first if NAME is not in PoE.
+
+        Once NAME exists in PoE, `send` is the OpFrontier request
+        ComplexGraphSync -> ComplexGitSync: it receives the temporary DEV private
+        key path, valid only during the call, and hash(SEED), never the GLYPH.
+        The key set is destroyed when `send` returns.
+        """
+        if not self.exists(name):
+            self.integrate(name, ask_seed())
+        seed_id, glyph_id = self.opx[name]
+        with tempfile.TemporaryDirectory(prefix="poex-") as tmp:
+            private = Path(tmp) / "id_ed25519"
+            # The ssh-keygen core of github.com/flipoyo/sshKeyGen, without ~/.ssh or ssh-agent.
+            subprocess.run(
+                ["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", f"poex-{seed_id}", "-f", str(private)],
+                check=True, capture_output=True,
+            )
+            public = Path(f"{private}.pub").read_bytes().strip()
+            send(private, seed_id)
+        return PoeVector(glyph_id, sha256(public), sha256(name.encode()), seed_id)
 
 
 def cgs(handler: Callable[[Request], int]) -> Callable[[Sequence[str] | None], int]:

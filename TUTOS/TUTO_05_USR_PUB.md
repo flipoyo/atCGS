@@ -1,20 +1,19 @@
-# TUTO 05 — README, USR / PUB, .bit and .wth
+# TUTO 05 — README, USR / PUB, GLYPH and KEY
 
-**Goal:** integrate the five publication tuples without alteration.
+**Goal:** integrate the five publication tuples and the KEY prototype without alteration.
 
 ## 1. New canonical frontier
 
 ```text
 README atCGS USR PUB
-PUB 256 256 .bit
-.bit .computo .omniscience .wth
-.wth .computo .gts .cgs
+GLYPH POEX PUB DELTA
+DELTA POEX OPX HASH
+HASH DELTA CGS OPX
 .cgs USR PUB .toml
 ```
 
 These are five `NAME NODE EDGE OP` records.
-The two `256` must never be deduplicated.
-The `.wth` extension is opaque, with no serialiser defined here.
+`.wth` no longer exists; no tuple may reintroduce it.
 
 ## 2. Link with the earlier transitions
 
@@ -28,14 +27,53 @@ The new table and the OpFrontier table serve distinct purposes.
 Do not merge their fields to build five-column tuples.
 Do not create an artificial fourth OpFrontier transition.
 
-## 3. The `.bit` representation
+## 3. The GLYPH and the class KEY
 
-The symbol `PUB` associates the dimensions 256 and 256 with `.bit`.
+The GLYPH (`.bit`) is the 256×256 public key of DELTA.
+It is a POEX privilege and is never exposed.
+POE is reached only through its hash, the prototype of the class KEY:
+
+```text
+PUB DELTA POEX KEY
+KEY OPX CGS PUB
+KEY sha256(GLYPH)
+```
+
+The first two lines are `NAME NODE EDGE OP` records.
+The third is a definition, `KEY := sha256(GLYPH)`, not a tuple.
 The simulator treats 256×256 bits as 8 192 bytes, row by row.
-The `.bit` field alone does not prove the GLYPH's authenticity.
-The lab file is not a signed artistic object.
+The lab file is synthetic: it is not a real GLYPH.
 
-## 4. Two spaces and one engine
+## 4. POEX, the wallet
+
+The wallet is the Python class `atcgs.POEX`; it wraps the C `poex` microcode.
+For a NAME X, POEX asks one question only: does X exist in PoE?
+
+```text
+NAME GLYPH POEX OPX
+NAME GLYPH PUB .toml
+```
+
+If not, POEX launches the GLYPH integration:
+
+1. Ask a SEED: a square `.bit` of at least 256×256 bits.
+2. `GLYPH := shake_256(hash(SEED) + SEED)`, 256×256 bits, deterministic.
+3. The microcode frames the GLYPH; OPX registers `NAME -> (hash(SEED), hash(GLYPH))`.
+
+If yes, the request is an OpFrontier request ComplexGraphSync -> ComplexGitSync.
+POEX then delivers `.poe`, one 4×256-bit POEX packet:
+
+```text
+OPX  hash(GLYPH)        OPX only
+DEV  hash(DEV ssh key)  temporary, destroyed after the request
+USR  hash(NAME)
+PUB  hash(SEED)         unique ID of NAME
+```
+
+Each layer receives only its own slot.
+Only `hash(SEED)` crosses the frontier; the GLYPH is never stored, by anyone.
+The compression runs even on a 256×256 SEED, so `hash(GLYPH) != hash(SEED)`.
+The DEV key uses the `ssh-keygen` core of [sshKeyGen](https://github.com/flipoyo/sshKeyGen).
 
 ```text
 .computo       PRIVATE  (ComplexGraphSync)
@@ -44,7 +82,6 @@ The lab file is not a signed artistic object.
 ```
 
 No tuple is a declaration of access rights.
-The exact semantics of `.wth` must be specified separately.
 The internal Omniscience register does not become PUBLIC without a projection.
 
 ## 5. Inspect the new table
@@ -53,8 +90,9 @@ The internal Omniscience register does not become PUBLIC without a projection.
 pixi run contract-inspect
 ```
 
-Expected result: `public_rows = 5`.
-The comparison is strict, including the repetition of `256`.
+Expected result: `public_rows = 5`, `key_rows = 2` and `glyph_rows = 2`.
+The comparison is strict, field by field.
+A KEY not defined as `sha256(GLYPH)`, or not held by POEX, is refused.
 
 ## 6. Generate an unpublished manifest
 
@@ -66,7 +104,7 @@ pixi run contract-candidate
 The candidate must keep `poex_verified=false` and `NOT_PUBLISHED`.
 The script does not contact the PUBLIC domain and writes nothing to GitHub.
 The manifest contains only the commitment, the sizes and the status.
-It must never carry the raw 8 192 bytes by default.
+It must never carry the raw 8 192 bytes of a GLYPH.
 
 ## 7. Negative test
 
@@ -74,77 +112,36 @@ In a copy of the manifest, replace `poex_verified` with `true`.
 The `candidate` validator must refuse this unjustified promotion.
 An exact local result is not an authenticated checkpoint.
 
-## 8. Outlook for `.wth`
+## 8. Outlook
 
-The protocol must still specify the meaning of the three associated fields.
-A file format, a routing operation and an address type
-cannot be deduced from four letters and a leading dot.
+`hash` is `sha256`; the compression is `shake_256`, seeded by `hash(SEED)`.
+`atcgs.POEX` runs the flow; no `@cgs` selector calls it yet.
+The OPX register is passed to POEX; where OPX persists it is still open.
 
 ## 9. Definition of success
 
-The five tuples are strictly preserved and checkable.
-The `.bit` matrix sequences correctly into 64 packets.
-No PRIVATE content is exposed as a validated public answer.
+The five tuples, the two KEY and the two GLYPH records are strictly preserved and checkable.
+The 256×256 matrix sequences correctly into 64 packets.
+No GLYPH and no `.PRIVATE` is exposed as a validated public answer.
 Tutorial 06 gathers the checks and the 24 h schedule.
 
 ## Additional validation: cases to automate
 
-- Tuple 0: `README` stays NAME.
-- Tuple 0: `atCGS` stays NODE.
-- Tuple 0: `USR` stays EDGE.
-- Tuple 0: `PUB` stays OP.
-- Tuple 0: refuse swapping the last two fields.
-- Tuple 0: refuse deleted fields.
-- Tuple 0: refuse case normalisation.
-- Tuple 0: no implicit PRIVATE permission.
-- Tuple 1: `PUB` stays NAME.
-- Tuple 1: `256` stays NODE.
-- Tuple 1: `256` stays EDGE.
-- Tuple 1: `.bit` stays OP.
-- Tuple 1: refuse swapping the last two fields.
-- Tuple 1: refuse deleted fields.
-- Tuple 1: refuse case normalisation.
-- Tuple 1: no implicit PRIVATE permission.
-- Tuple 2: `.bit` stays NAME.
-- Tuple 2: `.computo` stays NODE.
-- Tuple 2: `.omniscience` stays EDGE.
-- Tuple 2: `.wth` stays OP.
-- Tuple 2: refuse swapping the last two fields.
-- Tuple 2: refuse deleted fields.
-- Tuple 2: refuse case normalisation.
-- Tuple 2: no implicit PRIVATE permission.
-- Tuple 3: `.wth` stays NAME.
-- Tuple 3: `.computo` stays NODE.
-- Tuple 3: `.gts` stays EDGE.
-- Tuple 3: `.cgs` stays OP.
-- Tuple 3: refuse swapping the last two fields.
-- Tuple 3: refuse deleted fields.
-- Tuple 3: refuse case normalisation.
-- Tuple 3: no implicit PRIVATE permission.
-- Tuple 4: `.cgs` stays NAME.
-- Tuple 4: `USR` stays NODE.
-- Tuple 4: `PUB` stays EDGE.
-- Tuple 4: `.toml` stays OP.
-- Tuple 4: refuse swapping the last two fields.
-- Tuple 4: refuse deleted fields.
-- Tuple 4: refuse case normalisation.
-- Tuple 4: no implicit PRIVATE permission.
-- Publication: check a signed checkpoint.
-- Publication: check the explicitly authorised data.
-- Publication: check that local paths are rejected.
-- Publication: check the candidate/public distinction.
-- Publication: check filtered repository URLs.
-- Publication: check minimal answer fields.
-- Publication: check an anchored identity.
-- Publication: check an independent root.
-- The name `.wth` is opaque in 0.1.1-alpha.
+- Tuple 0: `README` NAME, `atCGS` NODE, `USR` EDGE, `PUB` OP.
+- Tuple 1: `GLYPH` NAME, `POEX` NODE, `PUB` EDGE, `DELTA` OP.
+- Tuple 2: `DELTA` NAME, `POEX` NODE, `OPX` EDGE, `HASH` OP.
+- Tuple 3: `HASH` NAME, `DELTA` NODE, `CGS` EDGE, `OPX` OP.
+- Tuple 4: `.cgs` NAME, `USR` NODE, `PUB` EDGE, `.toml` OP.
+- Every tuple: refuse swapped, deleted or case-normalised fields.
+- Every tuple: no implicit PRIVATE permission.
+- KEY: `PUB DELTA POEX KEY` and `KEY OPX CGS PUB` unchanged; KEY is `sha256(GLYPH)`.
+- GLYPH: `NAME GLYPH POEX OPX` and `NAME GLYPH PUB .toml` unchanged.
+- SEED: refuse a non-square `.bit` or one under 256×256 bits.
+- `hash(SEED)`: refuse a SEED already registered under another NAME.
+- GLYPH: never stored, never in a candidate, a `.poe` or a public answer.
+- DEV key: destroyed after the OpFrontier request, even when it fails.
+- Publication: check a signed checkpoint, an anchored identity, no local paths.
 - An `.omniscience` field does not publish a proof by magic.
-- The repeated 256 is fixed by contract.
 - PRIVATE content must remain inaccessible to PUB.
-- The candidate output contains no secret key.
-- A real checkpoint must be authenticated.
-- Recent tuples do not replace the engine's `.cgs` grammar.
-- The matrix is binary, not a PNG.
-- The candidate root is not a global record.
+- The matrix is binary, not a PNG; extensions are literal identifiers.
 - The interface must report `NOT_PUBLISHED` unambiguously.
-- Extensions are literal identifiers.

@@ -50,10 +50,22 @@ sequence = [
 [public_boundary]
 sequence = [
  ["README", "atCGS", "USR", "PUB"],
- ["PUB", "256", "256", ".bit"],
- [".bit", ".computo", ".omniscience", ".wth"],
- [".wth", ".computo", ".gts", ".cgs"],
+ ["GLYPH", "POEX", "PUB", "DELTA"],
+ ["DELTA", "POEX", "OPX", "HASH"],
+ ["HASH", "DELTA", "CGS", "OPX"],
  [".cgs", "USR", "PUB", ".toml"],
+]
+[key]  # prototype of the class KEY, held by the POEX wallet
+holder = "POEX"
+prototype = [
+ ["PUB", "DELTA", "POEX", "KEY"],
+ ["KEY", "OPX", "CGS", "PUB"],
+]
+definition = "sha256(GLYPH)"  # KEY; the GLYPH itself is never exposed
+[glyph]  # GLYPH integration of a NAME; only hash(SEED) crosses the CGS frontier
+sequence = [
+ ["NAME", "GLYPH", "POEX", "OPX"],
+ ["NAME", "GLYPH", "PUB", ".toml"],
 ]
 [poex]
 shape = [256, 256]
