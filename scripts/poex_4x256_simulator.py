@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""CGS-ALPHA 0.0.0: deterministic POEX 256x256 -> 64 x (4x256) simulator.
+"""atCGS (ComplexGraphSync SemVer): deterministic POEX 256x256 -> 64 x (4x256) simulator.
 
 This is an *offline simulation*. It never writes to real .computo/.omniscience,
 never executes cgitsync, never publishes or certifies a Proof of Existence.
@@ -12,8 +12,14 @@ from dataclasses import dataclass
 import hashlib
 import json
 from pathlib import Path
+import sys
 from typing import Iterator
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from atcgs import SYSTEM  # noqa: E402  # inner SemVer, single source of truth
+
+# Wire-format schema id and hash domain-separation prefix (see leaf/node
+# digests and ComplexGitSync#193), NOT the product SemVer: frozen, never bump.
 VERSION = "CGS-POEX/0.0.0"
 ROWS = 256
 BITS_PER_ROW = 256
@@ -150,7 +156,7 @@ def sequence(matrix: bytes) -> tuple[list[Packet], bytes]:
 def public_candidate(packets: list[Packet], root: bytes) -> dict:
     """Only a non-anchored public CANDIDATE; does not reveal raw payload/mount."""
     return {
-        "system": "ComplexGraphSync ALPHA 0.0.0",
+        "system": SYSTEM,
         "schema": VERSION,
         "source": "SYNTHETIC_SIMULATION",
         "status": "NOT_PUBLISHED",

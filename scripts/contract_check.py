@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
-"""Offline contract validator for atCGS ALPHA 0.0.0, not a deployed gate."""
+"""Offline contract validator for atCGS (ComplexGraphSync SemVer), not a deployed gate."""
 from pathlib import Path
 import argparse, json, sys, tomllib
 ROOT=Path(__file__).resolve().parents[1]
+sys.path.insert(0,str(ROOT))
+from atcgs import SYSTEM,__version__  # single SemVer source of truth
 SPEC=ROOT/'spec/contracts.toml'
 FIXTURES={
 'boot':{'identity':('atCGS','ALPHA','BIOS','ComplexGitSync','M.m.p'),
@@ -28,6 +30,7 @@ def demand(ok,reason):
 def inspect(path=SPEC):
     with path.open('rb') as handle: data=tomllib.load(handle)
     c=data['contract']
+    demand(c['version']==__version__,f'contract version {c["version"]!r} != {__version__!r}')
     demand(c['prime_g']==['NAME','NODE','EDGE','OP'],'incorrect PRIME G')
     demand(c['prime_cgs']==['OPX','DEV','USR','PUB'],'incorrect PRIME CGS')
     demand(c['public']=='.omniscience' and c['private']=='.computo' and c['internal']=='.cgitsync','incorrect system spaces')
@@ -40,13 +43,13 @@ def inspect(path=SPEC):
     demand(v['shape']==[256,256] and v['packet_shape']==[4,256],'incorrect matrix')
     demand(v['packets']==64 and v['packet_bytes']==128 and v['quartet_reports']==16384,'incorrect frames')
     demand(v['published'] is False,'fixture must remain NOT_PUBLISHED')
-    return {'status':'VALIDATED_SYNTAX','bios_new_rows':5,'bios_history_rows':7,
+    return {'status':'VALIDATED_SYNTAX','version':c['version'],'bios_new_rows':5,'bios_history_rows':7,
             'history_extended_rows':2,'delta_nabla_rows':4,'opfrontier_rows':3,'frontier_rows':2,
             'public_rows':5,'poex_verified':False,'published':False}
 
 def candidate(path):
     d=json.loads(path.read_text(encoding='utf-8'))
-    for key,expected in [('dimensions_bits',[256,256]),('packet_shape_bits',[4,256]),
+    for key,expected in [('system',SYSTEM),('dimensions_bits',[256,256]),('packet_shape_bits',[4,256]),
                           ('packet_count',64),('nibble_reports',16384),('status','NOT_PUBLISHED'),
                           ('poex_verified',False),('gts_verified',False),('public_space','.omniscience')]:
         demand(d.get(key)==expected,f'candidate {key} mismatch')

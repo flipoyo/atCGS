@@ -7,9 +7,13 @@ Its `OpFrontier` accepts exactly four case-sensitive System Layer selectors,
 selector, then passed unchanged to `ComplexGitSync.cli.main`, which routes
 mutating operations via `RoutedClient -> Op`.
 
+Inner version: `0.1.0-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
+prerelease). Its single source is `atcgs.__version__`; `@cgs --version` prints it.
+
 ```bash
 pixi install
 pixi run '@cgs' --help
+pixi run '@cgs' --version    # ComplexGraphSync 0.1.0-alpha (local, no cgitsync)
 pixi run '@cgs' OPX          # emits .gts OPX DEV .cgs (evidence: unverified)
 pixi run '@cgs' DEV          # emits .cgs DEV USR .toml
 pixi run '@cgs' USR          # emits .toml USR PUB .omniscience

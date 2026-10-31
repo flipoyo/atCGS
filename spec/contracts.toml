@@ -1,7 +1,7 @@
-# atCGS ALPHA 0.0.0 — ordered literal tuples; not .cgs grammar.
+# atCGS 0.1.0-alpha — ordered literal tuples; not .cgs grammar.
 [contract]
 project = "ComplexGraphSync"
-version = "ALPHA 0.0.0"
+version = "0.1.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 state = "DECLARED_ONLY"
 prime_g = ["NAME", "NODE", "EDGE", "OP"]
 prime_cgs = ["OPX", "DEV", "USR", "PUB"]

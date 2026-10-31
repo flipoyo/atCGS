@@ -19,6 +19,12 @@ from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
 
+# Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
+# pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
+# The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
+__version__ = "0.1.0-alpha"
+SYSTEM = f"ComplexGraphSync {__version__}"
+
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
 PRIME_G: tuple[str, ...] = ("NAME", "NODE", "EDGE", "OP*")
 
@@ -52,6 +58,7 @@ AUTHORIZE_ENV = "ATCGS_AUTHORIZE"
 MOUNTS_ENV = "ATCGS_MOUNTS"
 
 USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
+       @cgs --version       print the inner ComplexGraphSync SemVer
 
   OPX | DEV            emit the layer's outgoing OpFrontier transition
   OPX | DEV <op ...>   delegate an existing cgitsync operation (requires ATCGS_AUTHORIZE)
@@ -282,6 +289,9 @@ def cgs(handler: Callable[[Request], int]) -> Callable[[Sequence[str] | None], i
         raw = tuple(sys.argv[1:] if argv is None else argv)
         if raw in {("--help",), ("-h",)}:
             print(USAGE)
+            return 0
+        if raw == ("--version",):
+            print(SYSTEM)
             return 0
         return handler(OpFrontier().accept(raw))
 

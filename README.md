@@ -1,4 +1,4 @@
-# atCGS — ComplexGraphSync ALPHA 0.0.0
+# atCGS — ComplexGraphSync 0.1.0-alpha
 
 **Canonical README — USR / PUB / BIOS / POEX / OpFrontier.**
 
