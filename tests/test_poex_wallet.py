@@ -132,21 +132,26 @@ class SessionTests(Microcodes):
 
     def test_ladder(self):
         self.assertEqual({k: format(v, "04b") for k, v in POE_CODES.items()},
-                         {"POE": "0000", "OPX": "0001", "DEV": "1001", "USR": "1101", "PUB": "1111"})
+                         {"POE": "0000", "OPX": "0000", "DEV": "1000", "USR": "1100", "PUB": "1111"})
 
     def test_left_equals_right_is_poe(self):
         with self.wallet.session() as session:
             self.assertEqual(session.prove("X", SEED, SEED), 0b0000)
             self.assertEqual(session.poe("X"), 0b0000)
 
-    def test_unknown_name_is_opx(self):
+    def test_unknown_name_is_born_then_proven_to_become_opx(self):
         with self.wallet.session() as session:
-            self.assertEqual(session.prove("Y", SEED, SEED), 0b0001)
+            self.assertEqual(session.prove("Y", BIG_SEED, BIG_SEED), POE_CODES["OPX"])
+        self.assertEqual(self.opx["Y"], (sha256(BIG_SEED), sha256(glyph_of(BIG_SEED))))
+
+    def test_unknown_name_born_but_not_proven(self):
+        with self.wallet.session() as session:
+            self.assertEqual(session.prove("Y", BIG_SEED, SEED[::-1]), 0b1111)
 
     def test_failed_control_is_dev(self):
         # BIG_SEED is not X's SEED: GLYPH(left) does not match OPX's hash(GLYPH).
         with self.wallet.session() as session:
-            self.assertEqual(session.prove("X", BIG_SEED, BIG_SEED), 0b1001)
+            self.assertEqual(session.prove("X", BIG_SEED, BIG_SEED), 0b1000)
 
     def test_left_differs_from_right_is_pub(self):
         with self.wallet.session() as session:

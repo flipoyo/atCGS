@@ -1,4 +1,4 @@
-# atCGS 1.2.0-alpha — POEX and EOPX monolithic C microcodes
+# atCGS 1.2.1-alpha — POEX and EOPX monolithic C microcodes
 
 Two microcodes, two purposes:
 

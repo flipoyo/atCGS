@@ -116,7 +116,7 @@ def inspect(path=SPEC):
     v = data["poex"]
     demand(v["purpose"] == "comparison", "poex compares, nothing else")
     demand(
-        v["poe"] == {"POE": "0000", "OPX": "0001", "DEV": "1001", "USR": "1101", "PUB": "1111"},
+        v["poe"] == {"POE": "0000", "OPX": "0000", "DEV": "1000", "USR": "1100", "PUB": "1111"},
         "incorrect .poe ladder",
     )
     e = data["eopx"]

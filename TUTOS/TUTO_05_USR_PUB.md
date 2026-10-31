@@ -66,11 +66,11 @@ If not, EOPX runs the birth protocol:
 A session proves left = right and decorates the GLYPH, `*GLYPH = (.poe, GLYPH)`:
 
 ```text
-POE 0000 left = right    OPX 0001 X unknown    DEV 1001 control fails
-USR 1101 no case yet     PUB 1111 left != right
+POE 0000 left = right    OPX 0000 only through POE: OPX is EOPX
+DEV 1000 control fails   USR 1100 no case yet   PUB 1111 left != right
 ```
 
-The control (hash of GLYPH(left) against OPX) runs before poex; `.poe` dies with the session.
+An unknown X is born through EOPX from `left`; the control runs before poex; `.poe` dies with the session.
 
 If yes, the request is an OpFrontier request ComplexGraphSync -> ComplexGitSync.
 POEX then delivers `.poe`, one 4×256-bit POEX packet:

@@ -1,4 +1,4 @@
-# atCGS — ComplexGraphSync 1.2.0-alpha
+# atCGS — ComplexGraphSync 1.2.1-alpha
 
 **Canonical README — USR / PUB / BIOS / POEX / OpFrontier.**
 
@@ -46,8 +46,9 @@ X not in PoE  birth (eopx): ask SEED, a square .bit of at least 256x256 bits
               OPX registers NAME -> (hash(SEED), hash(GLYPH))
 compare       POEX rebuilds two GLYPHs from SEEDs; poex says equal or not
 *GLYPH        (.poe, GLYPH): a 4-bit decorator, held for a local session only
-              POE 0000 left = right   OPX 0001 X unknown   DEV 1001 control fails
-              USR 1101 (no case yet)  PUB 1111 left != right
+              POE 0000 left = right, and so OPX 0000: OPX only through POE (EOPX)
+              DEV 1000 control fails   USR 1100 (no case yet)   PUB 1111 left != right
+              an unknown X is born through EOPX first
 X in PoE      OpFrontier request ComplexGraphSync -> ComplexGitSync
 .poe          (OPX, DEV, USR, PUB) = one 4x256-bit POEX packet
               hash(GLYPH), hash(DEV ssh key), hash(NAME), hash(SEED)

@@ -24,7 +24,7 @@ from typing import Callable, Mapping, MutableMapping, Sequence
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.2.0-alpha"
+__version__ = "1.2.1-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -60,7 +60,7 @@ def build_name(manifest: Path | None = None) -> str:
 
 
 def commit_subject(summary: str) -> str:
-    """Commit subject <build-name>-<version> <summary>, as in cgs-1.2.0-alpha."""
+    """Commit subject <build-name>-<version> <summary>, as in cgs-1.2.1-alpha."""
     return f"{build_name()}-{__version__} {summary}"
 
 
@@ -316,7 +316,8 @@ _COMPARED = re.compile(
     r"POEX COMPARED: 64 packets x 4x256 bits; quartets=16384; zeros=(\d+); equal=(yes|no); evidence=UNVERIFIED"
 )
 # .poe: the 4-bit decorator in front of a GLYPH, *GLYPH = (.poe, GLYPH).
-POE_CODES: Mapping[str, int] = {"POE": 0b0000, "OPX": 0b0001, "DEV": 0b1001, "USR": 0b1101, "PUB": 0b1111}
+# OPX is 0000 too: the only way to become OPX is POE, so OPX is EOPX.
+POE_CODES: Mapping[str, int] = {"POE": 0b0000, "OPX": 0b0000, "DEV": 0b1000, "USR": 0b1100, "PUB": 0b1111}
 
 
 def sha256(data: bytes) -> str:
@@ -467,15 +468,16 @@ class Session:
     def prove(self, name: str, left: bytes, right: bytes) -> int:
         """Prove left = right for NAME and return its .poe.
 
-        Is NAME known? If not, 0001 (OPX). If yes, control GLYPH(left) against
-        OPX's hash(GLYPH) before poex; a mismatch is 1001 (DEV). Then poex
-        compares GLYPH(left) and GLYPH(right): 0000 (POE) if equal, else 1111 (PUB).
+        Is NAME known? If not, EOPX gives it birth from `left`. Then control
+        GLYPH(left) against OPX's hash(GLYPH) before poex; a mismatch is 1000
+        (DEV). Then poex compares GLYPH(left) and GLYPH(right): 0000 (POE, and
+        so OPX) if equal, else 1111 (PUB).
         Only a proven GLYPH is decorated, *GLYPH = (0000, GLYPH), for this session.
         """
         if not self._open:
             raise ValueError("POEX session is closed")
         if not self._wallet.exists(name):
-            return self._issue(name, POE_CODES["OPX"])
+            self._wallet.eopx.birth(name, left)
         glyph = bytearray(self._wallet.eopx.glyph(left))
         if sha256(glyph) != self._wallet.eopx.opx[name][1]:
             glyph[:] = bytes(len(glyph))
