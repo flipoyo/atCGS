@@ -30,11 +30,11 @@ cc -std=c11 -O2 -Wall -Wextra -Werror -pedantic -o poex poex.c
 ## Demo / use
 
 ```sh
-python3 -c 'import sys;sys.stdout.buffer.write(bytes([0xA5])*8192)' > demo.bit
+pixi run python -c 'import sys;sys.stdout.buffer.write(bytes([0xA5])*8192)' > demo.bit
 ./poex --packet < demo.bit          # 64 display updates, one per 4×256 packet
 ./poex --trace < demo.bit | head -n 5  # inspect 4-bit stream (broken pipe may exit early)
 ./poex < demo.bit                   # 16,384 carriage-return live updates
-python3 test_poex.py               # compiler + 7 deterministic regression tests
+pixi run microcode-test           # compiler + 7 deterministic regression tests
 ```
 
 ## Boundary and limitations

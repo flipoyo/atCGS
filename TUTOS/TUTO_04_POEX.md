@@ -37,7 +37,7 @@ The Rust `.poe` memory pointer is not implemented in this lab.
 ## 4. Run the demonstrator
 
 ```bash
-python3 scripts/poex_4x256_simulator.py --output candidate.json
+pixi run poex-candidate
 ```
 
 Without `--input`, it produces a deterministic synthetic matrix.
@@ -46,7 +46,7 @@ The output contains a candidate root but no existence signature.
 ## 5. Test with a real lab matrix
 
 ```bash
-python3 scripts/poex_4x256_simulator.py \
+pixi run python scripts/poex_4x256_simulator.py \
   --input fixtures/demo_256x256.bit --output from_bit.json
 ```
 
@@ -56,7 +56,7 @@ The `.bit` file is synthetic, not taken from a real GitTree.
 ## 6. Proof verification
 
 ```bash
-python3 -m unittest discover -s tests -v
+pixi run test
 ```
 
 The tests check the reassembly of the 64 packets.

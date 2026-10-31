@@ -93,20 +93,20 @@ A local success does not mean publication on a network.
 
 ## 7. Starting the offline lab
 
-Requirements: Python 3.11+; no external dependency for this demonstrator.
-From the root of the extracted directory:
+Requirements: Pixi only; every command below is a Pixi task (pixi install once).
+From the root of the atCGS checkout:
 
 ```bash
-python3 scripts/contract_check.py inspect
-python3 scripts/poex_4x256_simulator.py --output candidate.json
-python3 scripts/contract_check.py candidate candidate.json
-python3 -m unittest discover -s tests -v
+pixi run contract-inspect
+pixi run poex-candidate
+pixi run contract-candidate
+pixi run test
 ```
 
 The `inspect` option validates the tuples of `spec/contracts.toml`.
 The sequencer uses a deterministic demonstration matrix by default.
 `candidate` must display `NOT_PUBLISHED` and `poex_verified=false`.
-Everything runs without cloning a repository or accessing a real `.computo`.
+None of it bootstraps a tree or accesses a real `.computo`.
 
 ## 8. TUTORIALS, 150 lines each
 

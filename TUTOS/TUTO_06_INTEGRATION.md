@@ -27,14 +27,14 @@ Do not turn a file suffix into a mutation order.
 ## 3. Offline demonstration
 
 ```bash
-python3 scripts/contract_check.py inspect
-python3 scripts/poex_4x256_simulator.py --output candidate.json
-python3 scripts/contract_check.py candidate candidate.json
-python3 -m unittest discover -s tests -v
+pixi run contract-inspect
+pixi run poex-candidate
+pixi run contract-candidate
+pixi run test
 ```
 
 The whole run produces a local report, not a real publication.
-The outputs are reproducible with Python 3.11+.
+The outputs are reproducible in the pinned Pixi environment.
 
 ## 4. P0 roadmap
 

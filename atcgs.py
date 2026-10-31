@@ -18,7 +18,6 @@ from functools import wraps
 from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
-
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
@@ -50,12 +49,19 @@ MOUNT_POLICY: Mapping[str, str] = {PUBLIC: "PUBLIC", PRIVATE: "PRIVATE"}
 PRIVATE_LAYERS = frozenset({"OPX", "DEV"})
 
 # Existing CGS-ALPHA verbs, reachable only behind an authorized OPX/DEV selector.
-CORE_OPERATIONS = frozenset({"bootstrap", "initialise", "status", "view-tree", "--version", "--help", "-h"})
+# `env show|check` is cgitsync's environment feature: @cgs and cgitsync share one
+# Pixi environment, so its observation and drift check apply to both.
+CORE_OPERATIONS = frozenset(
+    {"bootstrap", "initialise", "status", "view-tree", "env", "--version", "--help", "-h"}
+)
 CORE_RELEASE = frozenset({("release", "freeze"), ("release", "list"), ("release", "load")})
 
 # Operator configuration; never read from the request arguments.
 AUTHORIZE_ENV = "ATCGS_AUTHORIZE"
 MOUNTS_ENV = "ATCGS_MOUNTS"
+# Set by `pixi run`; @cgs runs under this repository's Pixi environment only.
+PIXI_ENV = "PIXI_PROJECT_ROOT"
+ROOT = Path(__file__).resolve().parent
 
 USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
        @cgs --version       print the inner ComplexGraphSync SemVer
@@ -65,7 +71,10 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
   USR                  emit the USR -> PUB transition
   PUB                  serve the read-only PUBLIC answer (.poe frontier)
   <layer> .omniscience resolve the PUBLIC mount
-  OPX | DEV .computo   resolve the PRIVATE mount (requires ATCGS_AUTHORIZE)"""
+  OPX | DEV .computo   resolve the PRIVATE mount (requires ATCGS_AUTHORIZE)
+  OPX | DEV env show|check  observe or check the shared environment (requires ATCGS_AUTHORIZE)
+
+Run it as: pixi run '@cgs' ..."""
 
 
 class Evidence(str, Enum):
@@ -323,8 +332,16 @@ def main(request: Request) -> int:
     return cgitsync_main(request.args)
 
 
+def require_pixi(env: Mapping[str, str] | None = None) -> None:
+    """Refuse to run outside this repository's Pixi environment."""
+    root = (os.environ if env is None else env).get(PIXI_ENV, "")
+    if not root or Path(root).resolve() != ROOT:
+        raise ValueError(f"run under Pixi only: pixi run <task> from {ROOT.name}")
+
+
 def run(argv: Sequence[str] | None = None) -> int:
     try:
+        require_pixi()
         return main(argv)
     except Unauthorized as exc:
         print(f"@cgs: {exc}", file=sys.stderr)

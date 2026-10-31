@@ -50,7 +50,7 @@ The internal Omniscience register does not become PUBLIC without a projection.
 ## 5. Inspect the new table
 
 ```bash
-python3 scripts/contract_check.py inspect
+pixi run contract-inspect
 ```
 
 Expected result: `public_rows = 5`.
@@ -59,8 +59,8 @@ The comparison is strict, including the repetition of `256`.
 ## 6. Generate an unpublished manifest
 
 ```bash
-python3 scripts/poex_4x256_simulator.py --output candidate.json
-python3 scripts/contract_check.py candidate candidate.json
+pixi run poex-candidate
+pixi run contract-candidate
 ```
 
 The candidate must keep `poex_verified=false` and `NOT_PUBLISHED`.

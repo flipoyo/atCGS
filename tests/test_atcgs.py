@@ -13,9 +13,24 @@ from tempfile import TemporaryDirectory
 from unittest.mock import Mock, patch
 
 from atcgs import (
-    AUTHORIZE_ENV, FRONTIERS, MOUNTS_ENV, PRIME_CGS, PRIME_G, TRANSITIONS,
-    Authorization, CgsMount, Evidence, MountTable, OpFrontier, Request,
-    Unauthorized, cgs, public_answer, run,
+    AUTHORIZE_ENV,
+    FRONTIERS,
+    MOUNTS_ENV,
+    PIXI_ENV,
+    PRIME_CGS,
+    PRIME_G,
+    TRANSITIONS,
+    Authorization,
+    CgsMount,
+    Evidence,
+    MountTable,
+    OpFrontier,
+    Request,
+    Unauthorized,
+    cgs,
+    public_answer,
+    require_pixi,
+    run,
 )
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -67,7 +82,7 @@ class Cli:
     def __init__(self, test, authorize=None, mounts=MOUNTS):
         self.dir = TemporaryDirectory()
         test.addCleanup(self.dir.cleanup)
-        self.env = {AUTHORIZE_ENV: authorize or ""}
+        self.env = {AUTHORIZE_ENV: authorize or "", PIXI_ENV: str(ROOT)}
         if mounts is not None:
             path = Path(self.dir.name) / "mounts.toml"
             path.write_text(mounts, encoding="utf-8")
@@ -144,11 +159,12 @@ class SelectorTests(unittest.TestCase):
         for layer in ("OPX", "DEV"):
             for args in (["bootstrap", "install.cgs"], ["initialise", "../install.cgs"], ["status"],
                          ["view-tree"], ["release", "freeze", "msg", "--dry-run"], ["release", "list"],
-                         ["release", "load", "8.5.0"], ["--version"]):
+                         ["release", "load", "8.5.0"], ["--version"], ["env", "show"],
+                         ["env", "check", "--cgs", "examples/cgs-dev.cgs"]):
                 with self.subTest(layer=layer, args=args):
                     self.assertEqual(OpFrontier().accept([layer, *args]), Request(layer, tuple(args)))
         for layer in ("USR", "PUB"):
-            for args in (["status"], ["release", "list"], ["bootstrap", "x.cgs"]):
+            for args in (["status"], ["release", "list"], ["bootstrap", "x.cgs"], ["env", "show"]):
                 with self.subTest(layer=layer, args=args), self.assertRaises(ValueError):
                     OpFrontier().accept([layer, *args])
 
@@ -335,6 +351,25 @@ class EntryPointTests(unittest.TestCase):
             with self.subTest(argv=argv):
                 self.assertEqual(cli(*argv, modules=modules)[0], 2)
         core.assert_not_called()
+
+    def test_runs_under_pixi_only(self):
+        require_pixi({PIXI_ENV: str(ROOT)})
+        for env in ({}, {PIXI_ENV: ""}, {PIXI_ENV: str(ROOT.parent)}):
+            with self.subTest(env=env), self.assertRaises(ValueError):
+                require_pixi(env)
+        core, modules = fake_core()
+        cli = Cli(self, authorize="OPX")
+        cli.env[PIXI_ENV] = str(ROOT.parent)
+        code, out, err = cli("OPX", "env", "show", modules=modules)
+        self.assertEqual((code, out), (2, ""))
+        self.assertIn("Pixi", err)
+        core.assert_not_called()
+
+    def test_env_feature_reaches_cgitsync_unchanged(self):
+        core, modules = fake_core(0)
+        cli = Cli(self, authorize="DEV")
+        self.assertEqual(cli("DEV", "env", "check", "--cgs", "examples/cgs-dev.cgs", modules=modules)[0], 0)
+        core.assert_called_once_with(("env", "check", "--cgs", "examples/cgs-dev.cgs"))
 
     def test_invalid_authorization_grant_fails_closed(self):
         core, modules = fake_core()

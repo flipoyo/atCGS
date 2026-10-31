@@ -8,15 +8,15 @@ A POEX Merkle commitment is not a signed existence checkpoint.
 from __future__ import annotations
 
 import argparse
-from dataclasses import dataclass
 import hashlib
 import json
-from pathlib import Path
 import sys
+from dataclasses import dataclass
+from pathlib import Path
 from typing import Iterator
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from atcgs import SYSTEM  # noqa: E402  # inner SemVer, single source of truth
+from atcgs import SYSTEM, require_pixi  # noqa: E402  # inner SemVer, single source of truth
 
 # Wire-format schema id and hash domain-separation prefix (see leaf/node
 # digests and ComplexGitSync#193), NOT the product SemVer: frozen, never bump.
@@ -176,6 +176,7 @@ def main() -> None:
     parser.add_argument("--input", type=Path, help="raw 8192-byte 256x256-bit matrix; default: deterministic synthetic matrix")
     parser.add_argument("--output", type=Path, default=Path("poex_public_candidate.json"), help="simulation manifest path")
     args = parser.parse_args()
+    require_pixi()
     data = args.input.read_bytes() if args.input else sample_matrix()
     packets, root = sequence(data)
     manifest = public_candidate(packets, root)

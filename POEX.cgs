@@ -1,8 +1,10 @@
 # SPDX-License-Identifier: Apache-2.0
-# POEX 0000 — minimal PUBLIC root Operating Space for @cgs.
+# POEX 0000 — the install.cgs of atCGS: the minimal PUB root Operating Space.
 # Ontological tuples are defined separately in POEX.0000.toml.
-# No fictitious .opx/.dev/.usr/.computo/.omniscience GitRepo mounts.
-# Prepare against the merged main branch; DO NOT freeze from this draft PR.
+#     pixi run cgitsync bootstrap POEX.cgs POEX
+# A PUB install mounts nothing private: no .computo and no .omniscience. The
+# levels that do are examples/cgs-{opx,dev,usr}.cgs (.computo = ComplexGitSync,
+# .omniscience = the register's POEX branch, the atCGS ledger).
 project = { name = "POEX", default_branch = "main", fallback_branch = "main" }
 
 repos = [

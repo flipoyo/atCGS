@@ -1,7 +1,7 @@
 # TUTO 01 — BIOS / BOOT / CGS ALPHA
 
 **Goal:** reproduce the initial anchoring without modifying ComplexGitSync.
-**Prerequisites:** Python 3.11+; a terminal; no GitHub token.
+**Prerequisites:** Pixi (`pixi install` once); a terminal; no GitHub token.
 **Indicative lab duration:** depends on the environment, not guaranteed.
 **Deliverable:** a checked BIOS table and the `DECLARED_ONLY` status.
 
@@ -54,7 +54,7 @@ A future revision must specify how the BIOS calls the BOOT.
 ## D. Check the fixtures
 
 ```bash
-python3 scripts/contract_check.py inspect
+pixi run contract-inspect
 ```
 
 Look for `bios_new_rows = 5` and `bios_history_rows = 7`.
@@ -64,7 +64,7 @@ This command launches no remote Git operation.
 ## E. Examine the normative data
 
 ```bash
-python3 - <<'PY'
+pixi run python - <<'PY'
 import tomllib
 with open('spec/contracts.toml','rb') as f:
     spec=tomllib.load(f)

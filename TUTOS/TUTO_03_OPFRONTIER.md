@@ -71,7 +71,7 @@ Rights must be decided at each frontier of the PUBLIC server.
 ## 7. Tuple verification
 
 ```bash
-python3 scripts/contract_check.py inspect
+pixi run contract-inspect
 ```
 
 The report must confirm `opfrontier_rows = 3`.

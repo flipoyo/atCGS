@@ -1,17 +1,28 @@
 [workspace]
 name = "atCGS"
 version = "0.1.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+# Same channels, platforms and Python as the pinned ComplexGitSync pixi.toml,
+# so @cgs and cgitsync observe one environment (cgitsync env check).
 channels = ["conda-forge"]
-platforms = ["linux-64", "osx-arm64", "win-64"]
+platforms = ["linux-64", "win-64", "osx-arm64"]
 
+# Every command runs under Pixi only; @cgs refuses to start outside it.
 [tasks]
 "@cgs" = "python -m atcgs"
-test = "python -m unittest discover -s tests -v"
+test = "python -m pytest"
+lint = "ruff check ."
+contract-inspect = "python scripts/contract_check.py inspect"
+contract-candidate = "python scripts/contract_check.py candidate candidate.json"
+poex-candidate = "python scripts/poex_4x256_simulator.py --output candidate.json"
+microcode-test = "python microcode/test_poex.py"
 
 [dependencies]
 python = "3.11.*"
+pytest = "*"
+ruff = "*"
+hypothesis = "*"
 
 [pypi-dependencies]
-# Immutable CGS-ALPHA head inspected on 2026-10-30; the installed CLI
-# continues to own all release/integrity semantics.
-complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "49f4dd5748d646d2e44001ea06a8132570ce0785" }
+# Immutable ComplexGitSync 8.6.2 head inspected on 2026-10-31; the installed
+# CLI continues to own all release/integrity/environment semantics.
+complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "9594d7e51ab9008458335cda09c80538f1a0bf98" }

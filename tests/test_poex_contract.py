@@ -1,9 +1,8 @@
 """Offline POEX 0000 contract checks (no network, no release side effects)."""
 
-from pathlib import Path
 import tomllib
 import unittest
-
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PRIMITIVE = (

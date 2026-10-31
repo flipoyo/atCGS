@@ -1,5 +1,6 @@
 """Validate the typed POEX descriptor without invoking the engine."""
 import unittest
+
 from atcgs import OpFrontier
 
 

@@ -1,0 +1,31 @@
+# The DEV tree for atCGS (ComplexGraphSync), one of cgs-{opx,dev,usr}.cgs.
+# Each file is named for the level it installs; the project is still POEX, on main,
+# so no branch has to exist for any level. POEX.cgs at the root is the PUB install.
+# DEV: everything OPX mounts, plus what atCGS writes.
+#   .computo      ComplexGitSync, mounted with its own developer tree (complexgitsync-dev.cgs)
+#   .omniscience  the register's POEX branch: the atCGS ledger, writable (register appends)
+#   .agent/.distant  .ticketing, DevSpec, DocSpec, shared and read-only
+#   .agent/.local    .dev, .localSpec, .claude, atCGS's own, writable, on branch POEX
+#     pixi run cgitsync bootstrap examples/cgs-dev.cgs POEX
+# A nested request the tree already holds is denied before cloning (IntegrityMount).
+
+environment_root = "root"
+environment = { tools = { python = "3.11", git = "2.30", pixi = "0.65" }, manifests = ["pixi.toml"] }
+
+project = { name = "POEX", default_branch = "main" }
+
+repos = [
+    { repository = "github:flipoyo/atCGS", fallback_branch = "main", nested_config = "disabled" },
+    { repository = "github:flipoyo/ComplexGitSync", relative_path = ".computo", fallback_branch = "main", nested_config = "examples/complexgitsync-dev.cgs" },
+    { repository = "codeberg:gx4g/.omniscience", relative_path = ".omniscience", default_branch = "POEX", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
+
+    # .distant — shared, read-only, the same for every conforming project
+    { repository = "github:flipoyo/.ticketing", relative_path = ".agent/.distant/ticket", default_branch = "main", fallback_branch = "main", private = true },
+    { repository = "github:flipoyo/DevSpec", relative_path = ".agent/.distant/dev-sync", default_branch = "main", fallback_branch = "main", nested_config = "disabled", private = true },
+    { repository = "github:flipoyo/DocSpec", relative_path = ".agent/.distant/documentation", default_branch = "main", fallback_branch = "main", nested_config = "disabled", private = true },
+
+    # .local — this project's own, writable
+    { repository = "github:flipoyo/.dev", relative_path = ".agent/.local/.dev", default_branch = "POEX", fallback_branch = "main", private = true, writable = true },
+    { repository = "github:flipoyo/.localSpec", relative_path = ".agent/.local/.localSpec", default_branch = "POEX", fallback_branch = "main", private = true, writable = true },
+    { repository = "github:flipoyo/.claude", relative_path = ".agent/.local/.claude", default_branch = "POEX", fallback_branch = "main", private = true, writable = true },
+]

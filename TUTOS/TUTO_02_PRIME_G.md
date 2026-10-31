@@ -63,7 +63,7 @@ The cycle is a symbolic property, not a certified executable loop.
 ## 6. Check the fixture
 
 ```bash
-python3 scripts/contract_check.py inspect
+pixi run contract-inspect
 ```
 
 Require seven BIOS lines, two extensions and four DELTA/NABLA lines.
