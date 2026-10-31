@@ -5,6 +5,7 @@
 #   .computo      ComplexGitSync, mounted with its own OPX tree (complexgitsync-opx.cgs)
 #   .omniscience  the register's POEX branch: the atCGS ledger, read-only at OPX
 #   .agent/.distant  .ticketing, DevSpec, DocSpec, shared and read-only
+#   .agent/.local    .dev, .localSpec, .claude, private and read-only (no writable repo at OPX)
 #     pixi run cgitsync bootstrap examples/cgs-opx.cgs POEX
 # A nested request the tree already holds is denied before cloning (IntegrityMount).
 
@@ -22,4 +23,9 @@ repos = [
     { repository = "github:flipoyo/.ticketing", relative_path = ".agent/.distant/ticket", default_branch = "main", fallback_branch = "main", private = true },
     { repository = "github:flipoyo/DevSpec", relative_path = ".agent/.distant/dev-sync", default_branch = "main", fallback_branch = "main", nested_config = "disabled", private = true },
     { repository = "github:flipoyo/DocSpec", relative_path = ".agent/.distant/documentation", default_branch = "main", fallback_branch = "main", nested_config = "disabled", private = true },
+
+    # .local — this project's own, private and read-only at OPX
+    { repository = "github:flipoyo/.dev", relative_path = ".agent/.local/.dev", default_branch = "POEX", fallback_branch = "main", private = true },
+    { repository = "github:flipoyo/.localSpec", relative_path = ".agent/.local/.localSpec", default_branch = "POEX", fallback_branch = "main", private = true },
+    { repository = "github:flipoyo/.claude", relative_path = ".agent/.local/.claude", default_branch = "POEX", fallback_branch = "main", private = true },
 ]

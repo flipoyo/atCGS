@@ -79,12 +79,13 @@ class LayerTreeTests(unittest.TestCase):
             mounts = by_path(load(layer)[1])
             with self.subTest(layer=layer):
                 agent = {path for path in mounts if path.startswith(".agent/")}
-                self.assertEqual(agent, {"opx": distant, "dev": distant | local, "usr": set()}[layer])
+                self.assertEqual(agent, {"opx": distant | local, "dev": distant | local, "usr": set()}[layer])
                 for path in agent & distant:
                     self.assertTrue(mounts[path]["private"])
                     self.assertNotIn("writable", mounts[path])
                 for path in agent & local:
-                    self.assertTrue(mounts[path]["private"] and mounts[path]["writable"])
+                    self.assertTrue(mounts[path]["private"])
+                    self.assertIs(mounts[path].get("writable", False), layer == "dev")
                     self.assertEqual(mounts[path]["default_branch"], "POEX")
 
     def test_only_dev_writes_and_usr_mounts_nothing_private(self):

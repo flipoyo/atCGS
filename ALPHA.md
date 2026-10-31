@@ -80,7 +80,7 @@ gate pattern of `gx4g-*.cgs`. Every level is project `POEX` on `main`.
 | `.computo`: ComplexGitSync, with `complexgitsync-<level>.cgs` nested | yes | yes | yes |
 | `.omniscience`: `codeberg:gx4g/.omniscience`, branch `POEX` (atCGS ledger) | read-only | writable | never |
 | `.agent/.distant`: `.ticketing`, `DevSpec`, `DocSpec` | read-only | read-only | no |
-| `.agent/.local`: `.dev`, `.localSpec`, `.claude`, branch `POEX` | no | writable | no |
+| `.agent/.local`: `.dev`, `.localSpec`, `.claude`, branch `POEX` | read-only | writable | no |
 
 ```bash
 pixi run cgitsync bootstrap examples/cgs-dev.cgs POEX
