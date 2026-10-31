@@ -7,7 +7,7 @@ Its `OpFrontier` accepts exactly four case-sensitive System Layer selectors,
 selector, then passed unchanged to `ComplexGitSync.cli.main`, which routes
 mutating operations via `RoutedClient -> Op`.
 
-Inner version: `1.3.0-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
+Inner version: `1.4.0-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
 prerelease). Its single source is `atcgs.__version__`; `@cgs --version` prints it.
 
 **Build name.** The project is `CGS`; its build is the executable in the Pixi
@@ -26,7 +26,7 @@ rules, so `@cgs` and `cgitsync` share one environment. Every command is a task:
 ```bash
 pixi install
 pixi run '@cgs' --help
-pixi run '@cgs' --version    # ComplexGraphSync 1.3.0-alpha (local, no cgitsync)
+pixi run '@cgs' --version    # ComplexGraphSync 1.4.0-alpha (local, no cgitsync)
 pixi run '@cgs' OPX          # emits .gts OPX DEV .cgs (evidence: unverified)
 pixi run '@cgs' DEV          # emits .cgs DEV USR .toml
 pixi run '@cgs' USR          # emits .toml USR PUB .omniscience
@@ -38,6 +38,8 @@ ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV status
 ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV release freeze "ALPHA release" --dry-run
 ATCGS_AUTHORIZE=OPX,DEV pixi run '@cgs' DEV .cgitsync   # resolve the PRIVATE mount
 ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV env check --cgs examples/cgs_dev.cgs
+ATCGS_REGISTER=opx.json ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX prove X seed.bit seed.bit  # birth, then .poe
+ATCGS_REGISTER=opx.json pixi run '@cgs' USR prove X left.bit right.bit   # {"poe": "0000"} or "1110"
 pixi run test
 pixi run lint
 ```

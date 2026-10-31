@@ -124,7 +124,7 @@ An exact local result is not an authenticated checkpoint.
 ## 8. Outlook
 
 `hash` is `sha256`; the compression is `shake_256`, seeded by `hash(SEED)`.
-`atcgs.POEX` runs the flow; no `@cgs` selector calls it, and OPX's register is not persisted.
+`@cgs <LAYER> prove NAME LEFT RIGHT` runs it; OPX's register is the file `ATCGS_REGISTER`.
 
 ## 9. Definition of success
 

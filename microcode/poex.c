@@ -1,4 +1,4 @@
-/* atCGS 1.3.0-alpha — monolithic POEX Layer-0 microcode, ISO C11.
+/* atCGS 1.4.0-alpha — monolithic POEX Layer-0 microcode, ISO C11.
  * Its only purpose is comparison: stdin is GLYPH A then GLYPH B, 2 x 8192 bytes.
  * Each quartet ingested is A XOR B; A == B if and only if zeros = 65536.
  * A quartet is four logical bits, held in the low nibble of a uint8_t.

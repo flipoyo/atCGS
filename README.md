@@ -1,4 +1,4 @@
-# atCGS — ComplexGraphSync 1.3.0-alpha
+# atCGS — ComplexGraphSync 1.4.0-alpha
 
 **Canonical README — USR / PUB / BIOS / POEX / OpFrontier.**
 
@@ -49,6 +49,8 @@ compare       POEX rebuilds two GLYPHs from SEEDs; poex says equal or not
               POEX knows who asks; granted (control passed, left = right): 0000
               refused: the requester's code, OPX 1000 DEV 1100 USR 1110 PUB 1111
               only OPX gives birth to an unknown X, through EOPX
+@cgs          <LAYER> prove NAME LEFT RIGHT: both SEEDs in one request; the
+              register is the file ATCGS_REGISTER (OPX only); prints only .poe
 X in PoE      OpFrontier request ComplexGraphSync -> ComplexGitSync
 .cred         (OPX, DEV, USR, PUB) = one 4x256-bit POEX packet
               hash(GLYPH), hash(DEV ssh key), hash(NAME), hash(SEED)

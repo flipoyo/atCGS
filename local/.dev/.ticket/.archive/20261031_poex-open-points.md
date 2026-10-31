@@ -28,3 +28,15 @@ Closed 2026-10-31 (1.3.0-alpha), owner's answers:
   (conda-forge has none for win-64); cc and ssh-keygen now come from Pixi.
 - Naming: the 4 x 256-bit vector is .cred (atcgs.Cred, POEX.cred()); .poe is
   only the 4-bit decorator.
+
+Closed 2026-10-31 (1.4.0-alpha), owner's answers to the design points:
+- SEEDs: one request carries both, left and right (Session.prove already does).
+- @cgs: `@cgs <LAYER> prove NAME LEFT RIGHT`; the selector is the requester, the
+  answer is only the 4-bit .poe; birth of an unknown NAME only under OPX with
+  ATCGS_AUTHORIZE=OPX.
+- Register: persisted by atcgs.Register in the JSON file named by
+  ATCGS_REGISTER, to live in a private repository mounted at OPX only. The
+  mount itself moves to opx-register-mount.md (repository name needed).
+- .agent stays outside the contract.
+- One chain: a ComplexGraphSync curl closes the loop; moves to
+  boundary-curl.md (connecting tuples needed).

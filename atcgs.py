@@ -19,12 +19,12 @@ from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
 from pathlib import Path
-from typing import Callable, Mapping, MutableMapping, Sequence
+from typing import Callable, Iterator, Mapping, MutableMapping, Sequence
 
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.3.0-alpha"
+__version__ = "1.4.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -60,7 +60,7 @@ def build_name(manifest: Path | None = None) -> str:
 
 
 def commit_subject(summary: str) -> str:
-    """Commit subject <build-name>-<version> <summary>, as in cgs-1.3.0-alpha."""
+    """Commit subject <build-name>-<version> <summary>, as in cgs-1.4.0-alpha."""
     return f"{build_name()}-{__version__} {summary}"
 
 
@@ -79,6 +79,7 @@ CORE_RELEASE = frozenset({("release", "freeze"), ("release", "list"), ("release"
 # Operator configuration; never read from the request arguments.
 AUTHORIZE_ENV = "ATCGS_AUTHORIZE"
 MOUNTS_ENV = "ATCGS_MOUNTS"
+REGISTER_ENV = "ATCGS_REGISTER"  # the OPX register file, in a private repo mounted at OPX
 # Set by `pixi run`; @cgs runs under this repository's Pixi environment only.
 PIXI_ENV = "PIXI_PROJECT_ROOT"
 ROOT = Path(__file__).resolve().parent
@@ -93,6 +94,8 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
   <layer> .omniscience resolve the PUBLIC mount
   OPX | DEV .cgitsync   resolve the PRIVATE mount (requires ATCGS_AUTHORIZE)
   OPX | DEV env show|check  observe or check the shared environment (requires ATCGS_AUTHORIZE)
+  <layer> prove NAME LEFT RIGHT  is poe granted to <layer>? prints the 4-bit .poe (ATCGS_REGISTER;
+                       an unknown NAME is born only under OPX, with ATCGS_AUTHORIZE=OPX)
 
 Run it as: pixi run '@cgs' ..."""
 
@@ -168,6 +171,8 @@ class OpFrontier:
         if not args or (len(args) == 1 and args[0] in MOUNT_POLICY):
             return Request(layer, args)
         if layer in PRIVATE_LAYERS and (args[0] in CORE_OPERATIONS or args[:2] in CORE_RELEASE):
+            return Request(layer, args)
+        if args[0] == "prove" and len(args) == 4:
             return Request(layer, args)
         raise ValueError(f"unsupported @cgs {layer} argument: {args[0]!r}")
 
@@ -312,6 +317,7 @@ def public_answer(table: MountTable) -> dict[str, object]:
 
 MICROCODE = ROOT / "microcode"
 GLYPH_BYTES = 256 * 256 // 8  # a GLYPH is 256x256 bits
+_SHA256 = re.compile(r"[0-9a-f]{64}")
 _COMPARED = re.compile(
     r"POEX COMPARED: 64 packets x 4x256 bits; quartets=16384; zeros=(\d+); equal=(yes|no); evidence=UNVERIFIED"
 )
@@ -354,6 +360,51 @@ class Cred:
     def packet(self) -> bytes:
         """4 x 256 bits = 128 bytes, in PRIME CGS order."""
         return b"".join(bytes.fromhex(self.slot(layer)) for layer in PRIME_CGS)
+
+
+class Register(MutableMapping[str, tuple[str, str]]):
+    """OPX's register NAME -> (hash(SEED), hash(GLYPH)), persisted in one JSON file.
+
+    The file lives in a private repository mounted at OPX only; each write
+    replaces it atomically. It never holds a SEED or a GLYPH, only their hashes.
+    """
+
+    def __init__(self, path: Path) -> None:
+        self.path = path
+        self._pairs: dict[str, tuple[str, str]] = {}
+        if path.exists():
+            raw = json.loads(path.read_text(encoding="utf-8"))
+            if not isinstance(raw, dict):
+                raise ValueError("the OPX register must be a JSON object")
+            for name, pair in raw.items():
+                if not (isinstance(pair, list) and len(pair) == 2 and all(isinstance(h, str) for h in pair)
+                        and all(_SHA256.fullmatch(h) for h in pair)):
+                    raise ValueError(f"the OPX register holds a malformed entry for {name!r}")
+                self._pairs[name] = (pair[0], pair[1])
+
+    def __getitem__(self, name: str) -> tuple[str, str]:
+        return self._pairs[name]
+
+    def __setitem__(self, name: str, pair: tuple[str, str]) -> None:
+        self._pairs[name] = pair
+        self._save()
+
+    def __delitem__(self, name: str) -> None:
+        del self._pairs[name]
+        self._save()
+
+    def __iter__(self) -> Iterator[str]:
+        return iter(self._pairs)
+
+    def __len__(self) -> int:
+        return len(self._pairs)
+
+    def _save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        draft = self.path.with_name(f".{self.path.name}.tmp")
+        draft.write_text(json.dumps({n: list(p) for n, p in self._pairs.items()}, indent=2) + "\n",
+                         encoding="utf-8")
+        os.replace(draft, self.path)
 
 
 @dataclass(frozen=True, slots=True)
@@ -526,9 +577,28 @@ def _emit(payload: Mapping[str, object]) -> int:
     return 0
 
 
+def prove(request: Request, authorization: Authorization, env: Mapping[str, str] | None = None) -> dict[str, str]:
+    """@cgs <LAYER> prove NAME LEFT RIGHT: the selector is the requester; only the .poe comes out."""
+    _, name, left, right = request.args
+    path = (os.environ if env is None else env).get(REGISTER_ENV)
+    if not path:
+        raise ValueError(f"prove needs the OPX register: set {REGISTER_ENV}")
+    register = Register(Path(path))
+    if name not in register and request.layer == "OPX":
+        authorization.require("OPX")  # birth through EOPX
+    seeds = Path(left).read_bytes(), Path(right).read_bytes()
+    with tempfile.TemporaryDirectory(prefix="cgs-microcode-") as tmp:
+        eopx = EOPX(build("eopx", Path(tmp)), register)
+        with POEX(build("poex", Path(tmp)), eopx).session() as session:
+            poe = session.prove(name, *seeds, request.layer)
+    return {"layer": request.layer, "name": name, "poe": format(poe, "04b")}
+
+
 @cgs
 def main(request: Request) -> int:
     table, authorization = MountTable.from_env(), Authorization.from_env()
+    if request.args and request.args[0] == "prove":
+        return _emit(prove(request, authorization))
     if request.args and request.args[0] in MOUNT_POLICY:
         name = request.args[0]
         mount = table.resolve(name, request.layer, authorization)

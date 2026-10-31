@@ -1,11 +1,29 @@
 """POEX and EOPX: the Python classes wrapping the C poex and eopx microcodes (offline)."""
 import hashlib
+import io
+import json
+import os
 import shutil
 import unittest
+from contextlib import redirect_stderr, redirect_stdout
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from unittest.mock import patch
 
-from atcgs import EOPX, POE_CODES, POEX, PRIME_CGS, build
+from atcgs import (
+    AUTHORIZE_ENV,
+    EOPX,
+    PIXI_ENV,
+    POE_CODES,
+    POEX,
+    PRIME_CGS,
+    REGISTER_ENV,
+    ROOT,
+    OpFrontier,
+    Register,
+    build,
+    run,
+)
 
 SEED = (Path(__file__).resolve().parents[1] / "fixtures/demo_256x256.bit").read_bytes()
 BIG_SEED = bytes(range(256)) * 128  # 32768 bytes = 512x512 bits
@@ -189,6 +207,85 @@ class SessionTests(Microcodes):
             session.prove("X", SEED, SEED, "USR")
             self.assertEqual(bytes(session._glyphs["X"]), glyph_of(SEED))
             self.assertNotIn(glyph_of(SEED).hex(), repr(session))
+
+
+class RegisterTests(unittest.TestCase):
+    def setUp(self):
+        tmp = TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.path = Path(tmp.name) / "register" / "opx.json"
+
+    def test_persists_across_instances(self):
+        pair = (sha256(SEED), sha256(glyph_of(SEED)))
+        Register(self.path)["X"] = pair
+        self.assertEqual(dict(Register(self.path)), {"X": pair})
+        self.assertEqual(json.loads(self.path.read_text()), {"X": list(pair)})
+
+    def test_refuses_a_malformed_file(self):
+        self.path.parent.mkdir(parents=True)
+        for raw in ("[]", '{"X": ["short", "pair"]}', '{"X": [1, 2]}'):
+            with self.subTest(raw=raw), self.assertRaises(ValueError):
+                self.path.write_text(raw)
+                Register(self.path)
+
+    def test_holds_only_hashes(self):
+        Register(self.path)["X"] = (sha256(SEED), sha256(glyph_of(SEED)))
+        text = self.path.read_text()
+        self.assertNotIn(SEED.hex()[:64], text)
+        self.assertNotIn(glyph_of(SEED).hex()[:64], text)
+
+
+class ProveCommandTests(unittest.TestCase):
+    def setUp(self):
+        if not shutil.which("cc"):
+            self.skipTest("needs a C11 compiler")
+        tmp = TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        self.dir = Path(tmp.name)
+        self.register = self.dir / "opx.json"
+        self.seed, self.other = self.dir / "seed.bit", self.dir / "other.bit"
+        self.seed.write_bytes(SEED)
+        self.other.write_bytes(BIG_SEED)
+
+    def cgs(self, *argv, authorize="", register=True):
+        env = {PIXI_ENV: str(ROOT), AUTHORIZE_ENV: authorize, REGISTER_ENV: str(self.register) if register else ""}
+        out, err = io.StringIO(), io.StringIO()
+        with patch.dict(os.environ, env), redirect_stdout(out), redirect_stderr(err):
+            code = run(list(argv))
+        return code, json.loads(out.getvalue()) if code == 0 else err.getvalue()
+
+    def prove(self, layer, name, left, right, **kwargs):
+        return self.cgs(layer, "prove", name, str(left), str(right), **kwargs)
+
+    def test_birth_needs_an_authorized_opx(self):
+        self.assertEqual(self.prove("OPX", "X", self.seed, self.seed)[0], 3)
+        self.assertFalse(self.register.exists())
+        code, answer = self.prove("OPX", "X", self.seed, self.seed, authorize="OPX")
+        self.assertEqual((code, answer), (0, {"layer": "OPX", "name": "X", "poe": "0000"}))
+        self.assertIn("X", Register(self.register))
+
+    def test_every_layer_gets_0000_or_its_own_code(self):
+        self.prove("OPX", "X", self.seed, self.seed, authorize="OPX")
+        for layer, refused in (("DEV", "1100"), ("USR", "1110"), ("PUB", "1111")):
+            with self.subTest(layer=layer):
+                self.assertEqual(self.prove(layer, "X", self.seed, self.seed)[1]["poe"], "0000")
+                self.assertEqual(self.prove(layer, "X", self.seed, self.other)[1]["poe"], refused)
+
+    def test_an_unknown_name_is_refused_below_opx(self):
+        self.assertEqual(self.prove("USR", "Y", self.seed, self.seed)[1]["poe"], "1110")
+        self.assertFalse(self.register.exists())
+
+    def test_answer_carries_no_seed_glyph_or_hash(self):
+        code, answer = self.prove("OPX", "X", self.seed, self.seed, authorize="OPX")
+        self.assertEqual(set(answer), {"layer", "name", "poe"})
+
+    def test_refuses_without_a_register_or_with_bad_arity(self):
+        code, err = self.prove("DEV", "X", self.seed, self.seed, register=False)
+        self.assertEqual(code, 2)
+        self.assertIn(REGISTER_ENV, err)
+        for argv in (("DEV", "prove"), ("DEV", "prove", "X", "a"), ("DEV", "prove", "X", "a", "b", "c")):
+            with self.subTest(argv=argv), self.assertRaises(ValueError):
+                OpFrontier().accept(argv)
 
 
 if __name__ == "__main__":
