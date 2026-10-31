@@ -1,7 +1,7 @@
-# atCGS 1.0.1-alpha — ordered literal tuples; not .cgs grammar.
+# atCGS 1.1.0-alpha — ordered literal tuples; not .cgs grammar.
 [contract]
 project = "ComplexGraphSync"
-version = "1.0.1-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.1.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 state = "DECLARED_ONLY"
 prime_g = ["NAME", "NODE", "EDGE", "OP"]
 prime_cgs = ["OPX", "DEV", "USR", "PUB"]
@@ -66,10 +66,15 @@ sequence = [
  ["NAME", "GLYPH", "POEX", "OPX"],
  ["NAME", "GLYPH", "PUB", ".toml"],
 ]
-[poex]
+[poex]  # Proof of Existence: its only purpose is comparing two GLYPHs
+purpose = "comparison"
 shape = [256, 256]
 packet_shape = [4, 256]
 packets = 64
 packet_bytes = 128
 quartet_reports = 16384
 published = false
+[eopx]  # Existence of Proof: the birth protocol
+seed_min_side = 256
+glyph_shape = [256, 256]
+compression = "shake_256(sha256(SEED) || SEED)"

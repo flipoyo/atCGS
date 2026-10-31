@@ -114,6 +114,14 @@ def inspect(path=SPEC):
         "KEY must be sha256(GLYPH), held by POEX",
     )
     v = data["poex"]
+    demand(v["purpose"] == "comparison", "poex compares, nothing else")
+    e = data["eopx"]
+    demand(
+        e["seed_min_side"] == 256
+        and e["glyph_shape"] == [256, 256]
+        and e["compression"] == "shake_256(sha256(SEED) || SEED)",
+        "incorrect eopx birth protocol",
+    )
     demand(v["shape"] == [256, 256] and v["packet_shape"] == [4, 256], "incorrect matrix")
     demand(
         v["packets"] == 64 and v["packet_bytes"] == 128 and v["quartet_reports"] == 16384,

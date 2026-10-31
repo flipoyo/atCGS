@@ -1,4 +1,6 @@
-/* atCGS 1.0.1-alpha — monolithic POEX Layer-0 microcode, ISO C11.
+/* atCGS 1.1.0-alpha — monolithic POEX Layer-0 microcode, ISO C11.
+ * Its only purpose is comparison: stdin is GLYPH A then GLYPH B, 2 x 8192 bytes.
+ * Each quartet ingested is A XOR B; A == B if and only if zeros = 65536.
  * A quartet is four logical bits, held in the low nibble of a uint8_t.
  * .poe is a stable pointer into SYSTEM, never a pointer to temporary memory.
  * ∆ELTA = current quartet XOR previous quartet (genesis quartet = 0000).
@@ -10,6 +12,7 @@
 #include <string.h>
 
 #define MATRIX_BYTES 8192u
+#define ZERO_BITS (MATRIX_BYTES * 8u)
 #define QUARTETS_PER_PACKET 256u
 #define PACKETS 64u
 /* POEX's authoritative engine is CGS-ALPHA OPX, not atCGS. */
@@ -30,6 +33,7 @@ typedef struct {
 } System;
 
 static System SYSTEM;         /* stable for the life of this process */
+static uint8_t GLYPH_A[MATRIX_BYTES]; /* held until compared, never written out */
 
 static void BIOS(void) {
     memset(&SYSTEM, 0, sizeof SYSTEM);
@@ -82,7 +86,7 @@ int main(int argc, char **argv) {
     Display mode = LIVE;
     if (argc > 2 || (argc == 2 && strcmp(argv[1], "--packet") != 0 &&
                      strcmp(argv[1], "--trace") != 0)) {
-        fprintf(stderr, "Usage: %s [--trace|--packet] < 256x256.bit\n", argv[0]);
+        fprintf(stderr, "Usage: %s [--trace|--packet] < A.bit B.bit (2 x 256x256 bits)\n", argv[0]);
         return 2;
     }
     if (argc == 2)
@@ -92,27 +96,33 @@ int main(int argc, char **argv) {
     size_t total = 0u;
     int octet;
     while ((octet = fgetc(stdin)) != EOF) {
-        if (total == MATRIX_BYTES) {
-            fputs("POEX ERROR: input exceeds 8192 bytes\n", stderr);
+        if (total == 2u * MATRIX_BYTES) {
+            fputs("POEX ERROR: input exceeds 16384 bytes\n", stderr);
             return 2;
         }
-        const uint8_t value = (uint8_t)octet;
+        if (total < MATRIX_BYTES) {
+            GLYPH_A[total++] = (uint8_t)octet;
+            continue;
+        }
+        const uint8_t value = (uint8_t)(GLYPH_A[total - MATRIX_BYTES] ^ (uint8_t)octet);
         (void)OpLayer(&SYSTEM, (uint8_t)(value >> 4u));
         report(&SYSTEM, mode);
         (void)OpLayer(&SYSTEM, (uint8_t)(value & 0x0fu));
         report(&SYSTEM, mode);
         total++;
     }
-    if (ferror(stdin) || total != MATRIX_BYTES) {
+    memset(GLYPH_A, 0, sizeof GLYPH_A);
+    if (ferror(stdin) || total != 2u * MATRIX_BYTES) {
         fprintf(stderr, "POEX ERROR: expected %u bytes, got %zu\n",
-                MATRIX_BYTES, total);
+                2u * MATRIX_BYTES, total);
         return 2;
     }
     if (SYSTEM.layer0.quartets != PACKETS * QUARTETS_PER_PACKET)
         return 3;
+    const int equal = SYSTEM.layer0.zeros == ZERO_BITS;
     if (mode == LIVE) putchar('\n');
-    printf("POEX FRAMED: %u packets x 4x256 bits; "
-           "quartets=%" PRIu64 "; zeros=%" PRIu64 "; evidence=UNVERIFIED\n",
-           PACKETS, SYSTEM.layer0.quartets, SYSTEM.layer0.zeros);
-    return 0;
+    printf("POEX COMPARED: %u packets x 4x256 bits; "
+           "quartets=%" PRIu64 "; zeros=%" PRIu64 "; equal=%s; evidence=UNVERIFIED\n",
+           PACKETS, SYSTEM.layer0.quartets, SYSTEM.layer0.zeros, equal ? "yes" : "no");
+    return equal ? 0 : 1;
 }

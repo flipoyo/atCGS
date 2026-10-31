@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import os
 import re
 import subprocess
@@ -25,7 +24,7 @@ from typing import Callable, Mapping, MutableMapping, Sequence
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.0.1-alpha"
+__version__ = "1.1.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -61,7 +60,7 @@ def build_name(manifest: Path | None = None) -> str:
 
 
 def commit_subject(summary: str) -> str:
-    """Commit subject <build-name>-<version> <summary>, as in cgs-1.0.1-alpha."""
+    """Commit subject <build-name>-<version> <summary>, as in cgs-1.1.0-alpha."""
     return f"{build_name()}-{__version__} {summary}"
 
 
@@ -311,32 +310,26 @@ def public_answer(table: MountTable) -> dict[str, object]:
     }
 
 
-MICROCODE = ROOT / "microcode" / "poex.c"
-GLYPH_SIDE = 256  # bits; a GLYPH is 256x256 bits
-GLYPH_BYTES = GLYPH_SIDE * GLYPH_SIDE // 8
-_FRAMED = re.compile(r"POEX FRAMED: 64 packets x 4x256 bits; quartets=16384; zeros=(\d+); evidence=UNVERIFIED")
+MICROCODE = ROOT / "microcode"
+GLYPH_BYTES = 256 * 256 // 8  # a GLYPH is 256x256 bits
+_COMPARED = re.compile(
+    r"POEX COMPARED: 64 packets x 4x256 bits; quartets=16384; zeros=(\d+); equal=(yes|no); evidence=UNVERIFIED"
+)
 
 
 def sha256(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
-def seed_side(seed: bytes) -> int:
-    """Side of a square SEED .bit, in bits; at least 256x256."""
-    side = math.isqrt(len(seed) * 8)
-    if side < GLYPH_SIDE or side * side != len(seed) * 8:
-        raise ValueError("SEED must be a square .bit of at least 256x256 bits")
-    return side
-
-
-def compress(seed: bytes) -> bytes:
-    """Deterministic SEED -> 256x256 GLYPH, from the initial value hash(SEED).
-
-    Always applied, even to a 256x256 SEED, so hash(GLYPH) never equals the
-    public hash(SEED); every SEED bit counts, so hash(SEED) alone is not enough.
-    """
-    seed_side(seed)
-    return hashlib.shake_256(hashlib.sha256(seed).digest() + seed).digest(GLYPH_BYTES)
+def build(name: str, directory: Path, compiler: str = "cc") -> Path:
+    """Compile microcode/<name>.c with the flags of microcode/README.md."""
+    binary = directory / name
+    subprocess.run(
+        [compiler, "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror", "-pedantic",
+         "-o", str(binary), str(MICROCODE / f"{name}.c")],
+        check=True,
+    )
+    return binary
 
 
 @dataclass(frozen=True, slots=True)
@@ -360,56 +353,61 @@ class PoeVector:
 
 
 @dataclass(frozen=True, slots=True)
-class POEX:
-    """The wallet: wraps the C poex microcode and delivers .poe for a NAME.
+class EOPX:
+    """Existence of Proof: wraps the C eopx microcode, the birth protocol.
 
-    It holds a GLYPH only while integrating it; POEX never stores a GLYPH, and
-    nobody does. `opx` maps NAME -> (hash(SEED), hash(GLYPH)), known by OPX only.
+    `opx` maps NAME -> (hash(SEED), hash(GLYPH)), known by OPX only. A GLYPH
+    lives in this process only while it is hashed or compared; nobody stores it.
     """
 
     binary: Path
     opx: MutableMapping[str, tuple[str, str]]
 
-    @staticmethod
-    def build(directory: Path, compiler: str = "cc") -> Path:
-        """Compile microcode/poex.c with the flags of microcode/README.md."""
-        binary = directory / "poex"
-        subprocess.run(
-            [compiler, "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror", "-pedantic",
-             "-o", str(binary), str(MICROCODE)],
-            check=True,
-        )
-        return binary
+    def glyph(self, seed: bytes) -> bytes:
+        """Rebuild the GLYPH of a SEED; the microcode refuses a non-square or small SEED."""
+        result = subprocess.run([str(self.binary)], input=seed, capture_output=True)
+        if result.returncode != 0 or len(result.stdout) != GLYPH_BYTES:
+            raise ValueError(f"eopx microcode refused the SEED: {result.stderr.decode().strip()}")
+        return result.stdout
 
-    def exists(self, name: str) -> bool:
-        """Does NAME exist in PoE? The only question POEX asks."""
-        return name in self.opx
-
-    def frame(self, glyph: bytes) -> int:
-        """Run the microcode on a GLYPH; it refuses anything but 256x256 bits."""
-        result = subprocess.run([str(self.binary), "--packet"], input=glyph, capture_output=True)
-        if result.returncode != 0:
-            raise ValueError(f"poex microcode refused the GLYPH: {result.stderr.decode().strip()}")
-        framed = _FRAMED.search(result.stdout.decode())
-        if framed is None:
-            raise ValueError("poex microcode output is not framed")
-        return int(framed.group(1))
-
-    def integrate(self, name: str, seed: bytes) -> None:
-        """GLYPH integration: compress SEED, frame the GLYPH, register its pair with OPX."""
-        if self.exists(name):
+    def birth(self, name: str, seed: bytes) -> None:
+        """Register a new NAME: hash(SEED) is its unique ID, hash(GLYPH) goes to OPX."""
+        if name in self.opx:
             raise ValueError(f"{name!r} already exists in PoE")
         seed_id = sha256(seed)
         if any(registered == seed_id for registered, _ in self.opx.values()):
             raise ValueError("hash(SEED) is already the ID of another NAME")
-        glyph = compress(seed)
-        self.frame(glyph)
-        self.opx[name] = (seed_id, sha256(glyph))
+        self.opx[name] = (seed_id, sha256(self.glyph(seed)))
+
+
+@dataclass(frozen=True, slots=True)
+class POEX:
+    """Proof of Existence: the wallet, wrapping the C poex microcode.
+
+    The microcode's only purpose is comparison. POEX rebuilds both GLYPHs with
+    EOPX and hands them to poex; neither leaves the process.
+    """
+
+    binary: Path
+    eopx: EOPX
+
+    def exists(self, name: str) -> bool:
+        """Does NAME exist in PoE? The only question POEX asks."""
+        return name in self.eopx.opx
+
+    def compare(self, seed_a: bytes, seed_b: bytes) -> bool:
+        """Rebuild two unknown GLYPHs, then let poex compare them: equal iff zeros = 65536."""
+        glyphs = self.eopx.glyph(seed_a) + self.eopx.glyph(seed_b)
+        result = subprocess.run([str(self.binary), "--packet"], input=glyphs, capture_output=True)
+        compared = _COMPARED.search(result.stdout.decode())
+        if result.returncode not in (0, 1) or compared is None:
+            raise ValueError(f"poex microcode refused the GLYPHs: {result.stderr.decode().strip()}")
+        return compared.group(2) == "yes"
 
     def poe(
         self, name: str, ask_seed: Callable[[], bytes], send: Callable[[Path, str], None]
     ) -> PoeVector:
-        """Deliver .poe for NAME, integrating its GLYPH first if NAME is not in PoE.
+        """Deliver .poe for NAME; a NAME not in PoE is born through EOPX first.
 
         Once NAME exists in PoE, `send` is the OpFrontier request
         ComplexGraphSync -> ComplexGitSync: it receives the temporary DEV private
@@ -417,8 +415,8 @@ class POEX:
         The key set is destroyed when `send` returns.
         """
         if not self.exists(name):
-            self.integrate(name, ask_seed())
-        seed_id, glyph_id = self.opx[name]
+            self.eopx.birth(name, ask_seed())
+        seed_id, glyph_id = self.eopx.opx[name]
         with tempfile.TemporaryDirectory(prefix="poex-") as tmp:
             private = Path(tmp) / "id_ed25519"
             # The ssh-keygen core of github.com/flipoyo/sshKeyGen, without ~/.ssh or ssh-agent.

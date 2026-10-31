@@ -7,7 +7,7 @@
 
 ## A. Identify the kernel
 
-The user entry is `atCGS`, the protocol version `1.0.1-alpha`.
+The user entry is `atCGS`, the protocol version `1.1.0-alpha`.
 The engine is `ComplexGitSync M.m.p`, to be pinned during an integration.
 The initial invariant proposed in the thread was:
 

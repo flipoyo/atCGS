@@ -1,4 +1,4 @@
-# atCGS — ComplexGraphSync 1.0.1-alpha
+# atCGS — ComplexGraphSync 1.1.0-alpha
 
 **Canonical README — USR / PUB / BIOS / POEX / OpFrontier.**
 
@@ -32,16 +32,19 @@ KEY OPX CGS PUB
 KEY sha256(GLYPH)
 ```
 
-POEX is the wallet, the Python class `atcgs.POEX`; it wraps the C `poex` microcode.
-For a NAME X it asks one question, "does X exist in PoE?", then delivers `.poe`:
+Two C microcodes, each wrapped by a Python class ([microcode/README.md](microcode/README.md)):
+`poex` (Proof of Existence, `atcgs.POEX`, the wallet) only compares two GLYPHs;
+`eopx` (Existence of Proof, `atcgs.EOPX`) runs the birth protocol, SEED -> GLYPH.
+For a NAME X, POEX asks one question, "does X exist in PoE?", then delivers `.poe`:
 
 ```text
 NAME GLYPH POEX OPX
 NAME GLYPH PUB .toml
 
-X not in PoE  ask SEED: a square .bit of at least 256x256 bits
+X not in PoE  birth (eopx): ask SEED, a square .bit of at least 256x256 bits
               GLYPH := shake_256(hash(SEED) + SEED), 256x256 bits
               OPX registers NAME -> (hash(SEED), hash(GLYPH))
+compare       POEX rebuilds two GLYPHs from SEEDs; poex says equal or not
 X in PoE      OpFrontier request ComplexGraphSync -> ComplexGitSync
 .poe          (OPX, DEV, USR, PUB) = one 4x256-bit POEX packet
               hash(GLYPH), hash(DEV ssh key), hash(NAME), hash(SEED)
@@ -53,7 +56,6 @@ POEX never stores the GLYPH, and nobody does; `.omniscience` and `.cgitsync` rep
 The compression always runs, so `hash(GLYPH)` never equals `hash(SEED)`.
 The DEV ssh key is temporary: it uses the `ssh-keygen` core of
 [sshKeyGen](https://github.com/flipoyo/sshKeyGen) and is destroyed after the request.
-`.cgitsync` belongs to the PRIVATE domain of ComplexGraphSync.
 `.omniscience` denotes its PUBLIC frontier, limited to publishable proofs.
 Character strings are not implicit execution commands.
 

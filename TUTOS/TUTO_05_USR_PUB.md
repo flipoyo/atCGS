@@ -46,7 +46,8 @@ The lab file is synthetic: it is not a real GLYPH.
 
 ## 4. POEX, the wallet
 
-The wallet is the Python class `atcgs.POEX`; it wraps the C `poex` microcode.
+Two microcodes: `poex` compares, `eopx` gives birth.
+The wallet `atcgs.POEX` wraps `poex`; `atcgs.EOPX` wraps `eopx`.
 For a NAME X, POEX asks one question only: does X exist in PoE?
 
 ```text
@@ -54,11 +55,14 @@ NAME GLYPH POEX OPX
 NAME GLYPH PUB .toml
 ```
 
-If not, POEX launches the GLYPH integration:
+If not, EOPX runs the birth protocol:
 
 1. Ask a SEED: a square `.bit` of at least 256×256 bits.
 2. `GLYPH := shake_256(hash(SEED) + SEED)`, 256×256 bits, deterministic.
-3. The microcode frames the GLYPH; OPX registers `NAME -> (hash(SEED), hash(GLYPH))`.
+3. OPX registers `NAME -> (hash(SEED), hash(GLYPH))`; the GLYPH is then dropped.
+
+`POEX.compare(seed_a, seed_b)` rebuilds both GLYPHs with eopx;
+`poex` reads them and answers equal if and only if `A XOR B` has 65 536 zeros.
 
 If yes, the request is an OpFrontier request ComplexGraphSync -> ComplexGitSync.
 POEX then delivers `.poe`, one 4×256-bit POEX packet:
@@ -115,7 +119,7 @@ An exact local result is not an authenticated checkpoint.
 
 `hash` is `sha256`; the compression is `shake_256`, seeded by `hash(SEED)`.
 `atcgs.POEX` runs the flow; no `@cgs` selector calls it yet.
-The OPX register is passed to POEX; where OPX persists it is still open.
+The OPX register is passed to EOPX; where OPX persists it is still open.
 
 ## 9. Definition of success
 

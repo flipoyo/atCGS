@@ -1,11 +1,11 @@
-"""POEX wallet: the Python class wrapping the C poex microcode (offline)."""
+"""POEX and EOPX: the Python classes wrapping the C poex and eopx microcodes (offline)."""
 import hashlib
 import shutil
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from atcgs import POEX, PRIME_CGS, compress, seed_side
+from atcgs import EOPX, POEX, PRIME_CGS, build
 
 SEED = (Path(__file__).resolve().parents[1] / "fixtures/demo_256x256.bit").read_bytes()
 BIG_SEED = bytes(range(256)) * 128  # 32768 bytes = 512x512 bits
@@ -15,45 +15,78 @@ def sha256(data):
     return hashlib.sha256(data).hexdigest()
 
 
-class SeedTests(unittest.TestCase):
-    def test_seed_must_be_square_and_at_least_256(self):
-        self.assertEqual(seed_side(SEED), 256)
-        self.assertEqual(seed_side(BIG_SEED), 512)
-        for bad in (SEED[:-1], bytes(4096), bytes(8192 + 1)):
-            with self.assertRaises(ValueError):
-                seed_side(bad)
-
-    def test_compress_is_deterministic_and_256x256(self):
-        glyph = compress(BIG_SEED)
-        self.assertEqual(len(glyph), 8192)
-        self.assertEqual(glyph, compress(BIG_SEED))
-        self.assertNotEqual(glyph, compress(SEED))
-
-    def test_minimal_seed_is_still_compressed(self):
-        self.assertNotEqual(sha256(compress(SEED)), sha256(SEED))
+def glyph_of(seed):
+    """Reference for the birth compression, used only to check the C microcode."""
+    return hashlib.shake_256(hashlib.sha256(seed).digest() + seed).digest(8192)
 
 
-class POEXWalletTests(unittest.TestCase):
+class Microcodes(unittest.TestCase):
     def setUp(self):
         if not shutil.which("cc") or not shutil.which("ssh-keygen"):
             self.skipTest("needs a C11 compiler and ssh-keygen")
-        self._tmp = TemporaryDirectory()
-        self.addCleanup(self._tmp.cleanup)
+        tmp = TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
         self.opx = {}
-        self.wallet = POEX(POEX.build(Path(self._tmp.name)), self.opx)
+        self.eopx = EOPX(build("eopx", Path(tmp.name)), self.opx)
+        self.wallet = POEX(build("poex", Path(tmp.name)), self.eopx)
         self.sent = []
 
     def send(self, private, seed_id):
         self.sent.append((private, seed_id, private.exists()))
         self.dev_public = Path(f"{private}.pub").read_bytes().strip()
 
-    def test_new_name_integrates_its_glyph(self):
+
+class EOPXTests(Microcodes):
+    def test_glyph_is_the_deterministic_compression(self):
+        for seed in (SEED, BIG_SEED):
+            with self.subTest(size=len(seed)):
+                self.assertEqual(self.eopx.glyph(seed), glyph_of(seed))
+                self.assertEqual(self.eopx.glyph(seed), self.eopx.glyph(seed))
+
+    def test_seed_must_be_square_and_at_least_256(self):
+        for bad in (SEED[:-1], bytes(4096), bytes(8192 + 1)):
+            with self.subTest(size=len(bad)), self.assertRaises(ValueError):
+                self.eopx.glyph(bad)
+
+    def test_minimal_seed_is_still_compressed(self):
+        self.assertNotEqual(sha256(self.eopx.glyph(SEED)), sha256(SEED))
+
+    def test_birth_registers_the_pair_with_opx(self):
+        self.eopx.birth("X", BIG_SEED)
+        self.assertEqual(self.opx["X"], (sha256(BIG_SEED), sha256(glyph_of(BIG_SEED))))
+
+    def test_hash_seed_is_a_unique_id(self):
+        self.eopx.birth("X", SEED)
+        with self.assertRaises(ValueError):
+            self.eopx.birth("Y", SEED)
+        with self.assertRaises(ValueError):
+            self.eopx.birth("X", BIG_SEED)
+        self.assertEqual(list(self.opx), ["X"])
+
+    def test_bad_seed_registers_nothing(self):
+        with self.assertRaises(ValueError):
+            self.eopx.birth("X", SEED[:-1])
+        self.assertEqual(self.opx, {})
+
+
+class POEXTests(Microcodes):
+    def test_compare_rebuilds_two_glyphs(self):
+        self.assertTrue(self.wallet.compare(SEED, SEED))
+        self.assertTrue(self.wallet.compare(BIG_SEED, BIG_SEED))
+        self.assertFalse(self.wallet.compare(SEED, BIG_SEED))
+        flipped = bytes([SEED[0] ^ 1]) + SEED[1:]
+        self.assertFalse(self.wallet.compare(SEED, flipped))
+
+    def test_compare_refuses_a_bad_seed(self):
+        with self.assertRaises(ValueError):
+            self.wallet.compare(SEED, SEED[:-1])
+
+    def test_new_name_is_born_then_served(self):
         self.assertFalse(self.wallet.exists("X"))
         poe = self.wallet.poe("X", lambda: BIG_SEED, self.send)
         self.assertTrue(self.wallet.exists("X"))
-        self.assertEqual(self.opx["X"], (sha256(BIG_SEED), sha256(compress(BIG_SEED))))
         self.assertEqual((poe.opx, poe.usr, poe.pub),
-                         (sha256(compress(BIG_SEED)), sha256(b"X"), sha256(BIG_SEED)))
+                         (sha256(glyph_of(BIG_SEED)), sha256(b"X"), sha256(BIG_SEED)))
         self.assertEqual(len(poe.packet()), 128)
         self.assertEqual([poe.slot(layer) for layer in PRIME_CGS], [poe.opx, poe.dev, poe.usr, poe.pub])
 
@@ -85,22 +118,11 @@ class POEXWalletTests(unittest.TestCase):
         self.assertFalse(seen[0].parent.exists())
 
     def test_glyph_is_never_stored_nor_delivered(self):
-        glyph = compress(SEED)
+        glyph = glyph_of(SEED)
         poe = self.wallet.poe("X", lambda: SEED, self.send)
-        for held in (repr(poe), repr(self.opx), repr(self.sent)):
+        for held in (repr(poe), repr(self.opx), repr(self.sent), repr(self.wallet)):
             self.assertNotIn(glyph.hex(), held)
         self.assertNotIn(glyph, poe.packet())
-
-    def test_hash_seed_is_a_unique_id(self):
-        self.wallet.poe("X", lambda: SEED, self.send)
-        with self.assertRaises(ValueError):
-            self.wallet.poe("Y", lambda: SEED, self.send)
-        self.assertFalse(self.wallet.exists("Y"))
-
-    def test_bad_seed_registers_nothing(self):
-        with self.assertRaises(ValueError):
-            self.wallet.poe("X", lambda: SEED[:-1], self.send)
-        self.assertEqual((self.opx, self.sent), ({}, []))
 
 
 if __name__ == "__main__":

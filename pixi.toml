@@ -1,6 +1,6 @@
 [workspace]
 name = "atCGS"
-version = "1.0.1-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.1.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 # Same channels, platforms and Python as the pinned ComplexGitSync pixi.toml,
 # so @cgs and cgitsync observe one environment (cgitsync env check).
 channels = ["conda-forge"]
@@ -21,7 +21,7 @@ lint = "ruff check ."
 contract-inspect = "python scripts/contract_check.py inspect"
 contract-candidate = "python scripts/contract_check.py candidate candidate.json"
 poex-candidate = "python scripts/poex_4x256_simulator.py --output candidate.json"
-microcode-test = "python microcode/test_poex.py"
+microcode-test = "python -m pytest microcode"
 
 [dependencies]
 python = "3.11.*"

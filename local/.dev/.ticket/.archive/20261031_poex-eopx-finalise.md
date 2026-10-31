@@ -45,3 +45,15 @@ Open points, not decided here:
   .omniscience and .cgitsync. Still open: whether .agent becomes a third space
   of the contract (the trees mount it, the contract does not name it), and
   POEX.0000.toml, whose .opx frontier still says .computo (left unchanged).
+
+Closed 2026-10-31 (1.1.0-alpha):
+- poex.c compares only: stdin is GLYPH A then GLYPH B; equal iff zeros = 65536;
+  exit 0 equal, 1 different, 2 bad size.
+- eopx.c: new monolithic microcode, SEED -> GLYPH with SHA-256 and SHAKE-256
+  written in C, checked against hashlib on every reachable padding case.
+- atcgs.EOPX wraps eopx (glyph, birth); atcgs.POEX wraps poex (exists,
+  compare, poe). integrate(), compress() and seed_side() are gone.
+- Contract [poex] purpose and [eopx] section, checked by contract_check.
+- microcode/README.md, README and TUTO 05 describe both microcodes;
+  microcode/README.md:42 no longer lets .cgitsync handle GLYPH bytes.
+- The remaining open points move to poex-open-points.md.

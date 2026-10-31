@@ -1,4 +1,4 @@
-"""Offline tests for atCGS Layer-0 POEX C microcode (no network)."""
+"""Offline tests for atCGS Layer-0 POEX C microcode: comparison of two GLYPHs (no network)."""
 import pathlib
 import shutil
 import subprocess
@@ -36,24 +36,30 @@ class MicrocodeTests(unittest.TestCase):
             "OpFrontier serves POEX NODE DELTA OPX",
         ])
 
-    def test_full_zero_matrix(self):
-        result = self.run_c(bytes(8192))
+    def test_equal_glyphs(self):
+        result = self.run_c(bytes(16384))
         self.assertEqual(result.returncode, 0, result.stderr)
         lines = result.stdout.decode().splitlines()
         self.assertEqual(len(lines), 65)
         self.assertIn("quartet=16384", lines[63])
         self.assertIn("zeros=65536", lines[-1])
         self.assertIn("∆=0000", lines[0])
-        self.assertIn("evidence=UNVERIFIED", lines[-1])
+        self.assertIn("equal=yes; evidence=UNVERIFIED", lines[-1])
 
-    def test_full_ones_matrix(self):
-        result = self.run_c(bytes([255]) * 8192)
-        self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn(b"zeros=0", result.stdout)
+    def test_same_ones_are_equal_and_opposite_differ(self):
+        self.assertEqual(self.run_c(bytes([255]) * 16384).returncode, 0)
+        result = self.run_c(bytes([255]) * 8192 + bytes(8192))
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn(b"zeros=0; equal=no", result.stdout)
+
+    def test_one_bit_differs(self):
+        result = self.run_c(bytes(8192) + bytes([1]) + bytes(8191))
+        self.assertEqual(result.returncode, 1, result.stderr)
+        self.assertIn(b"zeros=65535; equal=no", result.stdout)
 
     def test_xor_delta_on_first_two_nibbles(self):
-        result = self.run_c(bytes([0xA5]) + bytes(8191), "--trace")
-        self.assertEqual(result.returncode, 0, result.stderr)
+        result = self.run_c(bytes([0xA5]) + bytes(8191) + bytes(8192), "--trace")
+        self.assertEqual(result.returncode, 1, result.stderr)
         lines = result.stdout.decode().splitlines()
         self.assertEqual(len(lines), 16385)
         self.assertIn(".poe=1010 ∆=1010 zeros=2", lines[0])
@@ -61,18 +67,19 @@ class MicrocodeTests(unittest.TestCase):
         self.assertIn(".poe=0000 ∆=0101 zeros=8", lines[2])
 
     def test_reject_short_matrix(self):
-        result = self.run_c(bytes(8191))
-        self.assertEqual(result.returncode, 2)
-        self.assertIn(b"expected 8192", result.stderr)
+        for size in (8192, 16383):
+            result = self.run_c(bytes(size))
+            self.assertEqual(result.returncode, 2)
+            self.assertIn(b"expected 16384", result.stderr)
 
     def test_reject_long_matrix(self):
-        result = self.run_c(bytes(8193))
+        result = self.run_c(bytes(16385))
         self.assertEqual(result.returncode, 2)
-        self.assertIn(b"exceeds 8192", result.stderr)
+        self.assertIn(b"exceeds 16384", result.stderr)
 
     def test_packet_count_and_boundary(self):
-        result = self.run_c(bytes([0xF0]) * 8192)
-        self.assertEqual(result.returncode, 0, result.stderr)
+        result = self.run_c(bytes([0xF0]) * 8192 + bytes(8192))
+        self.assertEqual(result.returncode, 1, result.stderr)
         lines = result.stdout.decode().splitlines()
         self.assertEqual(sum(line.startswith("∆ELTA packet=") for line in lines), 64)
         self.assertIn("packet=00 quartet=00256", lines[0])
