@@ -63,6 +63,14 @@ If not, EOPX runs the birth protocol:
 
 `POEX.compare(seed_a, seed_b)` rebuilds both GLYPHs with eopx;
 `poex` reads them and answers equal if and only if `A XOR B` has 65 536 zeros.
+A session proves left = right and decorates the GLYPH, `*GLYPH = (.poe, GLYPH)`:
+
+```text
+POE 0000 left = right    OPX 0001 X unknown    DEV 1001 control fails
+USR 1101 no case yet     PUB 1111 left != right
+```
+
+The control (hash of GLYPH(left) against OPX) runs before poex; `.poe` dies with the session.
 
 If yes, the request is an OpFrontier request ComplexGraphSync -> ComplexGitSync.
 POEX then delivers `.poe`, one 4×256-bit POEX packet:
@@ -75,8 +83,7 @@ PUB  hash(SEED)         unique ID of NAME
 ```
 
 Each layer receives only its own slot.
-Only `hash(SEED)` crosses the frontier; the GLYPH is never stored, by anyone.
-The compression runs even on a 256×256 SEED, so `hash(GLYPH) != hash(SEED)`.
+Only `hash(SEED)` crosses the frontier; nobody stores the GLYPH, and `hash(GLYPH) != hash(SEED)`.
 The DEV key uses the `ssh-keygen` core of [sshKeyGen](https://github.com/flipoyo/sshKeyGen).
 
 ```text
@@ -84,8 +91,7 @@ The DEV key uses the `ssh-keygen` core of [sshKeyGen](https://github.com/flipoyo
 .omniscience   PUBLIC   (ComplexGraphSync)
 ```
 
-No tuple is a declaration of access rights.
-The internal Omniscience register does not become PUBLIC without a projection.
+No tuple declares access rights; the register becomes PUBLIC only by projection.
 
 ## 5. Inspect the new table
 
@@ -118,14 +124,12 @@ An exact local result is not an authenticated checkpoint.
 ## 8. Outlook
 
 `hash` is `sha256`; the compression is `shake_256`, seeded by `hash(SEED)`.
-`atcgs.POEX` runs the flow; no `@cgs` selector calls it yet.
-The OPX register is passed to EOPX; where OPX persists it is still open.
+`atcgs.POEX` runs the flow; no `@cgs` selector calls it, and OPX's register is not persisted.
 
 ## 9. Definition of success
 
 The five tuples, the two KEY and the two GLYPH records are strictly preserved and checkable.
-The 256×256 matrix sequences correctly into 64 packets.
-No GLYPH and no `.PRIVATE` is exposed as a validated public answer.
+The 256×256 matrix sequences into 64 packets; no GLYPH or `.PRIVATE` is exposed.
 Tutorial 06 gathers the checks and the 24 h schedule.
 
 ## Additional validation: cases to automate
@@ -135,16 +139,12 @@ Tutorial 06 gathers the checks and the 24 h schedule.
 - Tuple 2: `DELTA` NAME, `POEX` NODE, `OPX` EDGE, `HASH` OP.
 - Tuple 3: `HASH` NAME, `DELTA` NODE, `CGS` EDGE, `OPX` OP.
 - Tuple 4: `.cgs` NAME, `USR` NODE, `PUB` EDGE, `.toml` OP.
-- Every tuple: refuse swapped, deleted or case-normalised fields.
-- Every tuple: no implicit PRIVATE permission.
+- Every tuple: refuse swapped, deleted or case-normalised fields; no implicit PRIVATE.
 - KEY: `PUB DELTA POEX KEY` and `KEY OPX CGS PUB` unchanged; KEY is `sha256(GLYPH)`.
 - GLYPH: `NAME GLYPH POEX OPX` and `NAME GLYPH PUB .toml` unchanged.
-- SEED: refuse a non-square `.bit` or one under 256×256 bits.
-- `hash(SEED)`: refuse a SEED already registered under another NAME.
-- GLYPH: never stored, never in a candidate, a `.poe` or a public answer.
+- SEED: refuse a non-square or small `.bit`, or one already registered elsewhere.
+- GLYPH: never stored or shown; `*GLYPH` and `.poe` die with the session.
 - DEV key: destroyed after the OpFrontier request, even when it fails.
 - Publication: check a signed checkpoint, an anchored identity, no local paths.
-- An `.omniscience` field does not publish a proof by magic.
-- PRIVATE content must remain inaccessible to PUB.
-- The matrix is binary, not a PNG; extensions are literal identifiers.
-- The interface must report `NOT_PUBLISHED` unambiguously.
+- An `.omniscience` field publishes no proof by magic; PRIVATE stays out of PUB.
+- The matrix is binary, not a PNG; `NOT_PUBLISHED` is reported unambiguously.

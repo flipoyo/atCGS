@@ -115,6 +115,10 @@ def inspect(path=SPEC):
     )
     v = data["poex"]
     demand(v["purpose"] == "comparison", "poex compares, nothing else")
+    demand(
+        v["poe"] == {"POE": "0000", "OPX": "0001", "DEV": "1001", "USR": "1101", "PUB": "1111"},
+        "incorrect .poe ladder",
+    )
     e = data["eopx"]
     demand(
         e["seed_min_side"] == 256

@@ -20,3 +20,9 @@ Open points, not decided here:
 - POEX.0000.toml: its .opx frontier still says .computo (left unchanged).
 - USR: the cgitsync message asked for .agent/.local writable at every level;
   the USR tree mounts nothing private, so USR has none.
+- .poe ladder (1.2.0-alpha): POE 0000, OPX 0001, DEV 1001, USR 1101, PUB 1111.
+  Session.prove gives 0000 for left = right, 0001 for an unknown NAME, 1111 for
+  left != right, and 1001 for a failed control (assumed from the earlier
+  "mismatch goes to DEV" flow; owner to confirm). No case gives 1101 (USR) yet.
+- Naming: .poe is now the 4-bit decorator, but PoeVector, the 4 x 256-bit
+  credential vector returned by POEX.poe(), is also called .poe in the docs.

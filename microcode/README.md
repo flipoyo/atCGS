@@ -1,4 +1,4 @@
-# atCGS 1.1.0-alpha — POEX and EOPX monolithic C microcodes
+# atCGS 1.2.0-alpha — POEX and EOPX monolithic C microcodes
 
 Two microcodes, two purposes:
 
@@ -26,7 +26,7 @@ The lowercase `poex` microcode is declared as part of `cgitsync M.m.p` at `opx`.
 - `∆ELTA(t) = .poe(t) XOR .poe(t-1)`, nibble valued `0..15`. The boot/genesis quartet is `0000`, so the first delta equals the first received quartet. This definition describes bit changes; it is independent of the **DELTA** graph identity.
 - Real-time display = `fflush(stdout)` synchronously after each quartet is processed. It makes **no hard real-time latency guarantee** and does not invoke network, timer, dynamic allocation, or threads.
 - Binary input: **2 × 8192 bytes**, GLYPH A then GLYPH B, each exactly **256 rows × 256 bits**, row-major with most-significant-bit-first within each byte. A is held in a static buffer, zeroed after use; each quartet ingested is `A XOR B`, high nibble then low nibble.
-- Verdict: A and B are equal if and only if `zeros = 65536`. The last line is `POEX COMPARED: ...; equal=yes|no; evidence=UNVERIFIED`; exit `0` when equal, `1` when different, `2` on a wrong input size.
+- Verdict: A and B are equal if and only if `zeros = 65536`. `atcgs.POEX` takes it back as the 4-bit `.poe`: equal is `0000`, different `1111`. The last line is `POEX COMPARED: ...; equal=yes|no; evidence=UNVERIFIED`; exit `0` when equal, `1` when different, `2` on a wrong input size.
 - Packet framing: **64 packets × 128 bytes = 64 × (4 × 256 bits)**. Each packet contains 256 quartets; the whole matrix has 16,384 quartets. `.poe` reports are emitted for every quartet regardless of display mode.
 - The state is *process-lifetime persistent*, not reboot persistent. This program does **not** perform a genuine PoE verification, Merkle hashing, hashing of any kind, authentication, GitTree operation or PUBLIC publication. The output is `UNVERIFIED` and cannot authorize `.omniscience` disclosure.
 - External surface: reads the two raw matrices from `stdin` and writes only numeric counters/quartet changes to `stdout`. Raw matrix contents should be considered PRIVATE and no `--trace` output should automatically be treated as public.

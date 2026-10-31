@@ -24,7 +24,7 @@ from typing import Callable, Mapping, MutableMapping, Sequence
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.1.0-alpha"
+__version__ = "1.2.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -60,7 +60,7 @@ def build_name(manifest: Path | None = None) -> str:
 
 
 def commit_subject(summary: str) -> str:
-    """Commit subject <build-name>-<version> <summary>, as in cgs-1.1.0-alpha."""
+    """Commit subject <build-name>-<version> <summary>, as in cgs-1.2.0-alpha."""
     return f"{build_name()}-{__version__} {summary}"
 
 
@@ -315,6 +315,8 @@ GLYPH_BYTES = 256 * 256 // 8  # a GLYPH is 256x256 bits
 _COMPARED = re.compile(
     r"POEX COMPARED: 64 packets x 4x256 bits; quartets=16384; zeros=(\d+); equal=(yes|no); evidence=UNVERIFIED"
 )
+# .poe: the 4-bit decorator in front of a GLYPH, *GLYPH = (.poe, GLYPH).
+POE_CODES: Mapping[str, int] = {"POE": 0b0000, "OPX": 0b0001, "DEV": 0b1001, "USR": 0b1101, "PUB": 0b1111}
 
 
 def sha256(data: bytes) -> str:
@@ -395,14 +397,21 @@ class POEX:
         """Does NAME exist in PoE? The only question POEX asks."""
         return name in self.eopx.opx
 
-    def compare(self, seed_a: bytes, seed_b: bytes) -> bool:
-        """Rebuild two unknown GLYPHs, then let poex compare them: equal iff zeros = 65536."""
-        glyphs = self.eopx.glyph(seed_a) + self.eopx.glyph(seed_b)
-        result = subprocess.run([str(self.binary), "--packet"], input=glyphs, capture_output=True)
+    def verdict(self, glyph_a: bytes, glyph_b: bytes) -> int:
+        """Take poex's answer back as .poe: equal is 0000 (POE), different 1111 (PUB)."""
+        result = subprocess.run([str(self.binary), "--packet"], input=glyph_a + glyph_b, capture_output=True)
         compared = _COMPARED.search(result.stdout.decode())
         if result.returncode not in (0, 1) or compared is None:
             raise ValueError(f"poex microcode refused the GLYPHs: {result.stderr.decode().strip()}")
-        return compared.group(2) == "yes"
+        return POE_CODES["POE"] if compared.group(2) == "yes" else POE_CODES["PUB"]
+
+    def compare(self, seed_a: bytes, seed_b: bytes) -> bool:
+        """Rebuild two unknown GLYPHs, then let poex compare them: equal iff zeros = 65536."""
+        return self.verdict(self.eopx.glyph(seed_a), self.eopx.glyph(seed_b)) == POE_CODES["POE"]
+
+    def session(self) -> Session:
+        """A local session; every .poe it issues holds only until it closes."""
+        return Session(self)
 
     def poe(
         self, name: str, ask_seed: Callable[[], bytes], send: Callable[[Path, str], None]
@@ -427,6 +436,66 @@ class POEX:
             public = Path(f"{private}.pub").read_bytes().strip()
             send(private, seed_id)
         return PoeVector(glyph_id, sha256(public), sha256(name.encode()), seed_id)
+
+
+class Session:
+    """A local POEX session: each *GLYPH = (.poe, GLYPH) lives here and dies with it."""
+
+    def __init__(self, wallet: POEX) -> None:
+        self._wallet = wallet
+        self._poe: dict[str, int] = {}
+        self._glyphs: dict[str, bytearray] = {}
+        self._open = True
+
+    def __enter__(self) -> Session:
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self.close()
+
+    def __repr__(self) -> str:
+        return f"Session(open={self._open}, poe={ {n: format(c, '04b') for n, c in self._poe.items()} })"
+
+    def close(self) -> None:
+        """End the session: every GLYPH is zeroed and every .poe forgotten."""
+        for glyph in self._glyphs.values():
+            glyph[:] = bytes(len(glyph))
+        self._glyphs.clear()
+        self._poe.clear()
+        self._open = False
+
+    def prove(self, name: str, left: bytes, right: bytes) -> int:
+        """Prove left = right for NAME and return its .poe.
+
+        Is NAME known? If not, 0001 (OPX). If yes, control GLYPH(left) against
+        OPX's hash(GLYPH) before poex; a mismatch is 1001 (DEV). Then poex
+        compares GLYPH(left) and GLYPH(right): 0000 (POE) if equal, else 1111 (PUB).
+        Only a proven GLYPH is decorated, *GLYPH = (0000, GLYPH), for this session.
+        """
+        if not self._open:
+            raise ValueError("POEX session is closed")
+        if not self._wallet.exists(name):
+            return self._issue(name, POE_CODES["OPX"])
+        glyph = bytearray(self._wallet.eopx.glyph(left))
+        if sha256(glyph) != self._wallet.eopx.opx[name][1]:
+            glyph[:] = bytes(len(glyph))
+            return self._issue(name, POE_CODES["DEV"])
+        poe = self._wallet.verdict(bytes(glyph), self._wallet.eopx.glyph(right))
+        if poe == POE_CODES["POE"]:
+            self._glyphs[name] = glyph
+        else:
+            glyph[:] = bytes(len(glyph))
+        return self._issue(name, poe)
+
+    def _issue(self, name: str, poe: int) -> int:
+        self._poe[name] = poe
+        return poe
+
+    def poe(self, name: str) -> int:
+        """NAME's .poe in this session; there is none outside it."""
+        if not self._open or name not in self._poe:
+            raise ValueError(f"no .poe for {name!r} in this session")
+        return self._poe[name]
 
 
 def cgs(handler: Callable[[Request], int]) -> Callable[[Sequence[str] | None], int]:

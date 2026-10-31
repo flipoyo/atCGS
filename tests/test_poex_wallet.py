@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-from atcgs import EOPX, POEX, PRIME_CGS, build
+from atcgs import EOPX, POE_CODES, POEX, PRIME_CGS, build
 
 SEED = (Path(__file__).resolve().parents[1] / "fixtures/demo_256x256.bit").read_bytes()
 BIG_SEED = bytes(range(256)) * 128  # 32768 bytes = 512x512 bits
@@ -123,6 +123,55 @@ class POEXTests(Microcodes):
         for held in (repr(poe), repr(self.opx), repr(self.sent), repr(self.wallet)):
             self.assertNotIn(glyph.hex(), held)
         self.assertNotIn(glyph, poe.packet())
+
+
+class SessionTests(Microcodes):
+    def setUp(self):
+        super().setUp()
+        self.eopx.birth("X", SEED)
+
+    def test_ladder(self):
+        self.assertEqual({k: format(v, "04b") for k, v in POE_CODES.items()},
+                         {"POE": "0000", "OPX": "0001", "DEV": "1001", "USR": "1101", "PUB": "1111"})
+
+    def test_left_equals_right_is_poe(self):
+        with self.wallet.session() as session:
+            self.assertEqual(session.prove("X", SEED, SEED), 0b0000)
+            self.assertEqual(session.poe("X"), 0b0000)
+
+    def test_unknown_name_is_opx(self):
+        with self.wallet.session() as session:
+            self.assertEqual(session.prove("Y", SEED, SEED), 0b0001)
+
+    def test_failed_control_is_dev(self):
+        # BIG_SEED is not X's SEED: GLYPH(left) does not match OPX's hash(GLYPH).
+        with self.wallet.session() as session:
+            self.assertEqual(session.prove("X", BIG_SEED, BIG_SEED), 0b1001)
+
+    def test_left_differs_from_right_is_pub(self):
+        with self.wallet.session() as session:
+            self.assertEqual(session.prove("X", SEED, BIG_SEED), 0b1111)
+
+    def test_poe_holds_only_for_the_session(self):
+        session = self.wallet.session()
+        session.prove("X", SEED, SEED)
+        glyph = session._glyphs["X"]
+        session.close()
+        self.assertEqual(bytes(glyph), bytes(8192))
+        with self.assertRaises(ValueError):
+            session.poe("X")
+        with self.assertRaises(ValueError):
+            session.prove("X", SEED, SEED)
+        with self.wallet.session() as fresh, self.assertRaises(ValueError):
+            fresh.poe("X")
+
+    def test_only_a_proven_glyph_is_decorated_and_never_shown(self):
+        with self.wallet.session() as session:
+            session.prove("X", SEED, BIG_SEED)
+            self.assertEqual(session._glyphs, {})
+            session.prove("X", SEED, SEED)
+            self.assertEqual(bytes(session._glyphs["X"]), glyph_of(SEED))
+            self.assertNotIn(glyph_of(SEED).hex(), repr(session))
 
 
 if __name__ == "__main__":

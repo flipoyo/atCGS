@@ -1,4 +1,4 @@
-/* atCGS 1.1.0-alpha — monolithic EOPX microcode (Existence of Proof), ISO C11.
+/* atCGS 1.2.0-alpha — monolithic EOPX microcode (Existence of Proof), ISO C11.
  * The birth protocol: stdin is a SEED, a square .bit of at least 256x256 bits;
  * stdout is its GLYPH, 256x256 bits = 8192 bytes, written to the wallet's pipe:
  *     GLYPH := SHAKE-256(SHA-256(SEED) || SEED)
