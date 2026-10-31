@@ -1,18 +1,17 @@
 # TUTO 05 — README, USR / PUB, GLYPH and KEY
 
-**Goal:** integrate the five publication tuples and the KEY prototype without alteration.
+**Goal:** integrate the four publication tuples and the KEY prototype without alteration.
 
 ## 1. New canonical frontier
 
 ```text
 README atCGS USR PUB
-GLYPH POEX PUB DELTA
 DELTA POEX OPX HASH
 HASH DELTA CGS OPX
 .cgs USR PUB .toml
 ```
 
-These are five `NAME NODE EDGE OP` records.
+These are four `NAME NODE EDGE OP` records; the GLYPH row is gone.
 `.wth` no longer exists; no tuple may reintroduce it.
 
 ## 2. Link with the earlier transitions
@@ -99,7 +98,7 @@ No tuple declares access rights; the register becomes PUBLIC only by projection.
 pixi run contract-inspect
 ```
 
-Expected result: `public_rows = 5`, `key_rows = 2` and `glyph_rows = 2`.
+Expected result: `public_rows = 4`, `key_rows = 2` and `glyph_rows = 2`.
 The comparison is strict, field by field.
 A KEY not defined as `sha256(GLYPH)`, or not held by OPX, is refused.
 
@@ -128,17 +127,16 @@ An exact local result is not an authenticated checkpoint.
 
 ## 9. Definition of success
 
-The five tuples, the two KEY and the two GLYPH records are strictly preserved and checkable.
+The four tuples, the two KEY and the two GLYPH records are strictly preserved and checkable.
 The 256×256 matrix sequences into 64 packets; no GLYPH or `.PRIVATE` is exposed.
 Tutorial 06 gathers the checks and the 24 h schedule.
 
 ## Additional validation: cases to automate
 
 - Tuple 0: `README` NAME, `atCGS` NODE, `USR` EDGE, `PUB` OP.
-- Tuple 1: `GLYPH` NAME, `POEX` NODE, `PUB` EDGE, `DELTA` OP.
-- Tuple 2: `DELTA` NAME, `POEX` NODE, `OPX` EDGE, `HASH` OP.
-- Tuple 3: `HASH` NAME, `DELTA` NODE, `CGS` EDGE, `OPX` OP.
-- Tuple 4: `.cgs` NAME, `USR` NODE, `PUB` EDGE, `.toml` OP.
+- Tuple 1: `DELTA` NAME, `POEX` NODE, `OPX` EDGE, `HASH` OP.
+- Tuple 2: `HASH` NAME, `DELTA` NODE, `CGS` EDGE, `OPX` OP.
+- Tuple 3: `.cgs` NAME, `USR` NODE, `PUB` EDGE, `.toml` OP.
 - Every tuple: refuse swapped, deleted or case-normalised fields; no implicit PRIVATE.
 - KEY: `PUB DELTA POEX KEY` and `KEY OPX CGS PUB` unchanged; KEY is `sha256(GLYPH)`.
 - GLYPH: `NAME GLYPH POEX OPX` and `NAME GLYPH PUB .toml` unchanged.

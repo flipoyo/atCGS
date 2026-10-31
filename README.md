@@ -1,4 +1,4 @@
-# atCGS — ComplexGraphSync 1.4.0-alpha
+# atCGS — ComplexGraphSync 1.5.0-alpha
 
 **Canonical README — USR / PUB / BIOS / POEX / OpFrontier.**
 
@@ -16,13 +16,12 @@ Names, extensions, repetitions and capitalisation are part of the contract.
 
 ```text
 README atCGS USR PUB
-GLYPH POEX PUB DELTA
 DELTA POEX OPX HASH
 HASH DELTA CGS OPX
 .cgs USR PUB .toml
 ```
 
-These five lines are PRIME G tuples, kept without normalisation.
+These four lines are PRIME G tuples, kept without normalisation; the GLYPH is not among them.
 The GLYPH (`.bit`) is the 256×256 public key of DELTA: a POEX privilege, never exposed.
 POE is reached only through `KEY := sha256(GLYPH)`, the prototype of the class KEY:
 
@@ -160,7 +159,7 @@ The package tutorials are reproducible examples, not a merged PR.
 
 ## 10. ALPHA release criteria
 
-- [ ] The five README/USR/PUB tuples are unchanged.
+- [ ] The four README/USR/PUB tuples are unchanged.
 - [ ] The six new BIOS symbols keep their original order.
 - [x] The four System Layers are the only exposed `@cgs` entries.
 - [ ] The cryptographic packet proof verifies independently.

@@ -12,3 +12,9 @@ To do:
 - Mount it in examples/cgs_opx.cgs only, private and writable, e.g. at
   .cgitsync/.register, and point ATCGS_REGISTER at its file.
 - tests/test_layers.py: the register is mounted at OPX and nowhere else.
+
+Closed 2026-10-31 (1.5.0-alpha), owner's OK: examples/cgs_opx.cgs mounts
+github:flipoyo/.register at .cgitsync/.register, private and writable, at OPX
+only (tests/test_layers.py checks it); ATCGS_REGISTER points at
+.cgitsync/.register/opx.json. The repository does not exist on GitHub yet:
+create it (private) before bootstrapping the OPX tree.

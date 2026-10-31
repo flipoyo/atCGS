@@ -20,16 +20,17 @@ from poex_4x256_simulator import (
 class TestContracts(unittest.TestCase):
     def test_canonical(self):
         report = inspect()
-        self.assertEqual(report["public_rows"], 5)
+        self.assertEqual(report["public_rows"], 4)
         self.assertEqual(report["opfrontier_rows"], 3)
 
     def test_public_tuples(self):
         self.assertEqual(
-            FIXTURES["public_boundary"]["sequence"][1], ("GLYPH", "POEX", "PUB", "DELTA")
+            FIXTURES["public_boundary"]["sequence"][1], ("DELTA", "POEX", "OPX", "HASH")
         )
         self.assertEqual(
-            FIXTURES["public_boundary"]["sequence"][3], ("HASH", "DELTA", "CGS", "OPX")
+            FIXTURES["public_boundary"]["sequence"][2], ("HASH", "DELTA", "CGS", "OPX")
         )
+        self.assertNotIn("GLYPH", {f for row in FIXTURES["public_boundary"]["sequence"] for f in row})
 
     def test_key_prototype(self):
         self.assertEqual(inspect()["key_rows"], 2)

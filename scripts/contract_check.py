@@ -53,7 +53,6 @@ FIXTURES = {
     "public_boundary": {
         "sequence": (
             ("README", "atCGS", "USR", "PUB"),
-            ("GLYPH", "POEX", "PUB", "DELTA"),
             ("DELTA", "POEX", "OPX", "HASH"),
             ("HASH", "DELTA", "CGS", "OPX"),
             (".cgs", "USR", "PUB", ".toml"),
@@ -141,7 +140,7 @@ def inspect(path=SPEC):
         "delta_nabla_rows": 4,
         "opfrontier_rows": 3,
         "frontier_rows": 2,
-        "public_rows": 5,
+        "public_rows": 4,
         "key_rows": 2,
         "glyph_rows": 2,
         "poex_verified": False,

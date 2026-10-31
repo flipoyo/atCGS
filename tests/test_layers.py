@@ -73,6 +73,15 @@ class LayerTreeTests(unittest.TestCase):
             with self.subTest(layer=layer):
                 self.assertNotIn(".omniscience", by_path(load(layer)[1]))
 
+    def test_register_is_mounted_writable_at_opx_only(self):
+        register = dict(by_path(load("opx")[1])[".cgitsync/.register"])
+        self.assertEqual(register, {"repository": "github:flipoyo/.register", "relative_path": ".cgitsync/.register",
+                                    "fallback_branch": "main", "private": True, "writable": True,
+                                    "nested_config": "disabled"})
+        for layer in ("dev", "usr"):
+            with self.subTest(layer=layer):
+                self.assertNotIn(".cgitsync/.register", by_path(load(layer)[1]))
+
     def test_agentic_structure_follows_complexgitsync(self):
         distant = {".agent/.distant/ticket", ".agent/.distant/dev-sync", ".agent/.distant/documentation"}
         local = {".agent/.local/.dev", ".agent/.local/.localSpec", ".agent/.local/.claude"}
