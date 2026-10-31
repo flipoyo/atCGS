@@ -1,168 +1,150 @@
-# @CGS
+# atCGS — ComplexGraphSync ALPHA 0.0.0
 
-License: Apache-2.0
+**README canonique — USR / PUB / BIOS / POEX / OpFrontier.**
 
-Version: ALPHA0001.00
+Ce dépôt décrit un prototype exécutable local, non un service PUBLIC déployé.
+Il conserve le moteur de ComplexGitSync et matérialise les frontières de CGS.
+Objectif : une architecture falsifiable, reproductible et minimale en 24 h.
 
-Formal definition: [ComplexGraphSync](https://codeberg.org/gx4g/ComplexGraphSync)
+## 1. Invariant PRIME G
 
----
+`PRIME G = {NAME, NODE, EDGE, OP}` : exactement quatre champs ordonnés.
+Les noms, extensions, répétitions et majuscules font partie du contrat.
+`*G` désigne un OperatingSpace requestable, pas une réponse déjà vérifiée.
 
-## CGS-BETA, CGS-ALPHA and GX4G
-
-`@CGS` is **CGS-BETA**: the Living Graph Python package, built by coupling
-two components.
-
-| Component | Role | Source |
-| --- | --- | --- |
-| **CGS-ALPHA** | [ComplexGitSync](https://github.com/flipoyo/ComplexGitSync): a distributed, git-native Operating Space. A project is a **GitTree**, a tree of nested Git repositories synchronised, versioned and restored as one unit, with a hash-chained memory of every State it goes through. | `github.com:flipoyo/ComplexGitSync` |
-| **GX4G** | The **GATE** between `G` and `X`: it manages the state transitions of `G` requested by `X`. | `codeberg.org:gx4g/gx4g` |
-| **CGS-BETA** | GX4G coupled with CGS-ALPHA: the Living Graph Python package. | this repository (`@CGS`) |
+## 2. Nouvelle frontière README / USR / PUB
 
 ```text
-CGS-BETA := GX4G + CGS-ALPHA
+README atCGS USR PUB
+PUB 256 256 .bit
+.bit .computo .omniscience .wth
+.wth .computo .gts .cgs
+.cgs USR PUB .toml
 ```
 
-CGS-ALPHA supplies persistence and reproducibility: every State is recorded
-and can be rebuilt exactly on another machine. GX4G supplies control: `X`
-never changes `G` directly, it requests a transition and the gate manages it.
-CGS-BETA lifts both into a graph: the living graph is what gets seeded,
-persisted and retrieved.
+Ces cinq lignes sont des tuples PRIME G, conservés sans normalisation.
+`PUB 256 256 .bit` fixe une représentation binaire 256×256 comme référence.
+`.bit` constitue ici une désignation d'artefact, non une permission de le publier.
+`.wth` est une étiquette opaque : aucune sémantique inventée par le tutoriel.
+`.computo` appartient au domaine PRIVATE de ComplexGraphSync.
+`.omniscience` désigne sa frontière PUBLIC, limitée aux preuves publiables.
+Les chaînes de caractères ne sont pas des commandes d'exécution implicites.
+
+## 3. BIOS / BOOT
 
 ```text
-X  --request-->  GX4G  --transition-->  G
+atCGS ALPHA BIOS ComplexGitSync M.m.p
+ComplexGitSync G POEX .gts
+.gts G OPX TWX
+TWX ENV HWX DEV
+DEV HWX TWX USR
+USR TWX G .cgs
 ```
 
-### The Living Graph package
+La première ligne est l'identité d'amorçage et la version du moteur à épingler.
+`M.m.p` est un espace réservé : ne pas inventer une version installée.
+Les cinq lignes suivantes constituent des tuples stricts à quatre champs.
+`ENV`, `HWX`, `TWX` sont conservés comme symboles tant que non spécifiés.
+`BOOT` ne signifie pas preuve d'existence authentifiée.
 
-The package is the living graph `G`, composed of four parts:
+## 4. System Layers et OpFrontier
 
 ```text
-NAME = G{ NAME, NODE, EDGE, OP }
+PRIME CGS = {OPX, DEV, USR, PUB}
+.gts OPX DEV .cgs
+.cgs DEV USR .toml
+.toml USR PUB .omniscience
 ```
 
-It is the living instance of the PRIME graph, whose primitives are:
+Les quatre System Layers ne sont pas quatre moteurs Git.
+Les trois frontières de quatre champs n'autorisent aucune copie automatique.
+`OPX` et `DEV` restent liés aux opérations privées autorisées.
+`USR` exprime la demande ; `PUB` limite ce qui peut être rendu public.
+Le décorateur `@cgs` devra accepter uniquement ces quatre sélecteurs.
+La CLI historique `cgitsync` demeure interne et autonome.
+
+## 5. POEX — transport de 256×256 bits
 
 ```text
-G := { NAME-G, NODE-G, EDGE-G, OP }
+Matrix = 256 rows × 256 bits = 65 536 bits = 8 192 bytes
+Packet = 4 rows × 256 bits = 1 024 bits = 128 bytes
+Stream = 64 indexed packets, in ascending row-major order
+.poe   = one zero-count report per 4-bit quartet
+Total  = 16 384 reports; 256 reports per packet
 ```
 
-| Part | Meaning |
-| --- | --- |
-| `NAME` | the name of the graph, which makes it addressable |
-| `NODE` | the nodes of the graph (PRIME `NODE-G`) |
-| `EDGE` | the edges between nodes (PRIME `EDGE-G`) |
-| `OP` | the operations that act on the graph (PRIME `OP`) |
+Le compteur de zéros ne prouve ni identité ni existence à un instant donné.
+La racine Merkle des paquets POEX est distincte du MerkleRoot du GitTree.
+Un changement d'un bit, une permutation ou un paquet manquant sont rejetés.
+Le dernier quartet est conservé logiquement ; aucun pointeur Rust n'est simulé.
 
-PRIME defines the primitives; the living package instantiates them:
+## 6. Espaces et publication
 
 ```text
-PRIME  G  := { NAME-G, NODE-G, EDGE-G, OP }
-LIVING @G := G{ NAME, NODE, EDGE, OP }
+ComplexGraphSync PRIVATE = .computo
+ComplexGraphSync PUBLIC  = .omniscience
+ComplexGitSync INTERNAL  = .cgitsync
 ```
 
-The formal definition lives in the GitRepo [ComplexGraphSync](codeberg.org/gx4g/ComplexGraphSync).
+Un manifeste candidat n'est pas un checkpoint authentifié.
+Aucune sortie publique ne contient de secret, chemin privé ou GitTree brut.
+L'ancien registre Omniscience interne PRIVATE n'est pas rendu public de force.
+Un succès local ne signifie pas publication sur un réseau.
 
+## 7. Démarrage du laboratoire hors réseau
 
----
+Requis : Python 3.11+ ; aucune dépendance externe pour ce démonstrateur.
+Depuis la racine du répertoire extrait :
 
-## What @CGS Is For
-
-`@CGS` is the Universal and Unique entry point to Living Graphs denoted *G. 
-
-Use `@CGS` to turn an input into a living graph that can be seeded, interpreted as graph state and graph space, persisted, and later retrieved.
-
-In practical terms, `@CGS` is for:
-
-- booting a public ontological NODE-G state-space entry-point 
-- booting a private  NODE-G space-state corresponding to OP-G
-- adapting input deterministically without mutating the input EDGE-G GX4G-OP
-- resolving input into a living graph instance through EDGE-G GX4G-NODE
-- reading the graph as deterministic state or contextual space .cgs
-- making the result addressable .gts
-
-The README answers what to use `@CGS` for. The ontology answers what `@CGS` is.
-
----
-
-## The OP Frontier
-
-The class `OP` of ComplexGitSync is the **Graph Frontier** between CGS-ALPHA
-and CGS-BETA. Every `cgitsync` operation (`bootstrap`, `pull`, `checkout`,
-`commit`, `push`, `merge`, `tag`, `memory`, `omniscience`) is an `OP` of `G`.
-Nothing crosses from one side to the other except through `OP`.
-
-```text
-CGS-BETA   X --request--> GX4G --OP--> G (living graph)
-                                       |
- ----------------------- OP frontier --+------------------------
-                                       |
-CGS-ALPHA                              v
-           GitTree --OP--> new State (.gts) --> memory --> omniscience
+```bash
+python3 scripts/contract_check.py inspect
+python3 scripts/poex_4x256_simulator.py --output candidate.json
+python3 scripts/contract_check.py candidate candidate.json
+python3 -m unittest discover -s tests -v
 ```
 
-| Side | Holds | Artifact |
-| --- | --- | --- |
-| CGS-BETA | the living graph `G{NAME, NODE, EDGE, OP}`, gated by GX4G | `@G` |
-| `OP` | the transition: what `X` requested and GX4G accepted | `cgitsync` command |
-| CGS-ALPHA | the GitTree, its recorded States and its memory | `.cgs`, `.gts` |
+L'option `inspect` valide les tuples du fichier `spec/contracts.toml`.
+Le séquenceur utilise par défaut une matrice de démonstration déterministe.
+`candidate` doit afficher `NOT_PUBLISHED` et `poex_verified=false`.
+L'ensemble fonctionne sans clonage de dépôt ni accès à `.computo` réel.
 
-- `.cgs` describes the topology of a graph's GitTree (the repositories it is made of).
-- `.gts` records one State: the exact commit of every repository.
-- The memory logs each State and the `OP` that produced it, in a verifiable hash chain.
+## 8. TUTORIELS 150 lignes chacun
 
----
+- [TUTO 01 — BIOS / BOOT](TUTOS/TUTO_01_BIOS_BOOT.md)
+- [TUTO 02 — PRIME G et DELTA/NABLA](TUTOS/TUTO_02_PRIME_G.md)
+- [TUTO 03 — System Layers et OpFrontier](TUTOS/TUTO_03_OPFRONTIER.md)
+- [TUTO 04 — POEX 4×256](TUTOS/TUTO_04_POEX.md)
+- [TUTO 05 — USR / PUB, .bit et .wth](TUTOS/TUTO_05_USR_PUB.md)
+- [TUTO 06 — Intégration et roadmap 24 h](TUTOS/TUTO_06_INTEGRATION.md)
 
-## Entry Points
+## 9. Réalité du code amont
 
-`@CGS` boots a living graph. The input is never mutated.
+`atCGS` PR #1 est un prototype en brouillon et n'a pas encore ces sélecteurs.
+Il transmet actuellement plusieurs commandes `cgitsync` directement.
+`ComplexGitSync` fournit le moteur GitTree / State / Memory / Integrity.
+Les tutoriels du paquet sont des exemples reproductibles, non une PR fusionnée.
 
-```text
-@CGS(.)         public boot, from the canonical public seed
-@CGS(., Α)      private boot, carrying the imprint Α
-@HI := @CGS($HI, $HI.PRIVATE@)    adapt a received input $HI into @HI
-```
+## 10. Critères de release ALPHA
 
-`@HI` is the living graph derived from `$HI`; `$HI` stays as received.
-To derive an instance through several imprints:
+- [ ] Les cinq tuples README/USR/PUB sont inchangés.
+- [ ] Les six symboles BIOS nouveaux conservent leur ordre d'origine.
+- [ ] Les quatre System Layers sont les seules entrées `@cgs` exposées.
+- [ ] La preuve cryptographique des paquets se vérifie indépendamment.
+- [ ] Les accès PRIVATE ne sont jamais promus par le niveau PoE.
+- [ ] `.omniscience` ne sert que des preuves autorisées et authentifiées.
+- [ ] La compatibilité Merkle schema-1 de ComplexGitSync est préservée.
+- [ ] Les tests CI documentent les échecs, pas seulement les succès.
 
-```text
-.Χ := @CGS(.)
-for i in <list>
-    .Χ := @CGS(.Χ, i)
-return .Χ
-```
+## 11. Suivi
 
----
+ComplexGitSync #193 : https://github.com/flipoyo/ComplexGitSync/issues/193
+atCGS #2 : https://github.com/flipoyo/atCGS/issues/2
+atCGS PR #1 : https://github.com/flipoyo/atCGS/pull/1
 
-## Usage Map
+**Statut : modèle documentaire et démonstrateur offline ; pas de BOOT PUBLIC vérifié.**
 
-| Need | Use | Result |
-| --- | --- | --- |
-| Public graph | `@CGS(.)` | `.Χ` from the public seed |
-| Private graph | `@CGS(., Α)` | `.Χ` imprinted by `Α` |
-| Adapt an input | `@CGS($HI, $HI.PRIVATE@)` | `@HI` |
-| Change the graph | `X` requests, GX4G gates | an `OP` and a new State |
-| Materialise a graph | `cgitsync bootstrap <graph>.cgs` | the GitTree on disk |
-| Persist a State | `cgitsync add · commit · push · tag` | `.gts` snapshot and memory entry |
-| Restore a State | `cgitsync bootstrap <state>.gts` | the exact recorded GitTree |
-| Register and prove | `cgitsync omniscience register · verify` | a State readable from anywhere |
+## Validation complémentaire : cas à automatiser
 
----
-
-## Typical Flow
-
-1. Receive the input `$HI`, or start from the public seed.
-2. Call `@CGS` to obtain the living graph `@HI`.
-3. `X` requests a change of `G`; GX4G gates it.
-4. The accepted request crosses the `OP` frontier as a `cgitsync` operation.
-5. CGS-ALPHA records the new State (`.gts`) in the memory.
-6. Retrieve any recorded State later, here or on another machine.
-
----
-
-AUTH: Nicolas Flipo
-
-License: Apache-2.0
-
-@ := 2026-10-29
+- Toute réponse PUBLIC exige une politique de publication explicite.
+- Ne jamais inférer un clone Git depuis un symbole de tuple.
+- Un nom requestable ne signifie pas un service disponible.

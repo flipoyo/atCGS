@@ -1,0 +1,20 @@
+{
+  "system": "ComplexGraphSync ALPHA 0.0.0",
+  "schema": "CGS-POEX/0.0.0",
+  "source": "SYNTHETIC_SIMULATION",
+  "status": "NOT_PUBLISHED",
+  "poex_verified": false,
+  "public_space": ".omniscience",
+  "dimensions_bits": [
+    256,
+    256
+  ],
+  "packet_shape_bits": [
+    4,
+    256
+  ],
+  "packet_count": 64,
+  "nibble_reports": 16384,
+  "candidate_poex_merkle_root_sha256": "fc828da94f2a52d66b4bf7a52c706fa09fdf8229743d207da3d2f98f3ac6574b",
+  "gts_verified": false
+}

@@ -1,0 +1,61 @@
+# atCGS ALPHA 0.0.0 — ordered literal tuples; not .cgs grammar.
+[contract]
+project = "ComplexGraphSync"
+version = "ALPHA 0.0.0"
+state = "DECLARED_ONLY"
+prime_g = ["NAME", "NODE", "EDGE", "OP"]
+prime_cgs = ["OPX", "DEV", "USR", "PUB"]
+public = ".omniscience"
+private = ".computo"
+internal = ".cgitsync"
+[boot]
+identity = ["atCGS", "ALPHA", "BIOS", "ComplexGitSync", "M.m.p"]
+current = [
+ ["ComplexGitSync", "G", "POEX", ".gts"],
+ [".gts", "G", "OPX", "TWX"],
+ ["TWX", "ENV", "HWX", "DEV"],
+ ["DEV", "HWX", "TWX", "USR"],
+ ["USR", "TWX", "G", ".cgs"],
+]
+[bios_history]
+sequence = [
+ ["BIOS", "ENV", "HWX", "TWX"],
+ ["BOOT", "TWX", "POEX", "CGS"],
+ ["CGS", "POEX", "TWX", "GTS"],
+ ["GTS", "TWX", "OPX", "DEV"],
+ ["DEV", "HWX", "ENV", "USR"],
+ ["USR", "TWX", "GTS", "TWX"],
+ ["OPX", "HWX", "ENV", "TWX"],
+]
+extensions = [
+ ["*G", "XGTS", "GX4G", "TWX"],
+ ["CGS-ALPHA", "GX4G", "CGS", "TWX"],
+]
+[delta_nabla]
+sequence = [
+ ["DELTA", "POEX", "NABLA", "OPX"],
+ ["OPX", "ENV", "PRIME", "DELTA"],
+ ["DELTA", "ENV", "PRIME", "NABLA"],
+ ["NABLA", "EDGE", "POEX", "OPX"],
+]
+[opfrontier]
+sequence = [
+ [".gts", "OPX", "DEV", ".cgs"],
+ [".cgs", "DEV", "USR", ".toml"],
+ [".toml", "USR", "PUB", ".omniscience"],
+]
+[public_boundary]
+sequence = [
+ ["README", "atCGS", "USR", "PUB"],
+ ["PUB", "256", "256", ".bit"],
+ [".bit", ".computo", ".omniscience", ".wth"],
+ [".wth", ".computo", ".gts", ".cgs"],
+ [".cgs", "USR", "PUB", ".toml"],
+]
+[poex]
+shape = [256, 256]
+packet_shape = [4, 256]
+packets = 64
+packet_bytes = 128
+quartet_reports = 16384
+published = false
