@@ -6,6 +6,13 @@ version = "0.2.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 channels = ["conda-forge"]
 platforms = ["linux-64", "win-64", "osx-arm64"]
 
+# Project name 'CGS'. The build is the executable in the Pixi environment; its
+# name is lower-case(project) unless build-name is set, and is the prefix of
+# commit subjects: <build-name>-<version>. cgs and cgitsync name the same build.
+[tool.cgs]
+project = "CGS"
+# build-name = "cgs"
+
 # Every command runs under Pixi only; @cgs refuses to start outside it.
 [tasks]
 "@cgs" = "python -m atcgs"

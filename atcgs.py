@@ -48,6 +48,23 @@ FRONTIERS: tuple[tuple[str, tuple[str, str, str]], ...] = (
     (".opx", (".computo", ".omniscience", ".gts")),
 )
 
+
+
+def build_name(manifest: Path | None = None) -> str:
+    """Build name from pixi.toml [tool.cgs]: build-name, else lower-case(project)."""
+    with (manifest or ROOT / "pixi.toml").open("rb") as handle:
+        meta = tomllib.load(handle).get("tool", {}).get("cgs", {})
+    name = meta.get("build-name") or meta.get("project", "").lower()
+    if not re.fullmatch(r"[A-Za-z][A-Za-z0-9_.-]*", name):
+        raise ValueError("pixi.toml [tool.cgs] needs a project or a build-name")
+    return name
+
+
+def commit_subject(summary: str) -> str:
+    """Commit subject <build-name>-<version> <summary>, as in cgs-0.2.0-alpha."""
+    return f"{build_name()}-{__version__} {summary}"
+
+
 PUBLIC, PRIVATE = ".omniscience", ".computo"
 MOUNT_POLICY: Mapping[str, str] = {PUBLIC: "PUBLIC", PRIVATE: "PRIVATE"}
 PRIVATE_LAYERS = frozenset({"OPX", "DEV"})

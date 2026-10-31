@@ -10,6 +10,12 @@ mutating operations via `RoutedClient -> Op`.
 Inner version: `0.2.0-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
 prerelease). Its single source is `atcgs.__version__`; `@cgs --version` prints it.
 
+**Build name.** The project is `CGS`; its build is the executable in the Pixi
+environment, named `cgs` (`@cgs` and `cgitsync` are two names for that one
+build). The name is lower-case(project), or `build-name` when set, in
+`pixi.toml` `[tool.cgs]`. Commit subjects are `<build-name>-<version>`:
+`atcgs.commit_subject()`.
+
 **Pixi only.** `@cgs` and the scripts refuse to start outside this repository's
 Pixi environment (`PIXI_PROJECT_ROOT`, exit `2`). `pixi.toml` keeps the pinned
 ComplexGitSync's channels, platforms, Python and tools, and `ruff.toml` its lint
