@@ -64,7 +64,7 @@ class LayerTreeTests(unittest.TestCase):
                 self.assertFalse(computo.get("private", False) or computo.get("writable", False))
 
     def test_omniscience_is_the_poex_ledger_and_never_a_user_mount(self):
-        expected = {"repository": "codeberg:gx4g/.omniscience", "default_branch": "POEX",
+        expected = {"repository": "codeberg:gx4g/.omniscience", "default_branch": "cgs_CGS-ALPHA",
                     "fallback_branch": "main", "private": True, "nested_config": "disabled"}
         for layer, writable in (("opx", False), ("dev", True)):
             _, data = load(layer)
@@ -91,7 +91,7 @@ class LayerTreeTests(unittest.TestCase):
                 for path in agent & local:
                     self.assertTrue(mounts[path]["private"])
                     self.assertIs(mounts[path].get("writable", False), layer == "dev")
-                    self.assertEqual(mounts[path].get("default_branch"), None if layer == "dev" else "POEX")
+                    self.assertEqual(mounts[path].get("default_branch"), None if layer == "dev" else "cgs_CGS-ALPHA")
 
     def test_only_dev_writes_and_usr_mounts_nothing_private(self):
         for layer in LAYERS:

@@ -7,7 +7,7 @@ Its `OpFrontier` accepts exactly four case-sensitive System Layer selectors,
 selector, then passed unchanged to `ComplexGitSync.cli.main`, which routes
 mutating operations via `RoutedClient -> Op`.
 
-Inner version: `0.2.2-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
+Inner version: `0.2.3-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
 prerelease). Its single source is `atcgs.__version__`; `@cgs --version` prints it.
 
 **Build name.** The project is `CGS`; its build is the executable in the Pixi
@@ -26,7 +26,7 @@ rules, so `@cgs` and `cgitsync` share one environment. Every command is a task:
 ```bash
 pixi install
 pixi run '@cgs' --help
-pixi run '@cgs' --version    # ComplexGraphSync 0.2.2-alpha (local, no cgitsync)
+pixi run '@cgs' --version    # ComplexGraphSync 0.2.3-alpha (local, no cgitsync)
 pixi run '@cgs' OPX          # emits .gts OPX DEV .cgs (evidence: unverified)
 pixi run '@cgs' DEV          # emits .cgs DEV USR .toml
 pixi run '@cgs' USR          # emits .toml USR PUB .omniscience
@@ -84,9 +84,9 @@ gate pattern of `gx4g-*.cgs`. Every level is project `cgs` on `CGS-ALPHA`, falli
 | Mount | OPX | DEV | USR |
 | --- | --- | --- | --- |
 | `.computo`: ComplexGitSync, with `complexgitsync-<level>.cgs` nested | yes | yes | yes |
-| `.omniscience`: `codeberg:gx4g/.omniscience`, atCGS ledger: OPX reads branch `POEX`, DEV writes the computed `cgs_CGS-ALPHA` | read-only | writable | never |
+| `.omniscience`: `codeberg:gx4g/.omniscience`, atCGS ledger, branch `cgs_CGS-ALPHA`: written by DEV, read by OPX | read-only | writable | never |
 | `.agent/.distant`: `.ticketing`, `DevSpec`, `DocSpec` | read-only | read-only | no |
-| `.agent/.local`: `.dev`, `.localSpec`, `.claude`, OPX reads branch `POEX`, DEV writes `cgs_CGS-ALPHA` | read-only | writable | no |
+| `.agent/.local`: `.dev`, `.localSpec`, `.claude`, branch `cgs_CGS-ALPHA`, written by DEV, read by OPX | read-only | writable | no |
 
 ```bash
 pixi run cgitsync bootstrap examples/cgs_dev.cgs cgs

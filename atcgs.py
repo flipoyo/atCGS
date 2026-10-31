@@ -25,7 +25,7 @@ from typing import Callable, Mapping, MutableMapping, Sequence
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "0.2.2-alpha"
+__version__ = "0.2.3-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -61,7 +61,7 @@ def build_name(manifest: Path | None = None) -> str:
 
 
 def commit_subject(summary: str) -> str:
-    """Commit subject <build-name>-<version> <summary>, as in cgs-0.2.2-alpha."""
+    """Commit subject <build-name>-<version> <summary>, as in cgs-0.2.3-alpha."""
     return f"{build_name()}-{__version__} {summary}"
 
 

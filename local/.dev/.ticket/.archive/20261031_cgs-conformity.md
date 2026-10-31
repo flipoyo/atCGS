@@ -25,4 +25,4 @@ Closed 2026-10-31:
   cgs-<xxx>.cgs as a contract asking for branch <xxx> and fallback CGS-BETA.
 - Writable private repos of the DEV tree take the computed branch cgs_CGS-ALPHA
   instead of POEX. Branch POEX and the POEX.0000 ontology are untouched, but
-  DEV no longer writes branch POEX, which OPX still reads: to settle.
+  DEV no longer writes branch POEX; the OPX tree reads cgs_CGS-ALPHA too (owner's yes).
