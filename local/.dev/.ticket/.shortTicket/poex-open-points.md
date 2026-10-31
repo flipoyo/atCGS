@@ -10,19 +10,21 @@ Open points, not decided here:
 - Where OPX persists the register NAME -> (hash(SEED), hash(GLYPH)). The OPX
   tree now mounts codeberg:GX4G/.omniscience writable, but .omniscience is
   PUBLIC and the pair is OPX only.
-- KEY: [key] says holder = POEX, but the pair is OPX only.
 - Public boundary: the chain breaks after README atCGS USR PUB (next is GLYPH)
   and after HASH DELTA CGS OPX (next is .cgs). Keep both rows or drop them?
-- Pixi: cc and ssh-keygen come from the system; add a C compiler and openssh?
 - No @cgs selector calls POEX or EOPX yet.
 - Whether .agent becomes a third space of the contract (the trees mount it,
   the contract does not name it).
-- POEX.0000.toml: its .opx frontier still says .computo (left unchanged).
-- USR: the cgitsync message asked for .agent/.local writable at every level;
-  the USR tree mounts nothing private, so USR has none.
 - .poe (1.2.2-alpha), settled by the owner: POEX knows who asks and only asks
   whether poe can be granted. Granted is 0000; refused keeps the requester's
   code, OPX 1000, DEV 1100, USR 1110, PUB 1111. Assumed from "OPX is EOPX":
   only an OPX requester gives birth to an unknown NAME.
-- Naming: .poe is now the 4-bit decorator, but PoeVector, the 4 x 256-bit
-  credential vector returned by POEX.poe(), is also called .poe in the docs.
+
+Closed 2026-10-31 (1.3.0-alpha), owner's answers:
+- KEY: [key] holder = "OPX".
+- POEX.0000.toml: removed, with its pinning test.
+- USR stays private-free: no .agent/.local at USR (answer for the cgitsync side).
+- Pixi: c-compiler in [dependencies], openssh in [target.unix.dependencies]
+  (conda-forge has none for win-64); cc and ssh-keygen now come from Pixi.
+- Naming: the 4 x 256-bit vector is .cred (atcgs.Cred, POEX.cred()); .poe is
+  only the 4-bit decorator.

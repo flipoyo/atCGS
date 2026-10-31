@@ -107,7 +107,9 @@ class EnvironmentAgreementTests(unittest.TestCase):
         workspace = self.pixi["workspace"]
         self.assertEqual(workspace["channels"], CGS_CHANNELS)
         self.assertEqual(workspace["platforms"], CGS_PLATFORMS)
-        self.assertEqual(self.pixi["dependencies"], CGS_DEPENDENCIES)
+        # ComplexGitSync's dependencies, plus only what the C microcodes and wallet tests need.
+        self.assertEqual(self.pixi["dependencies"], {**CGS_DEPENDENCIES, "c-compiler": "*"})
+        self.assertEqual(self.pixi["target"], {"unix": {"dependencies": {"openssh": "*"}}})
         pin = self.pixi["pypi-dependencies"]["complexgitsync"]
         self.assertEqual(pin["git"], "https://github.com/flipoyo/ComplexGitSync.git")
         self.assertRegex(pin["rev"], r"^[0-9a-f]{40}$")

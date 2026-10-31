@@ -83,28 +83,28 @@ class POEXTests(Microcodes):
 
     def test_new_name_is_born_then_served(self):
         self.assertFalse(self.wallet.exists("X"))
-        poe = self.wallet.poe("X", lambda: BIG_SEED, self.send)
+        cred = self.wallet.cred("X", lambda: BIG_SEED, self.send)
         self.assertTrue(self.wallet.exists("X"))
-        self.assertEqual((poe.opx, poe.usr, poe.pub),
+        self.assertEqual((cred.opx, cred.usr, cred.pub),
                          (sha256(glyph_of(BIG_SEED)), sha256(b"X"), sha256(BIG_SEED)))
-        self.assertEqual(len(poe.packet()), 128)
-        self.assertEqual([poe.slot(layer) for layer in PRIME_CGS], [poe.opx, poe.dev, poe.usr, poe.pub])
+        self.assertEqual(len(cred.packet()), 128)
+        self.assertEqual([cred.slot(layer) for layer in PRIME_CGS], [cred.opx, cred.dev, cred.usr, cred.pub])
 
     def test_known_name_never_asks_its_seed_again(self):
-        self.wallet.poe("X", lambda: SEED, self.send)
+        self.wallet.cred("X", lambda: SEED, self.send)
 
         def refuse():
             raise AssertionError("SEED asked for a NAME that exists in PoE")
 
-        self.assertEqual(self.wallet.poe("X", refuse, self.send).pub, sha256(SEED))
+        self.assertEqual(self.wallet.cred("X", refuse, self.send).pub, sha256(SEED))
 
     def test_frontier_gets_hash_seed_and_a_destroyed_dev_key(self):
-        poe = self.wallet.poe("X", lambda: SEED, self.send)
+        cred = self.wallet.cred("X", lambda: SEED, self.send)
         private, seed_id, existed = self.sent[0]
         self.assertEqual(seed_id, sha256(SEED))
         self.assertTrue(existed)
         self.assertFalse(private.parent.exists())
-        self.assertEqual(poe.dev, sha256(self.dev_public))
+        self.assertEqual(cred.dev, sha256(self.dev_public))
 
     def test_dev_key_destroyed_when_send_fails(self):
         seen = []
@@ -114,15 +114,15 @@ class POEXTests(Microcodes):
             raise OSError("frontier unreachable")
 
         with self.assertRaises(OSError):
-            self.wallet.poe("X", lambda: SEED, send)
+            self.wallet.cred("X", lambda: SEED, send)
         self.assertFalse(seen[0].parent.exists())
 
     def test_glyph_is_never_stored_nor_delivered(self):
         glyph = glyph_of(SEED)
-        poe = self.wallet.poe("X", lambda: SEED, self.send)
-        for held in (repr(poe), repr(self.opx), repr(self.sent), repr(self.wallet)):
+        cred = self.wallet.cred("X", lambda: SEED, self.send)
+        for held in (repr(cred), repr(self.opx), repr(self.sent), repr(self.wallet)):
             self.assertNotIn(glyph.hex(), held)
-        self.assertNotIn(glyph, poe.packet())
+        self.assertNotIn(glyph, cred.packet())
 
 
 class SessionTests(Microcodes):

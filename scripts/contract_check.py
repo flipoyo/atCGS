@@ -110,8 +110,8 @@ def inspect(path=SPEC):
     )
     k = data["key"]
     demand(
-        k["holder"] == "POEX" and k["definition"] == "sha256(GLYPH)",
-        "KEY must be sha256(GLYPH), held by POEX",
+        k["holder"] == "OPX" and k["definition"] == "sha256(GLYPH)",
+        "KEY must be sha256(GLYPH), held by OPX",
     )
     v = data["poex"]
     demand(v["purpose"] == "comparison", "poex compares, nothing else")

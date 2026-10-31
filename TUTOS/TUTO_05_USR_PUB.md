@@ -73,7 +73,7 @@ refused   the requester's code: OPX 1000  DEV 1100  USR 1110  PUB 1111
 Only OPX gives birth to an unknown X, through EOPX from `left`; `.poe` dies with the session.
 
 If yes, the request is an OpFrontier request ComplexGraphSync -> ComplexGitSync.
-POEX then delivers `.poe`, one 4×256-bit POEX packet:
+POEX then delivers `.cred`, one 4×256-bit POEX packet:
 
 ```text
 OPX  hash(GLYPH)        OPX only
@@ -101,7 +101,7 @@ pixi run contract-inspect
 
 Expected result: `public_rows = 5`, `key_rows = 2` and `glyph_rows = 2`.
 The comparison is strict, field by field.
-A KEY not defined as `sha256(GLYPH)`, or not held by POEX, is refused.
+A KEY not defined as `sha256(GLYPH)`, or not held by OPX, is refused.
 
 ## 6. Generate an unpublished manifest
 

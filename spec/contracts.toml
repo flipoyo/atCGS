@@ -1,7 +1,7 @@
-# atCGS 1.2.2-alpha — ordered literal tuples; not .cgs grammar.
+# atCGS 1.3.0-alpha — ordered literal tuples; not .cgs grammar.
 [contract]
 project = "ComplexGraphSync"
-version = "1.2.2-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.3.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 state = "DECLARED_ONLY"
 prime_g = ["NAME", "NODE", "EDGE", "OP"]
 prime_cgs = ["OPX", "DEV", "USR", "PUB"]
@@ -54,8 +54,8 @@ sequence = [
  ["HASH", "DELTA", "CGS", "OPX"],
  [".cgs", "USR", "PUB", ".toml"],
 ]
-[key]  # prototype of the class KEY, held by the POEX wallet
-holder = "POEX"
+[key]  # prototype of the class KEY, held by OPX with the pair (hash(SEED), hash(GLYPH))
+holder = "OPX"
 prototype = [
  ["PUB", "DELTA", "POEX", "KEY"],
  ["KEY", "OPX", "CGS", "PUB"],

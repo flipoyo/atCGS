@@ -24,7 +24,7 @@ from typing import Callable, Mapping, MutableMapping, Sequence
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.2.2-alpha"
+__version__ = "1.3.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -60,7 +60,7 @@ def build_name(manifest: Path | None = None) -> str:
 
 
 def commit_subject(summary: str) -> str:
-    """Commit subject <build-name>-<version> <summary>, as in cgs-1.2.2-alpha."""
+    """Commit subject <build-name>-<version> <summary>, as in cgs-1.3.0-alpha."""
     return f"{build_name()}-{__version__} {summary}"
 
 
@@ -337,8 +337,8 @@ def build(name: str, directory: Path, compiler: str = "cc") -> Path:
 
 
 @dataclass(frozen=True, slots=True)
-class PoeVector:
-    """.poe: one 4x256-bit POEX packet, one sha256 credential per PRIME CGS layer."""
+class Cred:
+    """.cred: one 4x256-bit POEX packet, one sha256 credential per PRIME CGS layer."""
 
     opx: str  # sha256(GLYPH); OPX only
     dev: str  # sha256(temporary DEV ssh public key)
@@ -415,10 +415,10 @@ class POEX:
         """A local session; every .poe it issues holds only until it closes."""
         return Session(self)
 
-    def poe(
+    def cred(
         self, name: str, ask_seed: Callable[[], bytes], send: Callable[[Path, str], None]
-    ) -> PoeVector:
-        """Deliver .poe for NAME; a NAME not in PoE is born through EOPX first.
+    ) -> Cred:
+        """Deliver .cred for NAME; a NAME not in PoE is born through EOPX first.
 
         Once NAME exists in PoE, `send` is the OpFrontier request
         ComplexGraphSync -> ComplexGitSync: it receives the temporary DEV private
@@ -437,7 +437,7 @@ class POEX:
             )
             public = Path(f"{private}.pub").read_bytes().strip()
             send(private, seed_id)
-        return PoeVector(glyph_id, sha256(public), sha256(name.encode()), seed_id)
+        return Cred(glyph_id, sha256(public), sha256(name.encode()), seed_id)
 
 
 class Session:

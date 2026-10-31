@@ -1,4 +1,4 @@
-# atCGS — ComplexGraphSync 1.2.2-alpha
+# atCGS — ComplexGraphSync 1.3.0-alpha
 
 **Canonical README — USR / PUB / BIOS / POEX / OpFrontier.**
 
@@ -35,7 +35,7 @@ KEY sha256(GLYPH)
 Two C microcodes, each wrapped by a Python class ([microcode/README.md](microcode/README.md)):
 `poex` (Proof of Existence, `atcgs.POEX`, the wallet) only compares two GLYPHs;
 `eopx` (Existence of Proof, `atcgs.EOPX`) runs the birth protocol, SEED -> GLYPH.
-For a NAME X, POEX asks one question, "does X exist in PoE?", then delivers `.poe`:
+For a NAME X, POEX asks one question, "does X exist in PoE?", then delivers `.cred`:
 
 ```text
 NAME GLYPH POEX OPX
@@ -50,7 +50,7 @@ compare       POEX rebuilds two GLYPHs from SEEDs; poex says equal or not
               refused: the requester's code, OPX 1000 DEV 1100 USR 1110 PUB 1111
               only OPX gives birth to an unknown X, through EOPX
 X in PoE      OpFrontier request ComplexGraphSync -> ComplexGitSync
-.poe          (OPX, DEV, USR, PUB) = one 4x256-bit POEX packet
+.cred         (OPX, DEV, USR, PUB) = one 4x256-bit POEX packet
               hash(GLYPH), hash(DEV ssh key), hash(NAME), hash(SEED)
 ```
 
