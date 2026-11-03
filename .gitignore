@@ -6,3 +6,10 @@ __pycache__/
 .cgitsync/
 .omniscience/
 .agent/
+.agent/.distant/dev-sync
+.agent/.distant/documentation
+.agent/.distant/ticket
+.cgitsync/.memory
+.omniscience
+ComplexGitSync
+ComplexGraphSync.lgr
