@@ -73,14 +73,15 @@ class LayerTreeTests(unittest.TestCase):
             with self.subTest(layer=layer):
                 self.assertNotIn(".omniscience", by_path(load(layer)[1]))
 
-    def test_register_is_mounted_writable_at_opx_only(self):
-        register = dict(by_path(load("opx")[1])[".cgitsync/.register"])
-        self.assertEqual(register, {"repository": "github:flipoyo/.register", "relative_path": ".cgitsync/.register",
-                                    "fallback_branch": "main", "private": True, "writable": True,
-                                    "nested_config": "disabled"})
-        for layer in ("dev", "usr"):
+    def test_the_register_is_in_omniscience_not_in_cgitsync(self):
+        from atcgs.commands import REGISTER
+
+        self.assertEqual(REGISTER, ROOT / ".cgitsync" / ".memory" / ".register")
+        for layer in LAYERS:
+            mounts = by_path(load(layer)[1])
             with self.subTest(layer=layer):
-                self.assertNotIn(".cgitsync/.register", by_path(load(layer)[1]))
+                self.assertFalse(any(path.startswith(".cgitsync") for path in mounts))
+                self.assertFalse(any("register" in r["repository"] for r in mounts.values()))
 
     def test_agentic_structure_follows_complexgitsync(self):
         distant = {".agent/.distant/ticket", ".agent/.distant/dev-sync", ".agent/.distant/documentation"}
@@ -119,9 +120,15 @@ class EnvironmentAgreementTests(unittest.TestCase):
         # ComplexGitSync's dependencies, plus only the identity layer's cryptography.
         self.assertEqual(self.pixi["dependencies"], {**CGS_DEPENDENCIES, "cryptography": ">=44"})
         self.assertEqual(self.pixi["target"], {"unix": {"dependencies": {"openssh": "*"}}})
-        pin = self.pixi["pypi-dependencies"]["complexgitsync"]
+        self.assertNotIn("pypi-dependencies", self.pixi)  # ComplexGitSync comes from one feature only
+        pin = self.pixi["feature"]["pinned"]["pypi-dependencies"]["complexgitsync"]
         self.assertEqual(pin["git"], "https://github.com/flipoyo/ComplexGitSync.git")
         self.assertRegex(pin["rev"], r"^[0-9a-f]{40}$")
+
+    def test_dogfood_runs_the_nested_checkout_and_default_does_not(self):
+        live = self.pixi["feature"]["dogfood"]["pypi-dependencies"]["complexgitsync"]
+        self.assertEqual(live, {"path": "./ComplexGitSync", "editable": True})
+        self.assertEqual(self.pixi["environments"], {"default": ["pinned"], "dogfood": ["dogfood"]})
 
     def test_lint_contract_matches_complexgitsync(self):
         with (ROOT / "ruff.toml").open("rb") as handle:

@@ -83,7 +83,7 @@ about 17 Ed25519 keys, one per (repo, role), and never says how many.
 ## 7. The cycle, command by command
 
 ```bash
-export ATCGS_REGISTER=.cgitsync/.register
+# the register: .cgitsync/.memory/.register (ATCGS_REGISTER overrides it)
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init     # once: prints idpub to pin
 #   copy idpub into spec/contracts.toml [identity] opx_pub, then:
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init     # OPX enrols itself

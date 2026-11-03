@@ -261,8 +261,48 @@ class SessionTests(Lab):
 
     def test_subprocess_gets_the_agent_and_no_identity(self):
         with Session(ALICE, self.reg, self.glyph, "demo", "DEV") as s:
-            env = s.env({"PATH": os.environ["PATH"], "SSH_AGENT_PID": "1"})
-        self.assertEqual(set(env), {"PATH", "SSH_AUTH_SOCK"})
+            env = s.env({"PATH": os.environ["PATH"], "SSH_AGENT_PID": "1", "GIT_SSH": "x"})
+        self.assertEqual(set(env), {"PATH", "SSH_AUTH_SOCK", "GIT_SSH_COMMAND"})
+
+    def test_the_session_ssh_maps_each_repo_to_its_public_key_only(self):
+        with Session(ALICE, self.reg, self.glyph, "demo", "USR") as s:
+            wrapper = Path(s.env()["GIT_SSH_COMMAND"])
+            self.assertTrue(os.access(wrapper, os.X_OK))
+            self.assertIn("-F /dev/null", wrapper.read_text())
+            mapping = dict(line.split() for line in (wrapper.parent / "keys.map").read_text().splitlines())
+            self.assertEqual(list(mapping), ["flipoyo/other"])
+            self.assertEqual(Path(mapping["flipoyo/other"]).read_text().strip(), self.usr.public)
+            written = "".join(p.read_text() for p in wrapper.parent.rglob("*") if p.is_file())
+            self.assertNotIn("PRIVATE KEY", written)
+        self.assertFalse(wrapper.exists())
+
+    def test_repo_path(self):
+        from atcgs.session import repo_path
+
+        for repo in ("github:flipoyo/atCGS", "https://github.com/flipoyo/atCGS.git", "github:FLIPOYO/atcgs/"):
+            with self.subTest(repo=repo):
+                self.assertEqual(repo_path(repo), "flipoyo/atcgs")
+
+
+class DeployKeysTests(Lab):
+    def test_one_gh_command_per_active_github_grant(self):
+        import sys as _sys
+
+        _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+        from deploy_keys import commands
+
+        self.enrol(ALICE)
+        self.enrol(BOB)
+        dev = self.grant(ALICE, REPO, "DEV")
+        self.grant(BOB, REPO, "USR")
+        self.grant(BOB, OTHER, "USR")
+        self.reg.revoke_access(OPX, BOB.uid, OTHER)
+        lines = commands(self.reg.state())
+        self.assertEqual(len(lines), 2)
+        mine = next(line for line in lines if dev.public in line)
+        self.assertIn("repos/flipoyo/demo/keys", mine)
+        self.assertIn("read_only=false", mine)
+        self.assertNotIn("PRIVATE", "".join(lines))
 
 
 class SelectorTests(unittest.TestCase):
@@ -270,11 +310,16 @@ class SelectorTests(unittest.TestCase):
         accept = OpFrontier().accept
         for argv in (["OPX", "init"], ["USR", "request", "out.json", REPO, "USR"],
                      ["OPX", "admit", "r.json"], ["OPX", "revoke", "u"], ["OPX", "revoke", "u", REPO],
-                     ["DEV", "login", "demo"], ["DEV", "login", "demo", "status"]):
+                     ["DEV", "login", "demo"], ["DEV", "login", "demo", "status"],
+                     ["USR", "login", "demo", "fetch"], ["DEV", "login", "demo", "commit", "-m", "x"],
+                     ["DEV", "login", "demo", "push"], ["OPX", "login", "demo", "tag", "v1"],
+                     ["OPX", "login", "demo", "bootstrap", "demo.cgs", "demo"]):
             with self.subTest(argv=argv):
                 self.assertEqual(accept(argv).args, tuple(argv[1:]))
         for argv in (["DEV", "init"], ["DEV", "admit", "r.json"], ["PUB", "login", "demo"],
-                     ["USR", "request", "out.json", REPO], ["DEV", "login", "demo", "rm", "-rf"],
+                     ["USR", "request", "out.json", REPO], ["DEV", "login", "demo", "bash"],
+                     ["USR", "login", "demo", "push"], ["USR", "login", "demo", "commit"],
+                     ["DEV", "login", "demo", "tag", "v1"], ["DEV", "login", "demo", "bootstrap", "x.cgs"],
                      ["USR", "revoke", "u"], ["OPX", "prove", "X", "a", "b"]):
             with self.subTest(argv=argv), self.assertRaises(ValueError):
                 accept(argv)
@@ -317,6 +362,11 @@ class CommandTests(unittest.TestCase):
         code, out, _ = self.cgs(alice, "DEV", "login", "demo")
         self.assertEqual((code, out["code"], out["agent_keys"], out["closed"]), (0, "1100", 1, True))
         self.assertTrue((self.dir / "demo.cgs").exists())
+        (self.dir / "demo.cgs").unlink()
+        code, out, _ = self.cgs(alice, "DEV", "login", "demo", "status")
+        self.assertEqual((code, out["cgs"]), (0, None))  # inside a tree: no stray TWIN.cgs
+        self.assertFalse((self.dir / "demo.cgs").exists())
+        self.assertIn("cgitsync", out)
         code, _, err = self.cgs(alice, "USR", "login", "demo")
         self.assertEqual(code, 3)
         self.assertIn("no USR grant", err)

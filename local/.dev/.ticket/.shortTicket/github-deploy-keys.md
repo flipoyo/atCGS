@@ -12,9 +12,10 @@ To do:
   and copies `idpub` into `spec/contracts.toml [identity] opx_pub`.
 
 Open points, not decided here:
-- DEV and USR need the journals to log in, but the register is mounted at OPX
-  only. Options: publish identity.jsonl in `.omniscience` and hand each user
-  their own signed grants; or mount a read-only copy of the register at DEV/USR.
+- DEV and USR need the journals to log in. Since 2026-11-03 the register is
+  `.cgitsync/.memory/.register` (the project's own memory), mounted at OPX only.
+  Options: mount `.cgitsync/.memory` read-only at DEV (USR stays without it), or
+  project identity.jsonl plus each user's own signed grants to them.
 - Projecting the identity journal and both chain heads to `.omniscience`.
 - `@cgs <LAYER> rotate` (password change) exists in the API (`Register.rotate`)
   but not as a command; it also needs the GLYPH resealed under the new key.

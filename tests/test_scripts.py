@@ -31,6 +31,8 @@ class ScriptTests(unittest.TestCase):
         result = script("local_remote.py")
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("this key is read-only (USR)", result.stdout)
+        self.assertIn("a deploy key of flipoyo/demo, not of flipoyo/other", result.stdout)
+        self.assertEqual(result.stdout.count("UNEXPECTED"), 0)
         self.assertIn("Permission denied (publickey)", result.stdout)
         self.assertIn("all checks passed", result.stdout)
 

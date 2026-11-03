@@ -30,6 +30,30 @@ from atcgs.journal import Grant, Register, canonical, fingerprint
 DEFAULT_LIFETIME = 3600  # seconds a key stays in the agent, even if close() never runs
 _SOCKET_LIMIT = 90  # Unix socket paths are limited to ~108 bytes
 
+# The session's ssh, given to git as GIT_SSH_COMMAND. A GitHub deploy key is valid for
+# one repo only, and ssh offers the agent's keys in turn: GitHub would accept the first
+# as a deploy key of *another* repo, then refuse the push. So the wrapper reads the repo
+# from git's remote command and offers that repo's key only. -F /dev/null keeps the
+# user's ~/.ssh keys and config out: a dogfooded push must prove the GLYPH's keys.
+SSH_WRAPPER = """#!/bin/sh
+# atCGS session ssh: only the key granted for the repo being reached, nothing from ~/.ssh.
+here=$(dirname "$0")
+key=""
+for arg in "$@"; do
+  case "$arg" in
+    "git-upload-pack "*|"git-receive-pack "*|"git-upload-archive "*)
+      path=$(printf %s "${arg#* }" | tr -d "'" | tr 'A-Z' 'a-z'); path=${path%/}; path=${path%.git}
+      name=${path##*/}; rest=${path%/*}; owner=${rest##*/}
+      key=$(awk -v r="$owner/$name" '$1 == r { print $2 }' "$here/keys.map") ;;
+  esac
+done
+if [ -z "$key" ]; then
+  echo "atCGS session: no key is granted for this repository in this session" >&2; exit 255
+fi
+exec "@SSH@" -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityFile="$key" \\
+  -o IdentityAgent="$here/agent" "$@"
+"""
+
 
 class AccessRefused(PermissionError):
     """The journals do not let this UID act as the requested layer."""
@@ -37,6 +61,13 @@ class AccessRefused(PermissionError):
 
 def challenge(nonce: bytes, uid: str, twin: str, when: int) -> bytes:
     return b"atCGS/session/v1\n" + canonical({"nonce": nonce.hex(), "uid": uid, "twin": twin, "time": when})
+
+
+def repo_path(repo: str) -> str:
+    """`owner/name`, lower-case, as the remote command names it: github:o/n, https://host/o/n(.git)."""
+    path = repo.split(":", 1)[1] if repo.startswith("github:") else repo.split("://", 1)[-1].split("/", 1)[-1]
+    parts = path.strip("/").removesuffix(".git").lower().split("/")
+    return "/".join(parts[-2:])
 
 
 def _socket_parent() -> str | None:
@@ -75,6 +106,7 @@ class Session:
             self._start_agent()
             for key in keys:
                 self._add(key)
+            self._write_ssh(keys)
         except BaseException:
             self.close()
             raise
@@ -123,6 +155,20 @@ class Session:
         subprocess.run([_tool("ssh-add"), "-q", "-t", str(self.lifetime), "-"], input=key.private.encode(),
                        env=self.env(), check=True, capture_output=True)
 
+    def _write_ssh(self, keys: list[SshKey]) -> None:
+        """Public halves and the repo -> key map for the wrapper; no private key is written."""
+        assert self._dir is not None
+        (self._dir / "keys").mkdir(mode=0o700)
+        lines = []
+        for number, key in enumerate(keys):
+            public = self._dir / "keys" / f"{number}.pub"
+            public.write_text(key.public + "\n")
+            lines.append(f"{repo_path(key.repo)} {public}")
+        (self._dir / "keys.map").write_text("\n".join(lines) + "\n")
+        wrapper = self._dir / "ssh"
+        wrapper.write_text(SSH_WRAPPER.replace("@SSH@", _tool("ssh")))
+        wrapper.chmod(0o700)
+
     # step 7
     def env(self, base: Mapping[str, str] | None = None) -> dict[str, str]:
         """The environment for a subprocess: the caller's, with this session's agent only."""
@@ -130,7 +176,9 @@ class Session:
             raise ValueError("the session is closed")
         env = dict(os.environ if base is None else base)
         env.pop("SSH_AGENT_PID", None)
+        env.pop("GIT_SSH", None)
         env["SSH_AUTH_SOCK"] = str(self._dir / "agent")
+        env["GIT_SSH_COMMAND"] = str(self._dir / "ssh")
         return env
 
     def loaded(self) -> list[str]:

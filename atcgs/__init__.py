@@ -73,11 +73,22 @@ CORE_OPERATIONS = frozenset(
 )
 CORE_RELEASE = frozenset({("release", "freeze"), ("release", "list"), ("release", "load")})
 IDENTITY_VERBS = frozenset({"init", "request", "admit", "revoke", "login"})
+# The cgitsync commands `<LAYER> login TWIN <op ...>` may run, by level: the everyday
+# loop, so atCGS is developed through @cgs (Dogfooding). The keys a level gets decide
+# what the remote accepts; this list only keeps a level to the commands it needs.
+_USR_OPS = frozenset({"status", "view-tree", "fetch", "pull", "validate"})
+_DEV_OPS = _USR_OPS | {"add", "rm", "commit", "push", "branch", "checkout", "merge", "autofix"}
+_OPX_OPS = _DEV_OPS | {"tag", "release", "bootstrap", "initialise", "omniscience", "memory",
+                       "env", "verify", "unlock", "self-history"}
+LOGIN_OPS: Mapping[str, frozenset[str]] = {"USR": _USR_OPS, "DEV": _DEV_OPS, "OPX": _OPX_OPS}
 
 # Operator configuration; never read from the request arguments.
 AUTHORIZE_ENV = "ATCGS_AUTHORIZE"
 MOUNTS_ENV = "ATCGS_MOUNTS"
-REGISTER_ENV = "ATCGS_REGISTER"  # the register directory: identity.jsonl and access.jsonl
+REGISTER_ENV = "ATCGS_REGISTER"  # overrides REGISTER, the journals' directory
+# atCGS's register (identity.jsonl, access.jsonl) lives in the project's memory,
+# .cgitsync/.memory/.register: private, per project. Its identity part and chain
+# heads may be projected to .omniscience, which holds no names.
 # Set by `pixi run`; @cgs runs under this repository's Pixi environment only.
 PIXI_ENV = "PIXI_PROJECT_ROOT"
 ROOT = Path(__file__).resolve().parents[1]
@@ -100,8 +111,12 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
   OPX admit REQUEST            enrol the requester and grant what it asks
   OPX revoke UID [REPO]        revoke a UID, or only its grant on REPO
   OPX | DEV | USR login TWIN [op ...]
-                               open a session: write TWIN.cgs, load the granted ssh keys
-                               into a private ssh-agent, run `cgitsync op ...` through it
+                               open a session: load the granted ssh keys into a private
+                               ssh-agent and run `cgitsync op ...` through it, each repo
+                               reached with its own key only. USR: status, fetch, pull;
+                               DEV: + add, commit, push, branch, checkout, merge;
+                               OPX: + tag, release, bootstrap, initialise, memory ...
+                               TWIN.cgs is written only for bootstrap/initialise, or alone.
 
 Run it as: pixi run '@cgs' ..."""
 
@@ -183,10 +198,6 @@ class OpFrontier:
         raise ValueError(f"unsupported @cgs {layer} argument: {args[0]!r}")
 
 
-def _core(args: Sequence[str]) -> bool:
-    return bool(args) and (args[0] in CORE_OPERATIONS or tuple(args[:2]) in CORE_RELEASE)
-
-
 def _identity_request(layer: str, args: Sequence[str]) -> bool:
     """The identity verbs and their arity (README § 3); the arguments are never secrets."""
     verb, rest = args[0], args[1:]
@@ -199,7 +210,7 @@ def _identity_request(layer: str, args: Sequence[str]) -> bool:
     if verb == "revoke":
         return layer == "OPX" and len(rest) in (1, 2)
     if verb == "login":
-        return layer != "PUB" and len(rest) >= 1 and (len(rest) == 1 or _core(rest[1:]))
+        return layer in LOGIN_OPS and len(rest) >= 1 and (len(rest) == 1 or rest[1] in LOGIN_OPS[layer])
     return False
 
 

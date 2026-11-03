@@ -16,7 +16,7 @@ import tomllib
 from pathlib import Path
 from typing import Callable, Mapping
 
-from atcgs import REGISTER_ENV, ROOT, Authorization, Request, Unauthorized
+from atcgs import PRIVATE, REGISTER_ENV, ROOT, Authorization, Request, Unauthorized
 from atcgs.glyph import SshKey, reseal
 from atcgs.identity import Identity, derive
 from atcgs.journal import ROLES, Register, enrol_statement, fingerprint
@@ -24,6 +24,7 @@ from atcgs.session import AccessRefused, Session
 
 OPX_PUB_ENV = "ATCGS_OPX_PUB"  # overrides the pin, for the lab and the tests
 GLYPHS_ENV = "ATCGS_GLYPHS"  # where a user's GLYPHs live; default ~/.cgs/.glyph
+INSTALL_OPS = frozenset({"bootstrap", "initialise"})
 ROLE_CODES: Mapping[str, str] = {"OPX": "1000", "DEV": "1100", "USR": "1110", "PUB": "1111"}
 
 ask: Callable[[str], str] = getpass.getpass  # replaced in tests only
@@ -48,11 +49,17 @@ def opx_pub(env: Mapping[str, str] | None = None) -> bytes:
     return pub
 
 
+# atCGS's register: per-project, private, in the project's own memory (.cgitsync/.memory).
+# cgitsync's memory scanner matches only its own folder names, so this folder is ignored by it.
+REGISTER = ROOT / PRIVATE / ".memory" / ".register"
+
+
 def register(env: Mapping[str, str] | None = None) -> Register:
+    """atCGS's register: .cgitsync/.memory/.register, unless ATCGS_REGISTER names another directory."""
     directory = _env(env).get(REGISTER_ENV)
-    if not directory:
-        raise ValueError(f"set {REGISTER_ENV} to the register directory")
-    return Register(Path(directory), opx_pub(env))
+    if not directory and not (ROOT / PRIVATE / ".memory").is_dir():
+        raise ValueError(f"no {PRIVATE}/.memory mount here for the register: mount it (OPX tree) or set {REGISTER_ENV}")
+    return Register(Path(directory) if directory else REGISTER, opx_pub(env))
 
 
 def glyph_path(uid: str, env: Mapping[str, str] | None = None) -> Path:
@@ -151,9 +158,12 @@ def login(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = Non
     if not path.exists():
         raise AccessRefused("no GLYPH for this login/password on this machine")
     with Session(me, register(env), path.read_bytes(), twin, layer) as session:
-        cgs = session.write_cgs(Path.cwd())
+        # TWIN.cgs only where it is the way in: alone, or for bootstrap/initialise.
+        # Run inside an existing tree (commit, push ...), it would be a stray file in a repo.
+        cgs = session.write_cgs(Path.cwd()) if not op or op[0] in INSTALL_OPS else None
         result: dict[str, object] = {
-            "layer": layer, "code": ROLE_CODES[layer], "uid": me.uid, "twin": twin, "cgs": str(cgs),
+            "layer": layer, "code": ROLE_CODES[layer], "uid": me.uid, "twin": twin,
+            "cgs": str(cgs) if cgs else None,
             "repos": [{"repo": r, "fingerprint": g.fingerprint} for r, g in sorted(session.grants.items())],
             "agent_keys": len(session.loaded()),
         }

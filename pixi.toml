@@ -21,6 +21,7 @@ lint = "ruff check ."
 contract-inspect = "python scripts/contract_check.py inspect"
 identity-demo = "python scripts/identity_demo.py"
 local-remote = "python scripts/local_remote.py"
+deploy-keys = "python scripts/deploy_keys.py"
 
 [dependencies]
 python = "3.11.*"
@@ -30,10 +31,22 @@ hypothesis = "*"
 # Ed25519, Argon2id (>= 44), HKDF and ChaCha20-Poly1305 for the identity layer.
 cryptography = ">=44"
 
-[pypi-dependencies]
-# Immutable ComplexGitSync 8.6.2 head inspected on 2026-10-31; the installed
-# CLI continues to own all release/integrity/environment semantics.
-complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "9594d7e51ab9008458335cda09c80538f1a0bf98" }
+# ComplexGitSync, in one of two places (a feature cannot override a dependency the
+# default environment also declares, so each source is its own feature):
+#   default  the pinned CGS-ALPHA head; a plain atCGS clone (POEX.cgs) installs it
+#   dogfood  the ./ComplexGitSync checkout, editable: a change on either side of
+#            CGS-ALPHA is live at once.  pixi run -e dogfood '@cgs' ...
+# The installed CLI continues to own all release/integrity/environment semantics.
+[feature.pinned.pypi-dependencies]
+# ComplexGitSync 8.7.0, CGS-ALPHA head dd3472b inspected on 2026-11-03.
+complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "dd3472b7b02ebd3028854413620197936a2f5f0e" }
+
+[feature.dogfood.pypi-dependencies]
+complexgitsync = { path = "./ComplexGitSync", editable = true }
+
+[environments]
+default = ["pinned"]
+dogfood = ["dogfood"]
 
 # ssh-agent, ssh-add (sessions) and sshd (local-remote). conda-forge has no openssh
 # for win-64, where Windows ships OpenSSH itself.

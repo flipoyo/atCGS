@@ -15,6 +15,7 @@ import sys
 import tempfile
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
@@ -39,7 +40,7 @@ class Lab:
     directory: Path
     ids: dict[str, Identity]
     register: Register
-    keys: dict[str, SshKey]
+    keys: dict[str, list[SshKey]]  # one key per (user, repo)
 
     def glyph(self, who: str) -> Path:
         return self.directory / "glyphs" / f"{who}.glyph"
@@ -49,7 +50,7 @@ def step(number: object, title: str) -> None:
     print(f"\n== {number}. {title}")
 
 
-def build_lab(directory: Path, repo: str = REPO, verbose: bool = True) -> Lab:
+def build_lab(directory: Path, repos: Sequence[str] = (REPO,), verbose: bool = True) -> Lab:
     """Steps 1 to 3: OPX and two users, both journals, one sealed GLYPH each."""
     say = print if verbose else (lambda *_: None)
     ids = {who: derive(*cred) for who, cred in CREDENTIALS.items()}
@@ -61,11 +62,11 @@ def build_lab(directory: Path, repo: str = REPO, verbose: bool = True) -> Lab:
     for who, role in ROLES.items():
         me = ids[who]
         register.enrol(opx, me.pub, me.sign(enrol_statement(me.pub)))
-        keys[who] = SshKey.generate(repo, role)
-        register.grant(opx, me.uid, repo, role, keys[who].public)
-        lab_glyph = seal(me, [keys[who]])
-        (directory / "glyphs" / f"{who}.glyph").write_bytes(lab_glyph)
-        say(f"   {who:5} UID {me.uid[:16]}…  {role} on {repo}  ssh {fingerprint(keys[who].public)}")
+        keys[who] = [SshKey.generate(repo, role) for repo in repos]
+        for key in keys[who]:
+            register.grant(opx, me.uid, key.repo, role, key.public)
+            say(f"   {who:5} UID {me.uid[:16]}…  {role} on {key.repo}  ssh {fingerprint(key.public)}")
+        (directory / "glyphs" / f"{who}.glyph").write_bytes(seal(me, keys[who]))
     return Lab(directory, ids, register, keys)
 
 
@@ -136,7 +137,7 @@ def refusals(lab: Lab) -> None:
         journal = lab.register.access
         saved = journal.path.read_bytes()
         entries = journal.entries()
-        body = {"repo": REPO, "role": "OPX", "ssh": lab.keys["alice"].public}
+        body = {"repo": REPO, "role": "OPX", "ssh": lab.keys["alice"][0].public}
         entries.append(journal.draft(entries, "grant", lab.ids["alice"].uid, body, lab.ids["alice"]))
         journal.write(entries)  # written behind the API's back, as an attacker would
         try:
@@ -159,7 +160,7 @@ def refusals(lab: Lab) -> None:
 def no_secret_on_disk(lab: Lab) -> None:
     files = [p for p in lab.directory.rglob("*") if p.is_file()]
     needles = [s.encode() for cred in CREDENTIALS.values() for s in cred]
-    needles += [k.private.split("\n")[1].encode() for k in lab.keys.values()]  # a line of each private key
+    needles += [k.private.split("\n")[1].encode() for ks in lab.keys.values() for k in ks]  # a line of each
     hits = [str(p.relative_to(lab.directory)) for p in files for n in needles if n in p.read_bytes()]
     print(f"   searched {len(files)} files for {len(needles)} logins, passwords and private-key lines: "
           f"{'none found' if not hits else hits}")

@@ -118,8 +118,10 @@ One role per (UID, repo), and one ssh key per grant: GitHub refuses a deploy key
 already used on another repo.
 
 - A UID with no entry for a repo is `PUB` on that repo.
-- The access journal is PRIVATE: it reveals which UIDs work on which repos. It lives
-  in OPX's register repository, `ATCGS_REGISTER`. Only its chain head is public.
+- The access journal is PRIVATE: it reveals which UIDs work on which repos. Both
+  journals are atCGS's register, `.cgitsync/.memory/.register`: the project's own
+  memory, private, written at OPX only. Only the identity journal and the access
+  chain head are projected to `.omniscience`.
 - The journal is the **decision**; the git remote is the **enforcement**. When OPX
   appends a `grant`, OPX also installs the ssh public key on the remote (a write
   deploy key for DEV, a read-only one for USR). A `revoke` removes it.
@@ -165,8 +167,9 @@ a service, steps 1, 5 and 6 stay on the client; only the signature of step 3 is 
 The session loads only the keys of the requested layer: `DEV login` gets the repos
 where the UID is DEV, `USR login` those where it is USR.
 
-The commands (`ATCGS_REGISTER` names the register directory; logins and passwords
-are asked with `getpass`, never passed as arguments or environment):
+The commands (the register is `.cgitsync/.memory/.register`, `ATCGS_REGISTER` overrides
+it; logins and passwords are asked with `getpass`, never passed as arguments or
+environment):
 
 ```bash
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init         # 1st run: prints the key to pin; 2nd: enrols OPX
@@ -243,12 +246,16 @@ The historical `cgitsync` CLI remains internal and autonomous.
 ## 6. Spaces and publication
 
 ```text
-PRIVATE = .cgitsync       (ComplexGitSync)   access journal, ATCGS_REGISTER
-PUBLIC  = .omniscience    (ComplexGraphSync) identity journal, chain heads
+PRIVATE = .cgitsync       (ComplexGitSync)   cgitsync's own (lgr, state) and the
+                                             project's memory, where the register lives:
+                                             .cgitsync/.memory/.register
+PUBLIC  = .omniscience    (ComplexGraphSync) anonymous projection only: the identity
+                                             journal and the access chain head
 ```
 
-In 1.6.0-alpha both journals live in the register; projecting the identity journal
-and the chain heads to `.omniscience` is not automated yet.
+`.omniscience` never holds the register itself. Only the anonymous projection
+(UIDs, public keys, hashes) may leave the private memory. That projection is not
+automated yet.
 
 A candidate manifest is not an authenticated checkpoint.
 No public output contains a secret, a private path or a raw GitTree.

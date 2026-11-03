@@ -40,7 +40,7 @@ ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV env check --cgs examples/cgs_dev.cgs
 # Identity and access (README § 3); logins and passwords are asked, never passed:
 pixi run identity-demo                      # the whole flow on throwaway data
 pixi run local-remote                       # the same against a local sshd: DEV pushes, USR only fetches
-export ATCGS_REGISTER=.cgitsync/.register   # identity.jsonl + access.jsonl
+# The register is .cgitsync/.memory/.register (identity.jsonl + access.jsonl); ATCGS_REGISTER overrides it.
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init                  # prints the key to pin, then enrols OPX
 pixi run '@cgs' DEV request req.json github:flipoyo/atCGS DEV  # new ssh key, sealed in your GLYPH
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit req.json        # enrol + grant
@@ -91,7 +91,7 @@ gate pattern of `gx4g-*.cgs`. Every level is project `cgs` on `CGS-ALPHA`, falli
 | Mount | OPX | DEV | USR |
 | --- | --- | --- | --- |
 | `.omniscience`: `codeberg:GX4G/.omniscience`, the ledger, branch `cgs_CGS-ALPHA` | writable | no | never |
-| `.cgitsync/.register`: `github:flipoyo/.register`, OPX's register, the identity and access journals (`ATCGS_REGISTER`) | writable | no | never |
+| `.cgitsync/.memory`: `.register`, atCGS's private register (`ATCGS_REGISTER` overrides it) | writable | no | never |
 | `.agent/.distant`: `.ticketing`, `DevSpec`, `DocSpec` | read-only | read-only | no |
 | `.agent/.local`: `.dev`, `.localSpec`, `.claude`, branch `cgs_CGS-ALPHA` | writable | writable | no |
 
