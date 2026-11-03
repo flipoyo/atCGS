@@ -1,0 +1,30 @@
+# atCGS domain ontology only. Not an executable ComplexGitSync .cgs.
+[ontology]
+id = "atCGS/OperatingSpace/TWIN-NODE-DATA-CMP"
+version = 0
+state = "PROPOSED"
+fields = ["TWIN", "NODE", "DATA", "CMP"]
+
+[types]
+TWIN = "persistent Operating Space identity"
+NODE = "identified physical object, not a GitRepo"
+DATA = "observed or derived information with provenance"
+CMP = "versioned processing and scientific computation"
+node_kinds = ["HARDWARE", "RIVERBED"]
+
+[compatibility]
+infrastructure_primitive = ["NAME", "NODE", "EDGE", "OP*"]
+node_namespace = "domain:physical"
+infrastructure_node_namespace = "prime-g:graph"
+cgs_format = "unchanged"
+git_tree_engine = "ComplexGitSync"
+operating_space_gate = "atCGS"
+
+[publication]
+boundary = ".omniscience"
+state = "NOT_PUBLISHED"
+requires_authenticated_opx = true
+requires_verified_gts = true
+allowlisted_projection_only = true
+may_expose_private_locations = false
+may_expose_raw_credentials = false
