@@ -64,11 +64,11 @@ class LayerTreeTests(unittest.TestCase):
                 self.assertNotIn(".computo", mounts)
                 self.assertFalse(any(r["repository"] == "github:flipoyo/ComplexGitSync" for r in mounts.values()))
 
-    def test_omniscience_is_the_gx4g_ledger_written_at_opx_only(self):
+    def test_omniscience_is_the_ledger_written_at_opx_only(self):
         ledger = dict(by_path(load("opx")[1])[".omniscience"])
         ledger.pop("relative_path")
         # A writable repository takes cgs_<branch> from the project, never a fixed branch.
-        self.assertEqual(ledger, {"repository": "codeberg:GX4G/.omniscience", "fallback_branch": "main",
+        self.assertEqual(ledger, {"repository": "github:flipoyo/omniscience", "fallback_branch": "main",
                                   "private": True, "writable": True, "nested_config": "disabled"})
         for layer in ("dev", "usr"):
             with self.subTest(layer=layer):

@@ -90,7 +90,7 @@ gate pattern of `gx4g-*.cgs`. Every level is project `cgs`. The files are named 
 
 | Mount | OPX | DEV | USR |
 | --- | --- | --- | --- |
-| `.omniscience`: `codeberg:GX4G/.omniscience`, the ledger, branch `cgs_CGS-ALPHA` | writable | no | never |
+| `.omniscience`: `github:flipoyo/omniscience`, the ledger, branch `cgs_CGS-ALPHA` | writable | no | never |
 | `.cgitsync/.memory`: `.register`, atCGS's private register (`ATCGS_REGISTER` overrides it) | writable | no | never |
 | `.agent/.distant`: `.ticketing`, `DevSpec`, `DocSpec` | read-only | read-only | no |
 | `.agent/.local`: `.dev`, `.localSpec`, `.claude`, branch `cgs_CGS-ALPHA` | writable | writable | no |
