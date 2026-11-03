@@ -12,29 +12,19 @@ Goal: a falsifiable, reproducible and minimal architecture within 24 h.
 Names, extensions, repetitions and capitalisation are part of the contract.
 `*G` denotes a requestable OperatingSpace, not an already verified answer.
 
-## 2. New README / USR / PUB frontier
+## 2. *G Requestable Operating Space.
 
-```text
-README atCGS USR PUB
-DELTA POEX OPX HASH
-HASH DELTA CGS OPX
-.cgs USR PUB .toml
-```
+An Operating Space is defined by its NAME, which is a project-name. A Twin is an operating space operated by UX that materialises the Gittree of a project corresponding to the UX requested state. By default UX access to the last state corresponding to its credential. An activated Operating Space activated by UX is denoted TXXX.
 
-These four lines are PRIME G tuples, kept without normalisation; the GLYPH is not among them.
-The GLYPH (`.bit`) is the 256×256 public key of DELTA: a POEX privilege, never exposed.
-POE is reached only through `KEY := sha256(GLYPH)`, the prototype of the class KEY:
+atCGS is in charge of the specific task of configuring TXXX depending on UX. It is a matter of UX identification and TXXX activation without revealing the NAME of UX. atCGS is therefore based of an identification protocole called POEX that defines UXXX credentials in the Graph system held by ComplexGraphSync. UXXX is of four types {OPX,DEVX,USRX,UXXX}.
 
-```text
-PUB DELTA POEX KEY
-KEY OPX CGS PUB
-KEY sha256(GLYPH)
-```
+atCGS configurates TXXX calling the proper cgitsync commands that corresponds to the proper type of Operator profile. They are defined at the GitRepo level. OPX is maintainer, DEVX, is developper, USX is reviewer, UXXX is unknown. cgitsync is therefore anonymous and atCGS configurates the .cgs file required by cgitsync to activate the Operating Space.
+
 
 Two C microcodes, each wrapped by a Python class ([microcode/README.md](microcode/README.md)):
 `poex` (Proof of Existence, `atcgs.POEX`, the wallet) only compares two GLYPHs;
 `eopx` (Existence of Proof, `atcgs.EOPX`) runs the birth protocol, SEED -> GLYPH.
-For a NAME X, POEX asks one question, "does X exist in PoE?", then delivers `.cred`:
+For a UX, POEX asks one question, "does X exist in PoE?", then delivers `.cred`:
 
 ```text
 NAME GLYPH POEX OPX
