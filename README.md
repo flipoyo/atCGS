@@ -14,6 +14,8 @@ state (NODE), what is its universal interface (EDGE), which mutation it performs
 Names, extensions, repetitions and capitalisation are part of the contract.
 `*G` denotes a requestable OperatingSpace, not an already verified answer.
 
+**Operating Space domain ontology:** [TWIN, NODE, DATA, CMP](spec/OPERATING_SPACE_TWIN_NODE_DATA_CMP.md) defines the persistent TWIN, physical NODE (`HARDWARE` or `RIVERBED`), DATA and computation CMP. This is a domain model **distinct** from infrastructure PRIME G; it does not change `.cgs` grammar.
+
 ## 2. *G, the requestable Operating Space
 
 An Operating Space is defined by its NAME, a project name. A Twin is an Operating
