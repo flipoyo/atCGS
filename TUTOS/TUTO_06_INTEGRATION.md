@@ -1,149 +1,72 @@
-# TUTO 06 — ALPHA integration and 24 h roadmap
+# TUTO 06 — Integration: what is checked, and what is still open
 
-**Goal:** run the lab end to end, without a fake release.
+**Goal:** run every check this repository has, in one place, and see which parts of
+the system are not yet built.
 
-## 1. Active contracts
+This tutorial replaces the earlier 24-hour roadmap. It listed windows and deliverables
+that were planning, not software state. Open work is now listed in README § 8 and in
+the open tickets under `local/.dev/.ticket/`.
 
-`BIOS` is a boot protocol still being formalised.
-`PRIME G` fixes four strict fields per tuple.
-`PRIME CGS` fixes the four layers OPX, DEV, USR, PUB.
-`OpFrontier` describes three artifact transitions.
-`POEX` sequences 256×256 matrices into 64 packets of 4×256.
-The new tuples describe the README/USR/PUB frontier.
-
-## 2. Engine and spaces
-
-```text
-ComplexGraphSync = interface and controlled public answer
-ComplexGitSync = GitTree, Memory, State and Integrity engine
-PUBLIC = .omniscience
-PRIVATE = .cgitsync
-```
-
-Do not reimplement the Git/Merkle engine in the decorator.
-Do not turn a file suffix into a mutation order.
-
-## 3. Offline demonstration
+## 1. Run every check
 
 ```bash
-pixi run contract-inspect
-pixi run identity-demo
-pixi run local-remote
-pixi run test
-```
-
-The whole run produces a local report, not a real publication.
-The outputs are reproducible in the pinned Pixi environment.
-
-## 4. P0 roadmap
-
-| Step | Window | Deliverable |
-| --- | --- | --- |
-| BIOS | H0–H4 | Freeze the tuples, version and identity |
-| POEX | H4–H10 | Packets, Merkle, OpFrontier emitter |
-| `@cgs` | H10–H16 | 4 System Layer selectors |
-| Security | H16–H21 | Refusal of PRIVATE leaks and invalid proofs |
-| Release candidate | H21–H24 | PR, CI tests and promotion decision |
-
-This breakdown is a development target, not a time-bound promise.
-
-## 5. Observed GitHub state
-
-`atCGS` PR #1 is merged.
-The decorator now accepts only the `OPX DEV USR PUB` selectors.
-Real verification of `.omniscience` proofs remains to be implemented.
-Validating this package modifies no GitHub repository.
-
-## 6. Optionally run the former prototype
-
-```bash
-git clone --branch feature/alpha-pixi-opfrontier \
-  https://github.com/flipoyo/atCGS.git
-cd atCGS
 pixi install
-pixi run '@cgs' --help
-pixi run test
+pixi run lint                  # ruff, rules from ComplexGitSync
+pixi run test                  # tests/: contracts, layers, identity, session, scripts
+pixi run contract-inspect      # spec/contracts.toml against the code
+pixi run identity-demo         # identity flow on throwaway data
+pixi run local-remote          # same flow against a local sshd
+pixi run cgitsync validate examples/cgs-opx.cgs
+pixi run cgitsync validate examples/cgs-dev.cgs
+pixi run cgitsync validate examples/cgs-usr.cgs
+pixi run cgitsync validate examples/ComplexGraphSync.cgs
 ```
 
-This sequence requires Git, Pixi and a reachable network.
-It is separate from the standalone Python lab in this folder.
-Do not run `release freeze` on a real project without context.
+Expected results:
+- `lint`: `All checks passed!`
+- `test`: `passed` with no failures.
+- `contract-inspect`: `"status": "VALIDATED_SYNTAX"`.
+- `identity-demo`: four lines starting `REFUSED`, then `temporary directory removed: True`.
+- `local-remote`: `all checks passed`.
+- each `validate`: `DECLARED`.
 
-## 7. Validation criteria
+`local-remote` needs `sshd` and `git-shell`. The test suite skips it when they are
+missing, so a green `test` run does not prove it ran.
 
-Fixtures must preserve all fields and their positions.
-Journals must verify end to end; a GLYPH must open only with its login and password.
-Nothing is `published` without a reliable checkpoint.
-Publication must be independent of the internal GitTree's rights.
-Integration must not modify historical schema-1 hashes.
-The PR status must be observed, not guessed.
+## 2. The dogfood environment
 
-## 8. Out of scope
+```bash
+pixi run -e dogfood test
+```
 
-`.computo` is gone: the PRIVATE mount is `.cgitsync`.
-No remote GX4G service claimed to be operational.
-No fictitious PoE signer or invented timestamp.
-No data migration without documented proof and rollback.
+This runs the same suite against the `./ComplexGitSync` checkout instead of the
+pinned revision. Use it when changing both repositories.
 
-## 9. Tracking
+## 3. Built and checked
 
-ComplexGitSync: https://github.com/flipoyo/ComplexGitSync/issues/193
-atCGS: https://github.com/flipoyo/atCGS/issues/2
-Prototype: https://github.com/flipoyo/atCGS/pull/1
+| Part | Where | Checked by |
+|---|---|---|
+| Levels and codes from ComplexGitSync | `atcgs/__init__.py`, `commands.py` | `test_layers` |
+| Journals: enrol, rotate, revoke, grant | `atcgs/journal.py` | `test_identity_layer` |
+| GLYPH: seal and open, one bit refused | `atcgs/glyph.py` | `test_identity_layer` |
+| Session: one key per repo, agent cleaned up | `atcgs/session.py` | `test_identity_layer`, `local-remote` |
+| Per-level cgitsync verbs through `login` | `LOGIN_OPS` | `test_identity_layer::SelectorTests` |
+| Level trees and workspace tree validate | `examples/` | `test_layers`, `cgitsync validate` |
 
-The expected result is a controlled demonstrator, not a PUBLIC server.
+## 4. Not built
 
-## Additional validation: cases to automate
+Each item is stated in README § 8:
+- OPX key pinning is a manual step for the owner.
+- DEV and USR cannot log in; the register is mounted at OPX only.
+- `login` does not run ComplexGitSync's `LevelCommand`.
+- Deploy keys are printed, not installed.
+- Nothing is projected to `.omniscience`.
+- No checkpoint is verified; every evidence value is `unverified`.
 
-- H0–H4 BIOS: check exact fixture.
-- H0–H4 BIOS: check reproducible output.
-- H0–H4 BIOS: check non-zero exit on failure.
-- H0–H4 BIOS: check no unauthorised access.
-- H0–H4 BIOS: check test result recorded.
-- H0–H4 BIOS: check achieved/simulated stage distinguished.
-- H0–H4 BIOS: check the PR can be reviewed.
-- H0–H4 BIOS: check engine dependency unchanged.
-- H4–H10 POEX: check exact fixture.
-- H4–H10 POEX: check reproducible output.
-- H4–H10 POEX: check non-zero exit on failure.
-- H4–H10 POEX: check no unauthorised access.
-- H4–H10 POEX: check test result recorded.
-- H4–H10 POEX: check achieved/simulated stage distinguished.
-- H4–H10 POEX: check the PR can be reviewed.
-- H4–H10 POEX: check engine dependency unchanged.
-- H10–H16 @cgs: check exact fixture.
-- H10–H16 @cgs: check reproducible output.
-- H10–H16 @cgs: check non-zero exit on failure.
-- H10–H16 @cgs: check no unauthorised access.
-- H10–H16 @cgs: check test result recorded.
-- H10–H16 @cgs: check achieved/simulated stage distinguished.
-- H10–H16 @cgs: check the PR can be reviewed.
-- H10–H16 @cgs: check engine dependency unchanged.
-- H16–H21 Security: check exact fixture.
-- H16–H21 Security: check reproducible output.
-- H16–H21 Security: check non-zero exit on failure.
-- H16–H21 Security: check no unauthorised access.
-- H16–H21 Security: check test result recorded.
-- H16–H21 Security: check achieved/simulated stage distinguished.
-- H16–H21 Security: check the PR can be reviewed.
-- H16–H21 Security: check engine dependency unchanged.
-- H21–H24 Release candidate: check exact fixture.
-- H21–H24 Release candidate: check reproducible output.
-- H21–H24 Release candidate: check non-zero exit on failure.
-- H21–H24 Release candidate: check no unauthorised access.
-- H21–H24 Release candidate: check test result recorded.
-- H21–H24 Release candidate: check achieved/simulated stage distinguished.
-- H21–H24 Release candidate: check the PR can be reviewed.
-- H21–H24 Release candidate: check engine dependency unchanged.
-- Closing criterion: no invented proof of existence.
-- Closing criterion: Merkle compatibility preserved.
-- Closing criterion: no PRIVATE path exposed.
-- Closing criterion: version resolution.
-- Closing criterion: CI verified.
-- Closing criterion: exact publication state.
-- Test results are attached to the PR.
-- Production commands are not launched by the lab.
-- PRIVATE ACLs are evaluated separately.
-- The release is blocked without attested publication.
-- Historical schema-1 hashes remain unchanged.
-- Cross-platform regressions remain to be checked.
+## 5. Definition of done for an integration change
+
+A change to atCGS is integrated when:
+- `pixi run lint` and `pixi run test` pass;
+- `pixi run contract-inspect` passes after any change to `spec/contracts.toml`;
+- each level tree still validates with `cgitsync validate`;
+- README § 2 and § 8 match what the change did.

@@ -60,7 +60,7 @@ graph LR
 | B5 | `ssh` also tries `~/.ssh/id_*`, so a dogfooded push could succeed with the owner's personal key and prove nothing. | `Session.env` |
 | B6 | No OPX key is pinned, no register exists for this workspace, and no GLYPH key is installed on GitHub. | owner, `spec/contracts.toml` |
 | B7 | **Two OpFrontiers disagree on the same codes.** ComplexGitSync's `PoE` gives OPX `0000`, DEV `1000`, USR `1100`, PUB `1111`; atCGS's role codes give OPX `1000`, DEV `1100`, USR `1110`, PUB `1111`. The level names agree; the bits don't. | `op_levels.LEVELS` vs `atcgs.commands.ROLE_CODES` |
-| B8 | **Two naming rules for level files.** `LevelCommand.of("cgs", "OPX")` says `cgitsync bootstrap cgs-opx.cgs`; atCGS ships `examples/cgs_opx.cgs` (underscore) on purpose (ALPHA.md). | `op_levels.LevelCommand`, ALPHA.md |
+| B8 | **Two naming rules for level files.** `LevelCommand.of("cgs", "OPX")` says `cgitsync bootstrap cgs-opx.cgs`; atCGS ships `examples/cgs-opx.cgs` (underscore) on purpose (ALPHA.md). | `op_levels.LevelCommand`, ALPHA.md |
 
 ## 2. The route
 
@@ -150,7 +150,7 @@ then `… push`. The push succeeds with GLYPH keys only, and the same push with
 | # | Question | Proposal |
 |---|---|---|
 | D1 | Which 4-bit codes are canonical (B7)? | **Decided 2026-11-03: ComplexGitSync's `PoE`** — *"cgitsync is right, OPX is POE"*: OPX `0000`, DEV `1000`, USR `1100`, PUB `1111`. atCGS's codes go in S4. |
-| D2 | Level file names: `cgs-opx.cgs` or `cgs_opx.cgs` (B8)? | **Decided 2026-11-03: the dash** for every `*.cgs`, as `LevelCommand` says. ALPHA.md's reason for the underscore predates 8.7.0's fallback to `CGS-ALPHA`; S4 renames `examples/cgs_{opx,dev,usr}.cgs` and corrects ALPHA.md, checking each with `cgitsync validate`. |
+| D2 | Level file names: `cgs-opx.cgs` or `cgs_opx.cgs` (B8)? | **Decided 2026-11-03: the dash**, as `LevelCommand` says. The owner accepted the consequence: `NamedCgs` (LinkAtCGS §7) reads `cgs-<level>.cgs` as branch `<level>` with fallback `CGS-ALPHA`, so each level file says `default_branch = "<level>"`. Applied in 1.7.1-alpha. |
 | D3 | Where does the spec of this workspace live? Today it is `ComplexGitSync/examples/cgs-opx.cgs`. | In atCGS (`examples/`), since atCGS is the tree's root. ComplexGitSync keeps a pointer or a copy checked by test. |
 | D4 | Where does the register live? | **Decided 2026-11-03: in `.cgitsync/.memory`** — *"the register belongs to atCGS, not .cgitsync"*, then: a register per project, in its own memory: `.cgitsync/.memory/.register`, the default of `@cgs`. Its anonymous projection goes to `.omniscience` later. |
 | D5 | ssh keys: one deploy key per repo, or one account key for OPX? | Deploy keys, with S3's per-repo choice: it is what DEV/USR users will need anyway. |
@@ -171,7 +171,18 @@ then `… push`. The push succeeds with GLYPH keys only, and the same push with
   per active grant. **Owner's part to do:** `OPX init` (twice, pinning in
   between), `OPX request` for the 8 repos, `OPX admit`, run the printed
   `gh api` commands. Then the first dogfooded commit closes goal 1.
-- **S4 next**, with D1 and D2 decided.
+- **S4 done, except D2.** `atcgs.PRIME_CGS` is `tuple(LEVELS)` and `ROLE_CODES`
+  is the PoE of `ComplexGitSync.orchestre.op_levels`: OPX `0000`, DEV `1000`,
+  USR `1100`, PUB `1111`. `spec/contracts.toml`, README § 7 and TUTO 05 follow;
+  a test checks both. The workspace spec moved to `examples/ComplexGraphSync.cgs`
+  (plain project, validated by cgitsync, checked against ComplexGitSync's copy).
+  Not done: `@cgs <LAYER> login TWIN bootstrap` does not yet go through
+  `LevelCommand.of`; ComplexGitSync's own tree is unchanged.
+- **D2 resolved (1.7.1-alpha).** The level trees are `examples/cgs-{opx,dev,usr}.cgs`,
+  each validated by cgitsync. Earlier note, kept for the record: Dash level files do not validate: `NamedCgs`
+  makes `cgs-opx.cgs` mean branch `opx`. Either keep the underscore (`cgs-opx.cgs`,
+  working today), or change LinkAtCGS §7 so the dash names the level and not a
+  branch. The level trees keep the underscore until then.
 
 ## 4. Refusals
 

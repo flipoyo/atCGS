@@ -1,150 +1,87 @@
-# TUTO 01 — BIOS / BOOT / CGS ALPHA
+# TUTO 01 — The BIOS declaration
 
-**Goal:** reproduce the initial anchoring without modifying ComplexGitSync.
-**Prerequisites:** Pixi (`pixi install` once); a terminal; no GitHub token.
-**Indicative lab duration:** depends on the environment, not guaranteed.
-**Deliverable:** a checked BIOS table and the `DECLARED_ONLY` status.
+**Goal:** read the BIOS section of `spec/contracts.toml`, run the check that
+validates it, and understand what it does and does not do.
 
-## A. Identify the kernel
+**Scope.** The BIOS is a declaration. Nothing boots from it. This tutorial covers
+the file, the check, and the one sentence you need about each symbol.
 
-The user entry is `atCGS`, the protocol version `1.6.0-alpha`.
-The engine is `ComplexGitSync M.m.p`, to be pinned during an integration.
-The initial invariant proposed in the thread was:
+## 1. Where it lives
 
-```text
-BIOS BOOT CGS M.m.p
-CGS L0 TIME POEX
-```
+`spec/contracts.toml`, the `[boot]` and `[bios_history]` tables, and the
+fixtures in `scripts/contract_check.py` that they must match.
 
-This historical notation defines no timestamp or signature format.
-Do not substitute a local clock for a verified proof of existence.
-
-## B. Canonical BIOS step
-
-```text
-atCGS ALPHA BIOS ComplexGitSync M.m.p
-ComplexGitSync G POEX .gts
-.gts G OPX TWX
-TWX ENV HWX DEV
-DEV HWX TWX USR
-USR TWX G .cgs
-```
-
-The first line has five tokens: it is the boot identity.
-The next five have exactly four tokens, per PRIME G.
-The spelling `M.m.p` is not replaced in the canonical document.
-`POEX` is a frontier symbol, not a signed attestation.
-
-## C. Earlier versions kept
-
-```text
-BIOS ENV HWX TWX
-BOOT TWX POEX CGS
-CGS POEX TWX GTS
-GTS TWX OPX DEV
-DEV HWX ENV USR
-USR TWX GTS TWX
-OPX HWX ENV TWX
-```
-
-These tuples are kept for design reproducibility.
-The last `TWX` of the `USR` tuple is not a duplication error.
-A future revision must specify how the BIOS calls the BOOT.
-
-## D. Check the fixtures
+## 2. Run the check
 
 ```bash
 pixi run contract-inspect
 ```
 
-Look for `bios_new_rows = 5` and `bios_history_rows = 7`.
-The check rejects any mutation of the tuples present in the TOML.
-This command launches no remote Git operation.
+Expected output (the counts are the ones this check reports):
 
-## E. Examine the normative data
-
-```bash
-pixi run python - <<'PY'
-import tomllib
-with open('spec/contracts.toml','rb') as f:
-    spec=tomllib.load(f)
-print(spec['boot']['identity'])
-for row in spec['boot']['current']:
-    print(*row)
-
-PY
+```text
+"status": "VALIDATED_SYNTAX",
+"version": "1.7.1-alpha",
+"bios_new_rows": 5,
+"bios_history_rows": 7,
+"history_extended_rows": 2,
 ```
 
-This inspection is local: it opens neither a GitRepo nor a socket.
+A changed row makes the command exit with `CONTRACT_REFUSED: noncanonical boot.current`
+(or the matching section name). The check compares rows in order.
 
-## Additional validation: cases to automate
+## 3. Read the four lines of `[boot]`
 
-- **ALPHA** `ComplexGitSync G POEX .gts`: check the literal sequence.
-- **ALPHA** `ComplexGitSync G POEX .gts`: remove a field and expect a refusal.
-- **ALPHA** `ComplexGitSync G POEX .gts`: swap fields 2 and 3 and expect a refusal.
-- **ALPHA** `ComplexGitSync G POEX .gts`: change the case and expect a refusal.
-- **ALPHA** `.gts G OPX TWX`: check the literal sequence.
-- **ALPHA** `.gts G OPX TWX`: remove a field and expect a refusal.
-- **ALPHA** `.gts G OPX TWX`: swap fields 2 and 3 and expect a refusal.
-- **ALPHA** `.gts G OPX TWX`: change the case and expect a refusal.
-- **ALPHA** `TWX ENV HWX DEV`: check the literal sequence.
-- **ALPHA** `TWX ENV HWX DEV`: remove a field and expect a refusal.
-- **ALPHA** `TWX ENV HWX DEV`: swap fields 2 and 3 and expect a refusal.
-- **ALPHA** `TWX ENV HWX DEV`: change the case and expect a refusal.
-- **ALPHA** `DEV HWX TWX USR`: check the literal sequence.
-- **ALPHA** `DEV HWX TWX USR`: remove a field and expect a refusal.
-- **ALPHA** `DEV HWX TWX USR`: swap fields 2 and 3 and expect a refusal.
-- **ALPHA** `DEV HWX TWX USR`: change the case and expect a refusal.
-- **ALPHA** `USR TWX G .cgs`: check the literal sequence.
-- **ALPHA** `USR TWX G .cgs`: remove a field and expect a refusal.
-- **ALPHA** `USR TWX G .cgs`: swap fields 2 and 3 and expect a refusal.
-- **ALPHA** `USR TWX G .cgs`: change the case and expect a refusal.
-- **BIOS** `BIOS ENV HWX TWX`: check the literal sequence.
-- **BIOS** `BIOS ENV HWX TWX`: remove a field and expect a refusal.
-- **BIOS** `BIOS ENV HWX TWX`: swap fields 2 and 3 and expect a refusal.
-- **BIOS** `BIOS ENV HWX TWX`: change the case and expect a refusal.
-- **BIOS** `BOOT TWX POEX CGS`: check the literal sequence.
-- **BIOS** `BOOT TWX POEX CGS`: remove a field and expect a refusal.
-- **BIOS** `BOOT TWX POEX CGS`: swap fields 2 and 3 and expect a refusal.
-- **BIOS** `BOOT TWX POEX CGS`: change the case and expect a refusal.
-- **BIOS** `CGS POEX TWX GTS`: check the literal sequence.
-- **BIOS** `CGS POEX TWX GTS`: remove a field and expect a refusal.
-- **BIOS** `CGS POEX TWX GTS`: swap fields 2 and 3 and expect a refusal.
-- **BIOS** `CGS POEX TWX GTS`: change the case and expect a refusal.
-- **BIOS** `GTS TWX OPX DEV`: check the literal sequence.
-- **BIOS** `GTS TWX OPX DEV`: remove a field and expect a refusal.
-- **BIOS** `GTS TWX OPX DEV`: swap fields 2 and 3 and expect a refusal.
-- **BIOS** `GTS TWX OPX DEV`: change the case and expect a refusal.
-- **BIOS** `DEV HWX ENV USR`: check the literal sequence.
-- **BIOS** `DEV HWX ENV USR`: remove a field and expect a refusal.
-- **BIOS** `DEV HWX ENV USR`: swap fields 2 and 3 and expect a refusal.
-- **BIOS** `DEV HWX ENV USR`: change the case and expect a refusal.
-- **BIOS** `USR TWX GTS TWX`: check the literal sequence.
-- **BIOS** `USR TWX GTS TWX`: remove a field and expect a refusal.
-- **BIOS** `USR TWX GTS TWX`: swap fields 2 and 3 and expect a refusal.
-- **BIOS** `USR TWX GTS TWX`: change the case and expect a refusal.
-- **BIOS** `OPX HWX ENV TWX`: check the literal sequence.
-- **BIOS** `OPX HWX ENV TWX`: remove a field and expect a refusal.
-- **BIOS** `OPX HWX ENV TWX`: swap fields 2 and 3 and expect a refusal.
-- **BIOS** `OPX HWX ENV TWX`: change the case and expect a refusal.
-- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p`: check the literal sequence.
-- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p`: remove a field and expect a refusal.
-- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p`: swap fields 2 and 3 and expect a refusal.
-- **ID** `atCGS ALPHA BIOS ComplexGitSync M.m.p`: change the case and expect a refusal.
-- Check the BOOT: no private path is published.
-- Check the BOOT: no checkpoint is fabricated.
-- Check the BOOT: no GitRepo is cloned.
-- Check the BOOT: no command is interpreted as a tuple.
-- Check the BOOT: no transition is executed.
-- Check the BOOT: the source keeps the TOML format.
-- `M.m.p` must be pinned before a real boot.
-- The BOOT fixture contains no secret.
-- An empty field makes the identity non-compliant.
-- The L0 proof stays separate from the local clock.
-- The current table has five four-field tuples.
-- The earlier table has seven.
-- `GTS` stays distinct from `.gts`.
-- The repetition of TWX is normative.
-- PRIVATE rights do not derive from the shape of the tuples.
-- No repository clone is executed.
-- A new version requires a documented change.
+```toml
+[boot]
+identity = ["atCGS", "ALPHA", "BIOS", "ComplexGitSync", "M.m.p"]
+current = [
+ ["ComplexGitSync", "G", "POEX", ".gts"],
+ [".gts", "G", "OPX", "TWX"],
+ ["TWX", "ENV", "HWX", "DEV"],
+ ["DEV", "HWX", "TWX", "USR"],
+ ["USR", "TWX", "G", ".cgs"],
+]
+```
+
+Each row has four fields, in this order: **source, edge, interface, target**.
+`identity` is the header. It says which product this is, and the engine version
+to pin. `M.m.p` is a placeholder: no installed version is claimed.
+
+## 4. What each symbol means today
+
+| Symbol | Status | What it stands for in the software |
+|---|---|---|
+| `ComplexGitSync` | implemented | the engine, installed by `pixi.toml` at the pinned revision |
+| `G` | declared | the prime graph, `{NAME, NODE, EDGE, OP}` |
+| `.gts` | implemented | a ComplexGitSync state file |
+| `OPX`, `DEV`, `USR`, `PUB` | implemented | the four levels, from `op_levels` |
+| `.cgs` | implemented | the tree-description file cgitsync reads |
+| `POEX` | **removed** | the 1.5 proof-of-existence microcode; see README § 7 |
+| `TWX` | placeholder | no code reads it |
+| `ENV` | placeholder | no code reads it |
+| `HWX` | placeholder | no code reads it |
+
+Row 1 names `POEX`, which no longer exists. The row is kept because the check
+requires it. Changing the row requires changing the fixture in the same commit.
+
+## 5. Read the history
+
+`[bios_history]` holds seven earlier rows and two extension rows. They are kept
+as written. The check verifies their form. No code uses them.
+
+## 6. What the BIOS does not do
+
+- It does not start a process, read a file at start-up, or select a level.
+- It does not prove identity. The `BOOT` symbol in the history names a step, not
+  an authenticated proof.
+- It does not check that `TWX`, `ENV` or `HWX` exist.
+
+The working entry points are `pixi run '@cgs' <LAYER>` (TUTO 03) and the identity
+commands (TUTO 05).
+
+## 7. Definition of done for this tutorial
+
+- `pixi run contract-inspect` prints `VALIDATED_SYNTAX`.
+- You can name what each symbol in § 4 refers to, and which ones are placeholders.
+- You know that changing a row without the fixture fails the check.

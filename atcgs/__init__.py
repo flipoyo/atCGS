@@ -18,17 +18,20 @@ from functools import wraps
 from pathlib import Path
 from typing import Callable, Mapping, Sequence
 
+from ComplexGitSync.orchestre.op_levels import LEVELS
+
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.6.0-alpha"
+__version__ = "1.7.1-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
 PRIME_G: tuple[str, ...] = ("NAME", "NODE", "EDGE", "OP*")
 
-# The only executable @cgs selectors; exact and case-sensitive.
-PRIME_CGS: tuple[str, ...] = ("OPX", "DEV", "USR", "PUB")
+# The four levels are ComplexGitSync's (LinkAtCGS, op_levels), not atCGS's: one definition,
+# used by both sides of the OpFrontier on CGS-ALPHA. The only executable @cgs selectors.
+PRIME_CGS: tuple[str, ...] = tuple(LEVELS)
 
 # (source_artifact, source_layer, destination_layer, destination_artifact).
 # Four layers, three edges: PUB is terminal and no fourth edge exists.
@@ -57,7 +60,7 @@ def build_name(manifest: Path | None = None) -> str:
 
 
 def commit_subject(summary: str) -> str:
-    """Commit subject <build-name>-<version> <summary>, as in cgs-1.6.0-alpha."""
+    """Commit subject <build-name>-<version> <summary>, as in cgs-1.7.1-alpha."""
     return f"{build_name()}-{__version__} {summary}"
 
 

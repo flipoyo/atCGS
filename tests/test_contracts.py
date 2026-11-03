@@ -49,7 +49,7 @@ class TestContracts(unittest.TestCase):
     def test_identity_matches_the_code(self):
         refused(self, "memory_kib = 262144", "memory_kib = 1024")
         refused(self, 'uid = "sha256(IDPUB)"', 'uid = "sha256(NAME)"')
-        refused(self, 'DEV = "1100"', 'DEV = "0000"')
+        refused(self, 'DEV = "1000"', 'DEV = "1111"')
         refused(self, 'opx_pub = ""', 'opx_pub = "c2hvcnQ="')
 
     def test_a_pinned_opx_key_is_accepted(self):

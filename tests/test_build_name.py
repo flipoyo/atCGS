@@ -33,7 +33,7 @@ class BuildNameTests(unittest.TestCase):
 
 class ConformityTests(unittest.TestCase):
     def test_cgs_files_name_the_project_after_the_build(self):
-        for path in ("POEX.cgs", "examples/cgs_opx.cgs", "examples/cgs_dev.cgs", "examples/cgs_usr.cgs"):
+        for path in ("POEX.cgs", "examples/cgs-opx.cgs", "examples/cgs-dev.cgs", "examples/cgs-usr.cgs"):
             with self.subTest(path=path), (ROOT / path).open("rb") as handle:
                 self.assertEqual(tomllib.load(handle)["project"]["name"], build_name())
 

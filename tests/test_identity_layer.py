@@ -360,7 +360,7 @@ class CommandTests(unittest.TestCase):
         code, out, _ = self.cgs(opx, "OPX", "admit", "req.json")
         self.assertEqual((code, out["granted"][0]["role"]), (0, "DEV"))
         code, out, _ = self.cgs(alice, "DEV", "login", "demo")
-        self.assertEqual((code, out["code"], out["agent_keys"], out["closed"]), (0, "1100", 1, True))
+        self.assertEqual((code, out["code"], out["agent_keys"], out["closed"]), (0, "1000", 1, True))
         self.assertTrue((self.dir / "demo.cgs").exists())
         (self.dir / "demo.cgs").unlink()
         code, out, _ = self.cgs(alice, "DEV", "login", "demo", "status")

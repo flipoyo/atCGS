@@ -1,150 +1,70 @@
-# TUTO 02 — PRIME G, *G, DELTA / NABLA
+# TUTO 02 — PRIME G, and the DELTA / NABLA rows
 
-**Goal:** interpret the tuples without changing their four fields.
+**Goal:** know what the PRIME G tuple and the DELTA/NABLA rows are in the software,
+and what checking them proves.
 
-## 1. Grammar
+**Scope.** PRIME G is a four-field naming scheme. The DELTA/NABLA rows are declared
+text. Neither drives any operation today.
 
-`PRIME G = {NAME, NODE, EDGE, OP}`.
-A line is a record, not a cloning instruction.
-Capital letters and leading dots are significant.
-A string may appear several times and in different columns.
+## 1. PRIME G
 
-## 2. Initial BIOS (seven lines)
+`PRIME G = {NAME, NODE, EDGE, OP}`: four ordered fields. Each field is itself a
+graph, and each answers one question:
 
-```text
-BIOS ENV HWX TWX
-BOOT TWX POEX CGS
-CGS POEX TWX GTS
-GTS TWX OPX DEV
-DEV HWX ENV USR
-USR TWX GTS TWX
-OPX HWX ENV TWX
-```
+| Field | Question |
+|---|---|
+| NAME | what exists |
+| NODE | what identity state it is in |
+| EDGE | what its universal interface is |
+| OP | which mutation it performs |
 
-The repetition of the last `TWX` of the `USR` tuple is preserved.
-These lines do not replace the ALPHA BIOS variant of tutorial 01.
+Two places state it:
 
-## 3. Topology extension
+- `spec/contracts.toml`: `prime_g = ["NAME", "NODE", "EDGE", "OP"]`, checked by `contract-inspect`.
+- `atcgs/__init__.py`: `PRIME_G = ("NAME", "NODE", "EDGE", "OP*")`, checked by one test.
 
-```text
-*G XGTS GX4G TWX
-CGS-ALPHA GX4G CGS TWX
-```
+**Known mismatch.** The code writes `OP*`; the contract writes `OP`. The star marks
+a requestable operation in the prose, but no code uses the tuple at run time. Pick one
+spelling and change both places together. Until then, both checks pass because each
+compares against its own copy.
 
-The `*` indicates a requestable identity, not an actual connection.
-`XGTS` and `GX4G` remain symbols with no associated remote service.
-An unresolved reference must be reported as unresolved.
+## 2. The DELTA / NABLA rows
 
-## 4. DELTA / NABLA
+`spec/contracts.toml` declares four rows, `[delta_nabla] sequence`:
 
 ```text
 DELTA POEX NABLA OPX
-OPX ENV PRIME DELTA
-DELTA ENV PRIME NABLA
-NABLA EDGE POEX OPX
+OPX   ENV  PRIME DELTA
+DELTA ENV  PRIME NABLA
+NABLA EDGE POEX  OPX
 ```
 
-`DELTA` appears twice, with different values.
-A table indexed only by NAME would lose one of these definitions.
-The fixture keeps an **ordered list**, never a dict keyed by NAME.
+What the software does with them:
+- `contract-inspect` checks that the rows match `scripts/contract_check.py`.
+- `POEX` appears in them, but the POEX microcode was removed in 1.6.0 (README § 7).
+- `ENV` and `PRIME` have no code.
+- `OpFrontier.serve_poex()` returns the static descriptor `("POEX", "NODE", "DELTA", "OPX")`.
+  It executes nothing; a test checks the tuple.
 
-## 5. Diagram of the declared cycle
+So DELTA and NABLA are names in a declared chain. They have no operation behind them.
 
-```mermaid
-flowchart LR
-    D["DELTA"] -->|OP| O["OPX"]
-    O -->|OP| D
-    D -->|OP| N["NABLA"]
-    N -->|OP| O
-```
-
-The cycle is a symbolic property, not a certified executable loop.
-
-## 6. Check the fixture
+## 3. Run the checks
 
 ```bash
-pixi run contract-inspect
+pixi run contract-inspect       # "delta_nabla_rows": 4, the row form only
+pixi run test                    # tests/test_opfrontier_poex.py, tests/test_contracts.py
 ```
 
-Require seven BIOS lines, two extensions and four DELTA/NABLA lines.
-The count alone is not enough: order and contents must also match.
+## 4. What is not built
 
-## 7. Edge cases
+- No operation computes DELTA or NABLA.
+- No key derivation uses DELTA. The class KEY of TUTO 05 is held by OPX and keyed
+  by the identity, not by DELTA.
+- Nothing checks that `ENV`, `PRIME` or `DELTA` refer to a real object.
 
-The string `GTS` is different from the `.gts` extension.
-The symbol `PUB` denotes a layer, not the opening of a Git repository.
-`TWX` implies no clock, permission or protocol by default.
-`HWX` implies no particular hardware without a new specification.
+## 5. Definition of done for this tutorial
 
-## 8. Controlled experiment
-
-On a copy, swap the EDGE and OP fields of a DELTA line.
-Expect a refusal from the fixture validator.
-Restore the canonical order and rerun the inspection.
-Repeat the test by deleting the second DELTA line.
-It must be treated as a contract deletion.
-
-## 9. Limits
-
-The graph does not authenticate a key holder.
-The graph does not prove that its GitRepos still exist.
-The graph does not define a UDP resolution protocol.
-The graph does not automatically identify an L0 checkpoint.
-Here, validation only guarantees a faithful representation.
-
-## 10. Result
-
-```text
-prime_g_fields = 4
-bios_history = 7
-extensions = 2
-delta_nabla = 4
-requestable_g_verified = false
-```
-
-Move on to tutorial 03 for System Layer transitions.
-
-## Additional validation: cases to automate
-
-- Line 0: `BIOS` keeps its four fields.
-- Line 0: `TWX` is OP, not an implicit Git action.
-- Line 0: the tuple `BIOS ENV HWX TWX` must not change position.
-- Line 1: `BOOT` keeps its four fields.
-- Line 1: `CGS` is OP, not an implicit Git action.
-- Line 1: the tuple `BOOT TWX POEX CGS` must not change position.
-- Line 2: `CGS` keeps its four fields.
-- Line 2: `GTS` is OP, not an implicit Git action.
-- Line 2: the tuple `CGS POEX TWX GTS` must not change position.
-- Line 3: `GTS` keeps its four fields.
-- Line 3: `DEV` is OP, not an implicit Git action.
-- Line 3: the tuple `GTS TWX OPX DEV` must not change position.
-- Line 4: `DEV` keeps its four fields.
-- Line 4: `USR` is OP, not an implicit Git action.
-- Line 4: the tuple `DEV HWX ENV USR` must not change position.
-- Line 5: `USR` keeps its four fields.
-- Line 5: `TWX` is OP, not an implicit Git action.
-- Line 5: the tuple `USR TWX GTS TWX` must not change position.
-- Line 6: `OPX` keeps its four fields.
-- Line 6: `TWX` is OP, not an implicit Git action.
-- Line 6: the tuple `OPX HWX ENV TWX` must not change position.
-- Line 7: `*G` keeps its four fields.
-- Line 7: `TWX` is OP, not an implicit Git action.
-- Line 7: the tuple `*G XGTS GX4G TWX` must not change position.
-- Line 8: `CGS-ALPHA` keeps its four fields.
-- Line 8: `TWX` is OP, not an implicit Git action.
-- Line 8: the tuple `CGS-ALPHA GX4G CGS TWX` must not change position.
-- Line 9: `DELTA` keeps its four fields.
-- Line 9: `OPX` is OP, not an implicit Git action.
-- Line 9: the tuple `DELTA POEX NABLA OPX` must not change position.
-- Line 10: `OPX` keeps its four fields.
-- Line 10: `DELTA` is OP, not an implicit Git action.
-- Line 10: the tuple `OPX ENV PRIME DELTA` must not change position.
-- Line 11: `DELTA` keeps its four fields.
-- Line 11: `NABLA` is OP, not an implicit Git action.
-- Line 11: the tuple `DELTA ENV PRIME NABLA` must not change position.
-- Line 12: `NABLA` keeps its four fields.
-- Line 12: `OPX` is OP, not an implicit Git action.
-- Line 12: the tuple `NABLA EDGE POEX OPX` must not change position.
-- Never group the tuples by NAME alone.
-- The `*G` identity signals requestability, not proof.
-- The table keeps the DELTA/NABLA cycle.
+- You can state the four PRIME G fields and their questions.
+- You can say which of the two spellings (`OP`, `OP*`) each file uses, and that they
+  must be made equal.
+- You can say that the DELTA/NABLA rows are checked as text and used by no code.

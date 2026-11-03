@@ -1,5 +1,7 @@
 # TUTO 05 — USR / PUB, identity journals and GLYPH
 
+**Status: current (1.7.1-alpha).** Every command below runs; each is covered by a test or by `identity-demo` / `local-remote`.
+
 **Goal:** keep the four publication tuples intact, then identify a user and open
 their ssh keys without ever storing a name or a password (README § 3).
 
@@ -106,7 +108,8 @@ cgitsync   a .cgs and SSH_AUTH_SOCK
 remote     an ssh public key
 ```
 
-The role codes stay 4-bit: OPX `1000`, DEV `1100`, USR `1110`, PUB `1111`.
+The role codes are ComplexGitSync's PoE vectors, 4-bit: OPX `0000` (OPX is POE),
+DEV `1000`, USR `1100`, PUB `1111`. atCGS imports them, it does not define them.
 PUB is the absence of a grant, never an entry.
 
 ## 9. The class KEY

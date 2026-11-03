@@ -16,6 +16,8 @@ import tomllib
 from pathlib import Path
 from typing import Callable, Mapping
 
+from ComplexGitSync.orchestre.op_levels import LEVELS
+
 from atcgs import PRIVATE, REGISTER_ENV, ROOT, Authorization, Request, Unauthorized
 from atcgs.glyph import SshKey, reseal
 from atcgs.identity import Identity, derive
@@ -25,7 +27,12 @@ from atcgs.session import AccessRefused, Session
 OPX_PUB_ENV = "ATCGS_OPX_PUB"  # overrides the pin, for the lab and the tests
 GLYPHS_ENV = "ATCGS_GLYPHS"  # where a user's GLYPHs live; default ~/.cgs/.glyph
 INSTALL_OPS = frozenset({"bootstrap", "initialise"})
-ROLE_CODES: Mapping[str, str] = {"OPX": "1000", "DEV": "1100", "USR": "1110", "PUB": "1111"}
+# A level's 4-bit code is its PoE vector over (NAME, NODE, EDGE, OP), from ComplexGitSync:
+# OPX 0000, DEV 1000, USR 1100, PUB 1111. OPX is POE.
+ROLE_CODES: Mapping[str, str] = {
+    level: "".join("1" if bit else "0" for bit in (poe.name, poe.node, poe.edge, poe.op))
+    for level, poe in LEVELS.items()
+}
 
 ask: Callable[[str], str] = getpass.getpass  # replaced in tests only
 

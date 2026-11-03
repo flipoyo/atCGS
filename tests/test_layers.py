@@ -1,4 +1,4 @@
-"""cgs_{opx,dev,usr}.cgs layer trees and their agreement with ComplexGitSync.
+"""cgs-{opx,dev,usr}.cgs layer trees and their agreement with ComplexGitSync.
 
 Runs under Pixi, where the pinned ComplexGitSync is installed: every tree is
 validated by cgitsync's own parser, not by a copy of its rules.
@@ -21,7 +21,7 @@ CGS_LINT = ["E4", "E7", "E9", "F", "I", "C90"]
 
 
 def load(layer):
-    path = ROOT / "examples" / f"cgs_{layer}.cgs"
+    path = ROOT / "examples" / f"cgs-{layer}.cgs"
     with path.open("rb") as handle:
         return path, tomllib.load(handle)
 
@@ -46,9 +46,10 @@ class LayerTreeTests(unittest.TestCase):
         for layer in LAYERS:
             _, data = load(layer)
             with self.subTest(layer=layer):
+                # LinkAtCGS §7: cgs-<level>.cgs opens its project on branch <level>, then CGS-ALPHA.
                 self.assertEqual(
                     data["project"],
-                    {"name": name, "default_branch": "CGS-ALPHA", "fallback_branch": "main"},
+                    {"name": name, "default_branch": layer, "fallback_branch": "CGS-ALPHA"},
                 )
                 root = by_path(data)["."]
                 self.assertEqual(root["repository"], "github:flipoyo/atCGS")
@@ -156,6 +157,40 @@ class EnvironmentAgreementTests(unittest.TestCase):
                 self.assertIn("pixi", tools)
                 declared.add(requirements)
         self.assertEqual(len(declared), 1, "the three levels must declare one environment")
+
+
+class OpFrontierSharedTests(unittest.TestCase):
+    """Dogfooding S4: atCGS takes its levels and codes from ComplexGitSync, one definition."""
+
+    def test_levels_and_codes_are_the_poe_of_complexgitsync(self):
+        from ComplexGitSync.orchestre.op_levels import LEVELS
+
+        import atcgs
+        from atcgs.commands import ROLE_CODES
+
+        self.assertEqual(atcgs.PRIME_CGS, tuple(LEVELS))
+        self.assertEqual(ROLE_CODES, {"OPX": "0000", "DEV": "1000", "USR": "1100", "PUB": "1111"})
+
+    def test_workspace_spec_is_a_plain_project_not_a_level_file(self):
+        from ComplexGitSync.tree.named_cgs import NamedCgs
+
+        path = ROOT / "examples" / "ComplexGraphSync.cgs"
+        self.assertIsNone(NamedCgs.parse(path))
+        document = CgsDocument.from_toml(path)
+        document.validate()
+        self.assertEqual(document.project_name, "ComplexGraphSync")
+        self.assertEqual(document.default_branch, "CGS-ALPHA")
+
+    def test_workspace_spec_agrees_with_complexgitsync_copy(self):
+        copy = ROOT / "ComplexGitSync" / "examples" / "cgs-opx.cgs"
+        if not copy.exists():
+            self.skipTest("the ComplexGitSync checkout is not here")
+
+        def body(path):
+            text = path.read_text(encoding="utf-8")
+            return text[text.index("project = "):]
+
+        self.assertEqual(body(ROOT / "examples" / "ComplexGraphSync.cgs"), body(copy))
 
 
 if __name__ == "__main__":

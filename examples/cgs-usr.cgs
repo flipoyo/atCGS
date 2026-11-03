@@ -1,15 +1,15 @@
-# The USR tree for atCGS (ComplexGraphSync), one of cgs_{opx,dev,usr}.cgs.
+# The USR tree for atCGS (ComplexGraphSync), one of cgs-{opx,dev,usr}.cgs.
 # Each file is named for the level it installs; the project is cgs, on CGS-ALPHA,
 # falling back to main where a repository has no such branch. POEX.cgs at the root is the PUB install.
 # USR: atCGS only, nothing private. A USER tree never mounts .omniscience:
 # the register is held by the gate, and USR reads only its PUBLIC answer (@cgs PUB).
-#     pixi run cgitsync bootstrap examples/cgs_usr.cgs cgs
+#     pixi run cgitsync bootstrap examples/cgs-usr.cgs cgs
 
 environment_root = "root"
 environment = { tools = { python = "3.11", git = "2.30", pixi = "0.65" }, manifests = ["pixi.toml"] }
 
-project = { name = "cgs", default_branch = "CGS-ALPHA", fallback_branch = "main" }
+project = { name = "cgs", default_branch = "usr", fallback_branch = "CGS-ALPHA" }
 
 repos = [
-    { repository = "github:flipoyo/atCGS", fallback_branch = "main", nested_config = "disabled" },
+    { repository = "github:flipoyo/atCGS", relative_path = ".", fallback_branch = "main", nested_config = "disabled" },
 ]
