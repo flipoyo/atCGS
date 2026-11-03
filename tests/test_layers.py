@@ -116,8 +116,8 @@ class EnvironmentAgreementTests(unittest.TestCase):
         workspace = self.pixi["workspace"]
         self.assertEqual(workspace["channels"], CGS_CHANNELS)
         self.assertEqual(workspace["platforms"], CGS_PLATFORMS)
-        # ComplexGitSync's dependencies, plus only what the C microcodes and wallet tests need.
-        self.assertEqual(self.pixi["dependencies"], {**CGS_DEPENDENCIES, "c-compiler": "*"})
+        # ComplexGitSync's dependencies, plus only the identity layer's cryptography.
+        self.assertEqual(self.pixi["dependencies"], {**CGS_DEPENDENCIES, "cryptography": ">=44"})
         self.assertEqual(self.pixi["target"], {"unix": {"dependencies": {"openssh": "*"}}})
         pin = self.pixi["pypi-dependencies"]["complexgitsync"]
         self.assertEqual(pin["git"], "https://github.com/flipoyo/ComplexGitSync.git")
@@ -131,8 +131,7 @@ class EnvironmentAgreementTests(unittest.TestCase):
 
     def test_every_command_is_a_pixi_task(self):
         tasks = self.pixi["tasks"]
-        for name in ("@cgs", "test", "lint", "contract-inspect", "contract-candidate",
-                     "poex-candidate", "microcode-test"):
+        for name in ("@cgs", "test", "lint", "contract-inspect", "identity-demo", "local-remote"):
             with self.subTest(task=name):
                 self.assertTrue(tasks[name].startswith("python ") or name == "lint")
 

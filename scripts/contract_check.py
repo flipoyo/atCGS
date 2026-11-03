@@ -2,6 +2,7 @@
 """Offline contract validator for atCGS (ComplexGraphSync SemVer), not a deployed gate."""
 
 import argparse
+import base64
 import json
 import sys
 import tomllib
@@ -9,7 +10,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from atcgs import SYSTEM, __version__, require_pixi  # noqa: E402  # single SemVer source of truth
+from atcgs import __version__, glyph, identity, require_pixi  # noqa: E402  # single SemVer source of truth
+from atcgs.commands import ROLE_CODES  # noqa: E402
+from atcgs.journal import ROLES  # noqa: E402
 
 SPEC = ROOT / "spec/contracts.toml"
 FIXTURES = {
@@ -107,30 +110,10 @@ def inspect(path=SPEC):
         tuple((k, tuple(x)) for k, x in data["frontiers"].items()) == FRONTIERS,
         "noncanonical frontiers",
     )
-    k = data["key"]
-    demand(
-        k["holder"] == "OPX" and k["definition"] == "sha256(GLYPH)",
-        "KEY must be sha256(GLYPH), held by OPX",
-    )
-    v = data["poex"]
-    demand(v["purpose"] == "comparison", "poex compares, nothing else")
-    demand(
-        v["poe"] == {"POE": "0000", "OPX": "1000", "DEV": "1100", "USR": "1110", "PUB": "1111"},
-        "incorrect .poe ladder",
-    )
-    e = data["eopx"]
-    demand(
-        e["seed_min_side"] == 256
-        and e["glyph_shape"] == [256, 256]
-        and e["compression"] == "shake_256(sha256(SEED) || SEED)",
-        "incorrect eopx birth protocol",
-    )
-    demand(v["shape"] == [256, 256] and v["packet_shape"] == [4, 256], "incorrect matrix")
-    demand(
-        v["packets"] == 64 and v["packet_bytes"] == 128 and v["quartet_reports"] == 16384,
-        "incorrect frames",
-    )
-    demand(v["published"] is False, "fixture must remain NOT_PUBLISHED")
+    demand("holder" not in data["key"] and "definition" not in data["key"],
+           "KEY no longer hashes a GLYPH (README § 3.7)")
+    check_glyph(data["glyph"])
+    check_identity(data["identity"])
     return {
         "status": "VALIDATED_SYNTAX",
         "version": c["version"],
@@ -143,56 +126,41 @@ def inspect(path=SPEC):
         "public_rows": 4,
         "key_rows": 2,
         "glyph_rows": 2,
-        "poex_verified": False,
+        "opx_pinned": bool(data["identity"]["opx_pub"]),
         "published": False,
     }
 
 
-def candidate(path):
-    d = json.loads(path.read_text(encoding="utf-8"))
-    for key, expected in [
-        ("system", SYSTEM),
-        ("dimensions_bits", [256, 256]),
-        ("packet_shape_bits", [4, 256]),
-        ("packet_count", 64),
-        ("nibble_reports", 16384),
-        ("status", "NOT_PUBLISHED"),
-        ("poex_verified", False),
-        ("gts_verified", False),
-        ("public_space", ".omniscience"),
-    ]:
-        demand(d.get(key) == expected, f"candidate {key} mismatch")
-    root = d.get("candidate_poex_merkle_root_sha256")
-    demand(
-        isinstance(root, str) and len(root) == 64 and all(c in "0123456789abcdef" for c in root),
-        "invalid root encoding",
-    )
-    demand(
-        not any(
-            k in d for k in ("payload", "private_path", "private_repo", "credentials", "secret")
-        ),
-        "private payload present",
-    )
-    return {
-        "candidate": "ACCEPTED_OFFLINE_ONLY",
-        "status": d["status"],
-        "poex_verified": False,
-        "published": False,
-    }
+def check_glyph(g):
+    """The [glyph] envelope must be the one atcgs.glyph seals."""
+    sizes = [len(glyph.MAGIC), 1, glyph.NONCE, glyph.PLAINTEXT, glyph.TAG]
+    demand(g["shape"] == [glyph.SIDE, glyph.SIDE] and g["bytes"] == glyph.GLYPH_BYTES, "incorrect GLYPH size")
+    demand(g["sizes"] == sizes and sum(sizes) == glyph.GLYPH_BYTES, "incorrect GLYPH layout")
+    demand(g["layout"][0] == glyph.MAGIC.decode() and g["aead"] == "ChaCha20-Poly1305", "incorrect GLYPH seal")
+    demand(g["published"] is False, "a GLYPH is never published")
+
+
+def check_identity(i):
+    """The [identity] section must match atcgs.identity and atcgs.commands."""
+    memory, iterations, lanes = identity.KDF_PROFILES["real"]
+    demand(i["kdf"] == "Argon2id" and i["signature"] == "Ed25519", "incorrect identity primitives")
+    demand(i["kdf_cost"] == {"memory_kib": memory, "iterations": iterations, "lanes": lanes},
+           "incorrect Argon2id cost")
+    demand(i["uid"] == "sha256(IDPUB)", "UID must be sha256(IDPUB)")
+    demand(tuple(i["roles"]) == ROLES and i["codes"] == dict(ROLE_CODES), "incorrect roles or codes")
+    demand(i["journals"] == ["identity.jsonl", "access.jsonl"], "incorrect journals")
+    pub = i["opx_pub"]
+    demand(pub == "" or len(base64.b64decode(pub, validate=True)) == 32, "opx_pub is not a 32-byte key")
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("operation", choices=("inspect", "candidate"))
+    ap.add_argument("operation", choices=("inspect",))
     ap.add_argument("file", nargs="?", type=Path)
     a = ap.parse_args()
     try:
         require_pixi()
-        result = (
-            inspect(a.file or SPEC)
-            if a.operation == "inspect"
-            else candidate(a.file or Path("candidate.json"))
-        )
+        result = inspect(a.file or SPEC)
     except (ValueError, KeyError, FileNotFoundError, tomllib.TOMLDecodeError) as exc:
         print(f"CONTRACT_REFUSED: {exc}", file=sys.stderr)
         return 2

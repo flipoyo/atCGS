@@ -1,6 +1,7 @@
-# TUTO 05 — README, USR / PUB, GLYPH and KEY
+# TUTO 05 — USR / PUB, identity journals and GLYPH
 
-**Goal:** integrate the four publication tuples and the KEY prototype without alteration.
+**Goal:** keep the four publication tuples intact, then identify a user and open
+their ssh keys without ever storing a name or a password (README § 3).
 
 ## 1. New canonical frontier
 
@@ -26,109 +27,112 @@ The new table and the OpFrontier table serve distinct purposes.
 Do not merge their fields to build five-column tuples.
 Do not create an artificial fourth OpFrontier transition.
 
-## 3. The GLYPH and the class KEY
+## 3. Watch it work first
 
-The GLYPH (`.bit`) is the 256×256 public key of DELTA.
-It is a POEX privilege and is never exposed.
-POE is reached only through its hash, the prototype of the class KEY:
+```bash
+pixi run identity-demo --pbm-dir /tmp/glyphs
+```
+
+It builds OPX, alice (DEV) and bob (USR) in a temporary directory and prints
+each step, ending with four refusals. Open `/tmp/glyphs/alice.pbm`: it is noise.
+
+```bash
+pixi run local-remote
+```
+
+The same against a real `sshd` on localhost: alice pushes, bob only fetches,
+and bob's key is refused as soon as OPX revokes it, even while it is loaded.
+
+## 4. Identity: login, password → public key
+
+```text
+IDSEED = Argon2id(password, "atCGS/id/v1/" + profile + "/" + login)   memory only
+IDPUB  = Ed25519 public key of IDSEED                                 registered
+UID    = sha256(IDPUB)                                                the only name
+```
+
+The same login and password always give the same UID; one changed character
+gives another. Nothing is looked up by login: the client recomputes the UID.
+The cost is real: anyone holding IDPUB can try passwords offline, so the
+Argon2id cost (256 MiB, 3 passes) and a long passphrase are the defence.
+
+## 5. The two journals
+
+```text
+identity.jsonl   enrol | rotate | revoke    who exists       signed by OPX (enrol)
+access.jsonl     grant | revoke             who may do what  signed by OPX only
+```
+
+Each line carries `prev = sha256(previous line)` and one signature. The first
+identity entry is OPX enrolling itself with the key pinned in
+`spec/contracts.toml [identity] opx_pub`. Every `enrol` carries the user's
+proof of possession. A `grant` binds (UID, repo) to one role and one ssh
+public key. Reading replays everything and refuses the whole file at the first
+fault: a reordered, edited, missing or replayed line, or a foreign signer.
+
+## 6. The GLYPH, the cover of the ssh keys
+
+```text
+"CGSG" | 1 | nonce (12) | ChaCha20-Poly1305(HKDF(IDSEED), keys + padding) | tag (16)
+= 8 192 bytes = 256 × 256 bits
+```
+
+Only the login and password open it; one flipped bit makes it refuse. It holds
+about 17 Ed25519 keys, one per (repo, role), and never says how many.
+
+## 7. The cycle, command by command
+
+```bash
+export ATCGS_REGISTER=.cgitsync/.register
+ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init     # once: prints idpub to pin
+#   copy idpub into spec/contracts.toml [identity] opx_pub, then:
+ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init     # OPX enrols itself
+pixi run '@cgs' DEV request req.json github:flipoyo/atCGS DEV
+ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit req.json
+pixi run '@cgs' DEV login cgs                    # cgs.cgs + DEV keys in a private agent
+ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX revoke <UID> github:flipoyo/atCGS
+```
+
+Every login and password is asked with `getpass`. `req.json` carries the
+UID, IDPUB, the proof and the ssh public keys: nothing secret.
+
+## 8. What each party sees
+
+```text
+UX         login, password, own GLYPH
+session    IDSEED, ssh private keys, in memory; agent killed at close
+OPX        UID, IDPUB, ssh public keys, roles
+cgitsync   a .cgs and SSH_AUTH_SOCK
+remote     an ssh public key
+```
+
+The role codes stay 4-bit: OPX `1000`, DEV `1100`, USR `1110`, PUB `1111`.
+PUB is the absence of a grant, never an entry.
+
+## 9. The class KEY
 
 ```text
 PUB DELTA POEX KEY
 KEY OPX CGS PUB
-KEY sha256(GLYPH)
 ```
 
-The first two lines are `NAME NODE EDGE OP` records.
-The third is a definition, `KEY := sha256(GLYPH)`, not a tuple.
-The simulator treats 256×256 bits as 8 192 bytes, row by row.
-The lab file is synthetic: it is not a real GLYPH.
+Both stay `NAME NODE EDGE OP` records; KEY is no longer `sha256(GLYPH)`.
 
-## 4. POEX, the wallet
-
-Two microcodes: `poex` compares, `eopx` gives birth.
-The wallet `atcgs.POEX` wraps `poex`; `atcgs.EOPX` wraps `eopx`.
-For a NAME X, POEX asks one question only: does X exist in PoE?
-
-```text
-NAME GLYPH POEX OPX
-NAME GLYPH PUB .toml
-```
-
-If not, EOPX runs the birth protocol:
-
-1. Ask a SEED: a square `.bit` of at least 256×256 bits.
-2. `GLYPH := shake_256(hash(SEED) + SEED)`, 256×256 bits, deterministic.
-3. OPX registers `NAME -> (hash(SEED), hash(GLYPH))`; the GLYPH is then dropped.
-
-`POEX.compare(seed_a, seed_b)` rebuilds both GLYPHs with eopx;
-`poex` reads them and answers equal if and only if `A XOR B` has 65 536 zeros.
-POEX knows who asks; a session says whether poe is granted, `*GLYPH = (.poe, GLYPH)`:
-
-```text
-granted   0000  the control passed and poex proved left = right
-refused   the requester's code: OPX 1000  DEV 1100  USR 1110  PUB 1111
-```
-
-Only OPX gives birth to an unknown X, through EOPX from `left`; `.poe` dies with the session.
-
-If yes, the request is an OpFrontier request ComplexGraphSync -> ComplexGitSync.
-POEX then delivers `.cred`, one 4×256-bit POEX packet:
-
-```text
-OPX  hash(GLYPH)        OPX only
-DEV  hash(DEV ssh key)  temporary, destroyed after the request
-USR  hash(NAME)
-PUB  hash(SEED)         unique ID of NAME
-```
-
-Each layer receives only its own slot.
-Only `hash(SEED)` crosses the frontier; nobody stores the GLYPH, and `hash(GLYPH) != hash(SEED)`.
-The DEV key uses the `ssh-keygen` core of [sshKeyGen](https://github.com/flipoyo/sshKeyGen).
-
-```text
-.cgitsync      PRIVATE  (ComplexGitSync)
-.omniscience   PUBLIC   (ComplexGraphSync)
-```
-
-No tuple declares access rights; the register becomes PUBLIC only by projection.
-
-## 5. Inspect the new table
+## 10. Inspect the contract
 
 ```bash
 pixi run contract-inspect
 ```
 
-Expected result: `public_rows = 4`, `key_rows = 2` and `glyph_rows = 2`.
-The comparison is strict, field by field.
-A KEY not defined as `sha256(GLYPH)`, or not held by OPX, is refused.
+Expected: `public_rows = 4`, `key_rows = 2`, `glyph_rows = 2`, `opx_pinned`
+false until OPX's key is pinned. `[identity]` and `[glyph]` are compared with
+the code (Argon2id cost, GLYPH layout, role codes): change one and it refuses.
 
-## 6. Generate an unpublished manifest
+## 11. Definition of success
 
-```bash
-pixi run poex-candidate
-pixi run contract-candidate
-```
-
-The candidate must keep `poex_verified=false` and `NOT_PUBLISHED`.
-The script does not contact the PUBLIC domain and writes nothing to GitHub.
-The manifest contains only the commitment, the sizes and the status.
-It must never carry the raw 8 192 bytes of a GLYPH.
-
-## 7. Negative test
-
-In a copy of the manifest, replace `poex_verified` with `true`.
-The `candidate` validator must refuse this unjustified promotion.
-An exact local result is not an authenticated checkpoint.
-
-## 8. Outlook
-
-`hash` is `sha256`; the compression is `shake_256`, seeded by `hash(SEED)`.
-`@cgs <LAYER> prove NAME LEFT RIGHT` runs it; OPX's register is the file `ATCGS_REGISTER`.
-
-## 9. Definition of success
-
-The four tuples, the two KEY and the two GLYPH records are strictly preserved and checkable.
-The 256×256 matrix sequences into 64 packets; no GLYPH or `.PRIVATE` is exposed.
+The four tuples, the two KEY and the two GLYPH records are strictly preserved.
+No login, password or private key is on disk after a session, and
+`pixi run test` covers every refusal below.
 Tutorial 06 gathers the checks and the 24 h schedule.
 
 ## Additional validation: cases to automate
@@ -138,11 +142,11 @@ Tutorial 06 gathers the checks and the 24 h schedule.
 - Tuple 2: `HASH` NAME, `DELTA` NODE, `CGS` EDGE, `OPX` OP.
 - Tuple 3: `.cgs` NAME, `USR` NODE, `PUB` EDGE, `.toml` OP.
 - Every tuple: refuse swapped, deleted or case-normalised fields; no implicit PRIVATE.
-- KEY: `PUB DELTA POEX KEY` and `KEY OPX CGS PUB` unchanged; KEY is `sha256(GLYPH)`.
+- KEY: `PUB DELTA POEX KEY` and `KEY OPX CGS PUB` unchanged; no GLYPH hash.
 - GLYPH: `NAME GLYPH POEX OPX` and `NAME GLYPH PUB .toml` unchanged.
-- SEED: refuse a non-square or small `.bit`, or one already registered elsewhere.
-- GLYPH: never stored or shown; `*GLYPH` and `.poe` die with the session.
-- DEV key: destroyed after the OpFrontier request, even when it fails.
-- Publication: check a signed checkpoint, an anchored identity, no local paths.
-- An `.omniscience` field publishes no proof by magic; PRIVATE stays out of PUB.
-- The matrix is binary, not a PNG; `NOT_PUBLISHED` is reported unambiguously.
+- Identity: same inputs, same UID; the test profile never matches a real key.
+- Journals: tamper, reorder, delete, replay, foreign signer, all refused.
+- GLYPH: 8 192 bytes, fresh nonce, capacity refused at seal time.
+- Session: agent gone after an exception; subprocess gets only `SSH_AUTH_SOCK`.
+- Login: wrong password `AccessRefused`; `USR login` of a DEV-only UID exits 3.
+- Publication: a GLYPH is never published, even sealed; PRIVATE stays out of PUB.

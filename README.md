@@ -1,4 +1,4 @@
-# atCGS — ComplexGraphSync 1.5.0-alpha
+# atCGS — ComplexGraphSync 1.6.0-alpha
 
 **Canonical README — USR / PUB / BIOS / Identity journals / OpFrontier.**
 
@@ -38,8 +38,9 @@ Roles are the four PRIME CGS layers, defined per GitRepo:
 
 ## 3. Identity and access journals
 
-> **Status.** This section is the target design for 1.6.0. Release 1.5.0-alpha still
-> runs the SEED/GLYPH prototype (`poex`, `eopx`), described in § 7 as legacy.
+> **Status.** Implemented in 1.6.0-alpha (`atcgs/identity.py`, `journal.py`, `glyph.py`,
+> `session.py`, `commands.py`). See it run with `pixi run identity-demo` and
+> `pixi run local-remote` (§ 8). The 1.5 SEED/GLYPH prototype is removed (§ 7).
 
 ### 3.1 Principles
 
@@ -60,13 +61,15 @@ The key pair is derived from the login and password, on the user's machine, each
 time the user logs in. Nothing is stored; the same inputs always give the same key.
 
 ```text
-salt    = "atCGS/id/v1/" || login
+salt    = "atCGS/id/v1/" || profile || "/" || login            profile: real, or test (CI)
 IDSEED  = Argon2id(password, salt, m = 256 MiB, t = 3, p = 1)   32 bytes, memory only
 IDSK    = Ed25519 private key from IDSEED                       never stored, never sent
 IDPUB   = Ed25519 public key of IDSK                             32 bytes, registered
 UID     = sha256(IDPUB)                                          the user's only name
 ```
 
+- Login and password are Unicode-normalised (NFC) first, so the same text typed on
+  two machines gives the same key.
 - The login is the salt: two users with the same password get different keys, and
   the system never needs to look a login up. The client recomputes `UID` and
   finds it in the journal.
@@ -89,21 +92,30 @@ seq  op      UID      payload               signed by
 3    revoke  UID_b    reason                OPX, or IDSK_b itself
 ```
 
-- `enrol` is countersigned by OPX: nobody joins without a maintainer.
-- OPX's own `IDPUB` is pinned in `POEX.cgs`; it is the root of trust.
+- `enrol` is signed by OPX and carries the user's `proof`: IDSK's signature of
+  IDPUB. Nobody joins without a maintainer, and nobody enrols a key they don't hold.
+- `rotate` is signed by the old key and carries the new key's signature; the grants
+  follow the new UID. OPX itself can be neither rotated nor revoked: its key is pinned.
+- Reading refuses the **whole** file at the first broken link, bad signature or
+  impossible entry (a grant for an unknown UID, a second role on one repo).
+- OPX's own `IDPUB` is pinned in `spec/contracts.toml [identity] opx_pub`; it is
+  the root of trust, and the first entry must be OPX enrolling itself.
 - The journal contains public keys only, so it may be projected to PUB as is.
 
 ### 3.4 The access journal (who may do what, where)
 
 Same format, signed by OPX only. One entry binds a UID, a GitRepo, a role and the
-fingerprints of the ssh keys that role uses.
+ssh public key that role uses (public anyway; OPX needs it to install the key).
 
 ```text
-seq  op      UID      REPO                 ROLE  SSH key fingerprints     signed by
-1    grant   UID_a    github:flipoyo/atCGS DEV   SHA256:Xq1…              OPX
-2    grant   UID_a    github:flipoyo/CGS   USR   SHA256:Lm7…              OPX
-3    revoke  UID_a    github:flipoyo/CGS   USR   SHA256:Lm7…              OPX
+seq  op      UID      REPO                 ROLE  ssh public key           signed by
+1    grant   UID_a    github:flipoyo/atCGS DEV   ssh-ed25519 AAAA…        OPX
+2    grant   UID_a    github:flipoyo/CGS   USR   ssh-ed25519 AAAA…        OPX
+3    revoke  UID_a    github:flipoyo/CGS                                  OPX
 ```
+
+One role per (UID, repo), and one ssh key per grant: GitHub refuses a deploy key
+already used on another repo.
 
 - A UID with no entry for a repo is `PUB` on that repo.
 - The access journal is PRIVATE: it reveals which UIDs work on which repos. It lives
@@ -150,6 +162,22 @@ GLYPH      = "CGSG" | version (1) | nonce (12) | ChaCha20-Poly1305(key, plaintex
 
 In the local prototype every step runs on the user's machine. When atCGS becomes
 a service, steps 1, 5 and 6 stay on the client; only the signature of step 3 is sent.
+The session loads only the keys of the requested layer: `DEV login` gets the repos
+where the UID is DEV, `USR login` those where it is USR.
+
+The commands (`ATCGS_REGISTER` names the register directory; logins and passwords
+are asked with `getpass`, never passed as arguments or environment):
+
+```bash
+ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init         # 1st run: prints the key to pin; 2nd: enrols OPX
+pixi run '@cgs' DEV request req.json REPO DEV REPO2 USR   # user: new ssh keys, sealed in the GLYPH
+ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit req.json    # OPX: enrol (if new) + grant
+pixi run '@cgs' DEV login TWIN [cgitsync op ...]          # TWIN.cgs + keys in a private agent
+ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX revoke UID [REPO] # revoke a UID, or one grant
+```
+
+`request.json` holds the UID, IDPUB, the proof and the ssh **public** keys only.
+The GLYPH goes to `~/.cgs/.glyph/<UID>.glyph` (`ATCGS_GLYPHS` overrides it).
 
 What each party sees:
 
@@ -219,29 +247,22 @@ PRIVATE = .cgitsync       (ComplexGitSync)   access journal, ATCGS_REGISTER
 PUBLIC  = .omniscience    (ComplexGraphSync) identity journal, chain heads
 ```
 
+In 1.6.0-alpha both journals live in the register; projecting the identity journal
+and the chain heads to `.omniscience` is not automated yet.
+
 A candidate manifest is not an authenticated checkpoint.
 No public output contains a secret, a private path or a raw GitTree.
 A GLYPH is never published, even sealed.
 A local success does not mean publication on a network.
 
-## 7. Legacy: POEX, 1.5.0-alpha prototype
+## 7. Removed in 1.6.0: the POEX/EOPX prototype
 
-Two C microcodes, each wrapped by a Python class ([microcode/README.md](microcode/README.md)):
-`poex` (Proof of Existence, `atcgs.POEX`) compares two GLYPHs;
-`eopx` (Existence of Proof, `atcgs.EOPX`) turns a SEED into a GLYPH.
-`@cgs <LAYER> prove NAME LEFT RIGHT` runs them against OPX's register `ATCGS_REGISTER`
-and prints only the 4-bit `.poe`: `0000` granted, else the requester's code
-(OPX `1000`, DEV `1100`, USR `1110`, PUB `1111`).
-
-```text
-Matrix = 256 rows × 256 bits = 65 536 bits = 8 192 bytes
-Packet = 4 rows × 256 bits = 1 024 bits = 128 bytes
-Stream = 64 indexed packets, in ascending row-major order
-.poe   = one zero-count report per 4-bit quartet
-```
-
-The zero counter proves neither identity nor existence at a given instant.
-This mechanism is replaced by § 3; the 256×256 format survives as the GLYPH envelope.
+1.5.0-alpha had two C microcodes, `poex` (compare two GLYPHs by XOR zero count) and
+`eopx` (SEED → GLYPH), the `prove` verb, the `.cred` packet and the 4×256 packet
+simulator with its `candidate.json`. All are removed (§ 3.7 says why); they remain in
+the Git history at `cgs-1.5.0-alpha`. What survives: the 256×256-bit format, now the
+GLYPH envelope, and the 4-bit codes, now role codes (OPX `1000`, DEV `1100`,
+USR `1110`, PUB `1111`).
 
 ## 8. Starting the offline lab
 
@@ -249,15 +270,16 @@ Requirements: Pixi only; every command below is a Pixi task (pixi install once).
 From the root of the atCGS checkout:
 
 ```bash
-pixi run contract-inspect
-pixi run poex-candidate
-pixi run contract-candidate
+pixi run contract-inspect   # the tuples, and [identity] / [glyph] against the code
+pixi run identity-demo      # § 3 end to end on throwaway data (--pbm-dir DIR: see the GLYPHs)
+pixi run local-remote       # the same against a local sshd: DEV pushes, USR fetches, revoked refused
 pixi run test
 ```
 
-The `inspect` option validates the tuples of `spec/contracts.toml`.
-The sequencer uses a deterministic demonstration matrix by default.
-`candidate` must display `NOT_PUBLISHED` and `poex_verified=false`.
+`inspect` validates the tuples of `spec/contracts.toml` and checks that its
+`[identity]` and `[glyph]` sections match the code.
+The two demos work in a temporary directory deleted at the end: no network, no
+`~/.ssh`, no real register. `ATCGS_KDF_PROFILE=test` makes them faster.
 None of it bootstraps a tree or accesses a real `.cgitsync`.
 
 ## 9. TUTORIALS, 150 lines each
@@ -265,8 +287,8 @@ None of it bootstraps a tree or accesses a real `.cgitsync`.
 - [TUTO 01 — BIOS / BOOT](TUTOS/TUTO_01_BIOS_BOOT.md)
 - [TUTO 02 — PRIME G and DELTA/NABLA](TUTOS/TUTO_02_PRIME_G.md)
 - [TUTO 03 — System Layers and OpFrontier](TUTOS/TUTO_03_OPFRONTIER.md)
-- [TUTO 04 — POEX 4×256](TUTOS/TUTO_04_POEX.md) (legacy, see § 7)
-- [TUTO 05 — USR / PUB, GLYPH and KEY](TUTOS/TUTO_05_USR_PUB.md) (to rewrite for § 3)
+- [TUTO 04 — POEX 4×256](TUTOS/TUTO_04_POEX.md) (legacy, removed in 1.6.0, see § 7)
+- [TUTO 05 — USR / PUB, identity journals and GLYPH](TUTOS/TUTO_05_USR_PUB.md)
 - [TUTO 06 — Integration and 24 h roadmap](TUTOS/TUTO_06_INTEGRATION.md)
 
 ## 10. Upstream code reality
@@ -278,26 +300,18 @@ The package tutorials are reproducible examples, not a merged PR.
 
 ## 11. ALPHA release criteria
 
-- [ ] The four README/USR/PUB tuples are unchanged.
-- [ ] The six new BIOS symbols keep their original order.
 - [x] The four System Layers are the only exposed `@cgs` entries.
-- [ ] No login, password or name is stored anywhere (grep the journals and the register).
-- [ ] Every identity journal entry verifies: chain, self-signature, OPX countersignature.
-- [ ] Every access journal entry is signed by the pinned OPX key.
-- [ ] A GLYPH with one flipped bit, or opened with a wrong password, is refused.
-- [ ] After a session, the ssh-agent holds no key and nothing was written to disk.
+- [x] No login, password or name is stored anywhere (grep the journals and the register).
+- [x] Every identity journal entry verifies: chain, proof of possession, OPX signature.
+- [x] Every access journal entry is signed by the pinned OPX key.
+- [x] A GLYPH with one flipped bit, or opened with a wrong password, is refused.
+- [x] After a session, the ssh-agent holds no key and nothing was written to disk.
 - [ ] PRIVATE access is never promoted by a PUB answer.
 - [ ] `.omniscience` serves only authorised and authenticated proofs.
 - [ ] ComplexGitSync schema-1 Merkle compatibility is preserved.
 - [ ] CI tests document failures, not only successes.
+- [ ] The six new BIOS symbols keep their original order.
 
-## 12. Tracking
-
-ComplexGitSync #193: https://github.com/flipoyo/ComplexGitSync/issues/193
-atCGS #2: https://github.com/flipoyo/atCGS/issues/2
-atCGS PR #1: https://github.com/flipoyo/atCGS/pull/1
-
-**Status: documentation model and offline demonstrator; no verified PUBLIC BOOT.**
 
 ## Additional validation: cases to automate
 
@@ -305,5 +319,5 @@ atCGS PR #1: https://github.com/flipoyo/atCGS/pull/1
 - Never infer a Git clone from a tuple symbol.
 - A requestable name does not mean an available service.
 - Same login + password always gives the same UID; one changed character gives another.
-- A `grant` not signed by OPX, or for a revoked UID, is ignored.
+- A `grant` not signed by OPX refuses the whole journal; a revoked UID cannot be granted.
 - A revoked ssh key is removed from the remote, not only from the journal.

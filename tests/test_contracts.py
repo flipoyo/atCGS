@@ -1,20 +1,22 @@
-import json
 import sys
 import unittest
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
-from contract_check import FIXTURES, candidate, inspect
-from poex_4x256_simulator import (
-    leaf_digest,
-    merkle_branch,
-    public_candidate,
-    sample_matrix,
-    sequence,
-    split_packets,
-    verify_branch,
-)
+from contract_check import FIXTURES, inspect  # noqa: E402
+
+SPEC = Path(__file__).resolve().parents[1] / "spec/contracts.toml"
+
+
+def refused(test: unittest.TestCase, old: str, new: str) -> None:
+    text = SPEC.read_text(encoding="utf-8")
+    test.assertIn(old, text)
+    with TemporaryDirectory() as d:
+        f = Path(d) / "contracts.toml"
+        f.write_text(text.replace(old, new, 1), encoding="utf-8")
+        with test.assertRaises(ValueError):
+            inspect(f)
 
 
 class TestContracts(unittest.TestCase):
@@ -22,6 +24,8 @@ class TestContracts(unittest.TestCase):
         report = inspect()
         self.assertEqual(report["public_rows"], 4)
         self.assertEqual(report["opfrontier_rows"], 3)
+        self.assertEqual((report["key_rows"], report["glyph_rows"]), (2, 2))
+        self.assertFalse(report["published"])
 
     def test_public_tuples(self):
         self.assertEqual(
@@ -32,55 +36,28 @@ class TestContracts(unittest.TestCase):
         )
         self.assertNotIn("GLYPH", {f for row in FIXTURES["public_boundary"]["sequence"] for f in row})
 
-    def test_key_prototype(self):
-        self.assertEqual(inspect()["key_rows"], 2)
+    def test_key_prototype_no_longer_hashes_a_glyph(self):
         self.assertEqual(FIXTURES["key"]["prototype"][0], ("PUB", "DELTA", "POEX", "KEY"))
+        refused(self, "[key]", '[key]\ndefinition = "sha256(GLYPH)"')
 
-    def test_key_must_hash_the_glyph(self):
-        text = Path(__file__).resolve().parents[1].joinpath("spec/contracts.toml").read_text()
+    def test_glyph_envelope_matches_the_code(self):
+        refused(self, "bytes = 8192", "bytes = 8191")
+        refused(self, "sizes = [4, 1, 12, 8159, 16]", "sizes = [4, 1, 12, 8160, 16]")
+        refused(self, 'aead = "ChaCha20-Poly1305"', 'aead = "AES-GCM"')
+        refused(self, "published = false  # a GLYPH", "published = true  # a GLYPH")
+
+    def test_identity_matches_the_code(self):
+        refused(self, "memory_kib = 262144", "memory_kib = 1024")
+        refused(self, 'uid = "sha256(IDPUB)"', 'uid = "sha256(NAME)"')
+        refused(self, 'DEV = "1100"', 'DEV = "0000"')
+        refused(self, 'opx_pub = ""', 'opx_pub = "c2hvcnQ="')
+
+    def test_a_pinned_opx_key_is_accepted(self):
+        text = SPEC.read_text(encoding="utf-8").replace('opx_pub = ""', f'opx_pub = "{"A" * 43}="')
         with TemporaryDirectory() as d:
             f = Path(d) / "contracts.toml"
-            f.write_text(text.replace('"sha256(GLYPH)"', '"GLYPH"'), encoding="utf-8")
-            with self.assertRaises(ValueError):
-                inspect(f)
-
-    def test_packet_roundtrip(self):
-        data = sample_matrix()
-        packets, root = sequence(data)
-        self.assertEqual(len(packets), 64)
-        self.assertEqual(b"".join(p.payload for p in packets), data)
-        self.assertEqual(sum(p.emitted_nibble_reports for p in packets), 16384)
-        self.assertEqual(len(root), 32)
-
-    def test_all_merkle_proofs(self):
-        packets, root = sequence(sample_matrix())
-        leaves = [p.leaf_hash for p in packets]
-        for i, p in enumerate(packets):
-            self.assertTrue(verify_branch(p.leaf_hash, i, merkle_branch(leaves, i), root))
-        modified = bytearray(packets[0].payload)
-        modified[0] ^= 1
-        self.assertFalse(
-            verify_branch(leaf_digest(0, bytes(modified)), 0, merkle_branch(leaves, 0), root)
-        )
-        self.assertFalse(
-            verify_branch(leaf_digest(0, packets[1].payload), 0, merkle_branch(leaves, 0), root)
-        )
-
-    def test_invalid_size(self):
-        with self.assertRaises(ValueError):
-            split_packets(sample_matrix()[:-1])
-
-    def test_candidate_no_fake_proof(self):
-        packets, root = sequence(sample_matrix())
-        doc = public_candidate(packets, root)
-        with TemporaryDirectory() as d:
-            f = Path(d) / "candidate.json"
-            f.write_text(json.dumps(doc), encoding="utf-8")
-            self.assertEqual(candidate(f)["status"], "NOT_PUBLISHED")
-            doc["poex_verified"] = True
-            f.write_text(json.dumps(doc), encoding="utf-8")
-            with self.assertRaises(ValueError):
-                candidate(f)
+            f.write_text(text, encoding="utf-8")
+            self.assertTrue(inspect(f)["opx_pinned"])
 
 
 if __name__ == "__main__":

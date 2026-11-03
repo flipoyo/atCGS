@@ -7,24 +7,21 @@ Layer, resolves its own GitRepo frontiers and applies the PUBLIC boundary.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
-import subprocess
 import sys
-import tempfile
 import tomllib
 from dataclasses import dataclass
 from enum import Enum
 from functools import wraps
 from pathlib import Path
-from typing import Callable, Iterator, Mapping, MutableMapping, Sequence
+from typing import Callable, Mapping, Sequence
 
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
-# pixi.toml, spec/contracts.toml, candidate.json and the docs must match.
+# pixi.toml, spec/contracts.toml and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.5.0-alpha"
+__version__ = "1.6.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -60,7 +57,7 @@ def build_name(manifest: Path | None = None) -> str:
 
 
 def commit_subject(summary: str) -> str:
-    """Commit subject <build-name>-<version> <summary>, as in cgs-1.5.0-alpha."""
+    """Commit subject <build-name>-<version> <summary>, as in cgs-1.6.0-alpha."""
     return f"{build_name()}-{__version__} {summary}"
 
 
@@ -75,14 +72,15 @@ CORE_OPERATIONS = frozenset(
     {"bootstrap", "initialise", "status", "view-tree", "env", "--version", "--help", "-h"}
 )
 CORE_RELEASE = frozenset({("release", "freeze"), ("release", "list"), ("release", "load")})
+IDENTITY_VERBS = frozenset({"init", "request", "admit", "revoke", "login"})
 
 # Operator configuration; never read from the request arguments.
 AUTHORIZE_ENV = "ATCGS_AUTHORIZE"
 MOUNTS_ENV = "ATCGS_MOUNTS"
-REGISTER_ENV = "ATCGS_REGISTER"  # the OPX register file, in a private repo mounted at OPX
+REGISTER_ENV = "ATCGS_REGISTER"  # the register directory: identity.jsonl and access.jsonl
 # Set by `pixi run`; @cgs runs under this repository's Pixi environment only.
 PIXI_ENV = "PIXI_PROJECT_ROOT"
-ROOT = Path(__file__).resolve().parent
+ROOT = Path(__file__).resolve().parents[1]
 
 USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
        @cgs --version       print the inner ComplexGraphSync SemVer
@@ -94,8 +92,16 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
   <layer> .omniscience resolve the PUBLIC mount
   OPX | DEV .cgitsync   resolve the PRIVATE mount (requires ATCGS_AUTHORIZE)
   OPX | DEV env show|check  observe or check the shared environment (requires ATCGS_AUTHORIZE)
-  <layer> prove NAME LEFT RIGHT  is poe granted to <layer>? prints the 4-bit .poe (ATCGS_REGISTER;
-                       an unknown NAME is born only under OPX, with ATCGS_AUTHORIZE=OPX)
+
+  Identity and access (ATCGS_REGISTER; logins and passwords are asked, never passed):
+  OPX init                     enrol OPX itself, with the key pinned in spec/contracts.toml
+  <layer> request OUT REPO ROLE [REPO ROLE ...]
+                               new ssh keys, sealed in your GLYPH; OUT is the request for OPX
+  OPX admit REQUEST            enrol the requester and grant what it asks
+  OPX revoke UID [REPO]        revoke a UID, or only its grant on REPO
+  OPX | DEV | USR login TWIN [op ...]
+                               open a session: write TWIN.cgs, load the granted ssh keys
+                               into a private ssh-agent, run `cgitsync op ...` through it
 
 Run it as: pixi run '@cgs' ..."""
 
@@ -172,9 +178,29 @@ class OpFrontier:
             return Request(layer, args)
         if layer in PRIVATE_LAYERS and (args[0] in CORE_OPERATIONS or args[:2] in CORE_RELEASE):
             return Request(layer, args)
-        if args[0] == "prove" and len(args) == 4:
+        if _identity_request(layer, args):
             return Request(layer, args)
         raise ValueError(f"unsupported @cgs {layer} argument: {args[0]!r}")
+
+
+def _core(args: Sequence[str]) -> bool:
+    return bool(args) and (args[0] in CORE_OPERATIONS or tuple(args[:2]) in CORE_RELEASE)
+
+
+def _identity_request(layer: str, args: Sequence[str]) -> bool:
+    """The identity verbs and their arity (README § 3); the arguments are never secrets."""
+    verb, rest = args[0], args[1:]
+    if verb == "init":
+        return layer == "OPX" and not rest
+    if verb == "request":
+        return len(rest) >= 3 and len(rest) % 2 == 1
+    if verb == "admit":
+        return layer == "OPX" and len(rest) == 1
+    if verb == "revoke":
+        return layer == "OPX" and len(rest) in (1, 2)
+    if verb == "login":
+        return layer != "PUB" and len(rest) >= 1 and (len(rest) == 1 or _core(rest[1:]))
+    return False
 
 
 @dataclass(frozen=True, slots=True)
@@ -304,257 +330,6 @@ class MountTable:
         return next((mount for mount in self.mounts if mount.name == name), None)
 
 
-def public_answer(table: MountTable) -> dict[str, object]:
-    """PUB: read-only PUBLIC view; never touches PRIVATE mounts or the core."""
-    mount = table.public()
-    return {
-        "layer": "PUB",
-        "frontier": {".poe": list(dict(FRONTIERS)[".poe"])},
-        "requestable": "*G",
-        PUBLIC: mount.public_view() if mount else {"evidence": Evidence.UNAVAILABLE.value},
-    }
-
-
-MICROCODE = ROOT / "microcode"
-GLYPH_BYTES = 256 * 256 // 8  # a GLYPH is 256x256 bits
-_SHA256 = re.compile(r"[0-9a-f]{64}")
-_COMPARED = re.compile(
-    r"POEX COMPARED: 64 packets x 4x256 bits; quartets=16384; zeros=(\d+); equal=(yes|no); evidence=UNVERIFIED"
-)
-# .poe: the 4-bit decorator in front of a GLYPH, *GLYPH = (.poe, GLYPH).
-# POEX knows who asks: 0000 when poe is granted, else the requester's own code.
-POE_CODES: Mapping[str, int] = {"POE": 0b0000, "OPX": 0b1000, "DEV": 0b1100, "USR": 0b1110, "PUB": 0b1111}
-POE_TRUE, POE_FALSE = 0b0000, 0b1111  # poex's answer, as POEX takes it back
-
-
-def sha256(data: bytes) -> str:
-    return hashlib.sha256(data).hexdigest()
-
-
-def build(name: str, directory: Path, compiler: str = "cc") -> Path:
-    """Compile microcode/<name>.c with the flags of microcode/README.md."""
-    binary = directory / name
-    subprocess.run(
-        [compiler, "-std=c11", "-O2", "-Wall", "-Wextra", "-Werror", "-pedantic",
-         "-o", str(binary), str(MICROCODE / f"{name}.c")],
-        check=True,
-    )
-    return binary
-
-
-@dataclass(frozen=True, slots=True)
-class Cred:
-    """.cred: one 4x256-bit POEX packet, one sha256 credential per PRIME CGS layer."""
-
-    opx: str  # sha256(GLYPH); OPX only
-    dev: str  # sha256(temporary DEV ssh public key)
-    usr: str  # sha256(NAME)
-    pub: str  # sha256(SEED), the unique ID of NAME
-
-    def slot(self, layer: str) -> str:
-        """The one component a layer receives."""
-        if layer not in PRIME_CGS:
-            raise ValueError(f"unsupported PRIME CGS layer: {layer!r}")
-        return getattr(self, layer.lower())
-
-    def packet(self) -> bytes:
-        """4 x 256 bits = 128 bytes, in PRIME CGS order."""
-        return b"".join(bytes.fromhex(self.slot(layer)) for layer in PRIME_CGS)
-
-
-class Register(MutableMapping[str, tuple[str, str]]):
-    """OPX's register NAME -> (hash(SEED), hash(GLYPH)), persisted in one JSON file.
-
-    The file lives in a private repository mounted at OPX only; each write
-    replaces it atomically. It never holds a SEED or a GLYPH, only their hashes.
-    """
-
-    def __init__(self, path: Path) -> None:
-        self.path = path
-        self._pairs: dict[str, tuple[str, str]] = {}
-        if path.exists():
-            raw = json.loads(path.read_text(encoding="utf-8"))
-            if not isinstance(raw, dict):
-                raise ValueError("the OPX register must be a JSON object")
-            for name, pair in raw.items():
-                if not (isinstance(pair, list) and len(pair) == 2 and all(isinstance(h, str) for h in pair)
-                        and all(_SHA256.fullmatch(h) for h in pair)):
-                    raise ValueError(f"the OPX register holds a malformed entry for {name!r}")
-                self._pairs[name] = (pair[0], pair[1])
-
-    def __getitem__(self, name: str) -> tuple[str, str]:
-        return self._pairs[name]
-
-    def __setitem__(self, name: str, pair: tuple[str, str]) -> None:
-        self._pairs[name] = pair
-        self._save()
-
-    def __delitem__(self, name: str) -> None:
-        del self._pairs[name]
-        self._save()
-
-    def __iter__(self) -> Iterator[str]:
-        return iter(self._pairs)
-
-    def __len__(self) -> int:
-        return len(self._pairs)
-
-    def _save(self) -> None:
-        self.path.parent.mkdir(parents=True, exist_ok=True)
-        draft = self.path.with_name(f".{self.path.name}.tmp")
-        draft.write_text(json.dumps({n: list(p) for n, p in self._pairs.items()}, indent=2) + "\n",
-                         encoding="utf-8")
-        os.replace(draft, self.path)
-
-
-@dataclass(frozen=True, slots=True)
-class EOPX:
-    """Existence of Proof: wraps the C eopx microcode, the birth protocol.
-
-    `opx` maps NAME -> (hash(SEED), hash(GLYPH)), known by OPX only. A GLYPH
-    lives in this process only while it is hashed or compared; nobody stores it.
-    """
-
-    binary: Path
-    opx: MutableMapping[str, tuple[str, str]]
-
-    def glyph(self, seed: bytes) -> bytes:
-        """Rebuild the GLYPH of a SEED; the microcode refuses a non-square or small SEED."""
-        result = subprocess.run([str(self.binary)], input=seed, capture_output=True)
-        if result.returncode != 0 or len(result.stdout) != GLYPH_BYTES:
-            raise ValueError(f"eopx microcode refused the SEED: {result.stderr.decode().strip()}")
-        return result.stdout
-
-    def birth(self, name: str, seed: bytes) -> None:
-        """Register a new NAME: hash(SEED) is its unique ID, hash(GLYPH) goes to OPX."""
-        if name in self.opx:
-            raise ValueError(f"{name!r} already exists in PoE")
-        seed_id = sha256(seed)
-        if any(registered == seed_id for registered, _ in self.opx.values()):
-            raise ValueError("hash(SEED) is already the ID of another NAME")
-        self.opx[name] = (seed_id, sha256(self.glyph(seed)))
-
-
-@dataclass(frozen=True, slots=True)
-class POEX:
-    """Proof of Existence: the wallet, wrapping the C poex microcode.
-
-    The microcode's only purpose is comparison. POEX rebuilds both GLYPHs with
-    EOPX and hands them to poex; neither leaves the process.
-    """
-
-    binary: Path
-    eopx: EOPX
-
-    def exists(self, name: str) -> bool:
-        """Does NAME exist in PoE? The only question POEX asks."""
-        return name in self.eopx.opx
-
-    def verdict(self, glyph_a: bytes, glyph_b: bytes) -> int:
-        """Take poex's answer back as .poe: equal is 0000 (POE), different 1111 (PUB)."""
-        result = subprocess.run([str(self.binary), "--packet"], input=glyph_a + glyph_b, capture_output=True)
-        compared = _COMPARED.search(result.stdout.decode())
-        if result.returncode not in (0, 1) or compared is None:
-            raise ValueError(f"poex microcode refused the GLYPHs: {result.stderr.decode().strip()}")
-        return POE_TRUE if compared.group(2) == "yes" else POE_FALSE
-
-    def compare(self, seed_a: bytes, seed_b: bytes) -> bool:
-        """Rebuild two unknown GLYPHs, then let poex compare them: equal iff zeros = 65536."""
-        return self.verdict(self.eopx.glyph(seed_a), self.eopx.glyph(seed_b)) == POE_TRUE
-
-    def session(self) -> Session:
-        """A local session; every .poe it issues holds only until it closes."""
-        return Session(self)
-
-    def cred(
-        self, name: str, ask_seed: Callable[[], bytes], send: Callable[[Path, str], None]
-    ) -> Cred:
-        """Deliver .cred for NAME; a NAME not in PoE is born through EOPX first.
-
-        Once NAME exists in PoE, `send` is the OpFrontier request
-        ComplexGraphSync -> ComplexGitSync: it receives the temporary DEV private
-        key path, valid only during the call, and hash(SEED), never the GLYPH.
-        The key set is destroyed when `send` returns.
-        """
-        if not self.exists(name):
-            self.eopx.birth(name, ask_seed())
-        seed_id, glyph_id = self.eopx.opx[name]
-        with tempfile.TemporaryDirectory(prefix="poex-") as tmp:
-            private = Path(tmp) / "id_ed25519"
-            # The ssh-keygen core of github.com/flipoyo/sshKeyGen, without ~/.ssh or ssh-agent.
-            subprocess.run(
-                ["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-C", f"poex-{seed_id}", "-f", str(private)],
-                check=True, capture_output=True,
-            )
-            public = Path(f"{private}.pub").read_bytes().strip()
-            send(private, seed_id)
-        return Cred(glyph_id, sha256(public), sha256(name.encode()), seed_id)
-
-
-class Session:
-    """A local POEX session: each *GLYPH = (.poe, GLYPH) lives here and dies with it."""
-
-    def __init__(self, wallet: POEX) -> None:
-        self._wallet = wallet
-        self._poe: dict[str, int] = {}
-        self._glyphs: dict[str, bytearray] = {}
-        self._open = True
-
-    def __enter__(self) -> Session:
-        return self
-
-    def __exit__(self, *_: object) -> None:
-        self.close()
-
-    def __repr__(self) -> str:
-        return f"Session(open={self._open}, poe={ {n: format(c, '04b') for n, c in self._poe.items()} })"
-
-    def close(self) -> None:
-        """End the session: every GLYPH is zeroed and every .poe forgotten."""
-        for glyph in self._glyphs.values():
-            glyph[:] = bytes(len(glyph))
-        self._glyphs.clear()
-        self._poe.clear()
-        self._open = False
-
-    def prove(self, name: str, left: bytes, right: bytes, requester: str) -> int:
-        """Can poe be granted to `requester` (OPX, DEV, USR or PUB) for NAME?
-
-        Is NAME known? If not, only OPX can give it birth, through EOPX, from
-        `left`. Then control GLYPH(left) against OPX's hash(GLYPH) before poex,
-        and let poex prove left = right. Granted, the .poe is 0000, and the
-        GLYPH is decorated *GLYPH = (0000, GLYPH) for this session; refused, the
-        .poe stays the requester's own code: OPX 1000, DEV 1100, USR 1110, PUB 1111.
-        """
-        if not self._open:
-            raise ValueError("POEX session is closed")
-        if requester not in PRIME_CGS:
-            raise ValueError(f"unsupported PRIME CGS layer: {requester!r}")
-        refused = POE_CODES[requester]
-        if not self._wallet.exists(name):
-            if requester != "OPX":
-                return self._issue(name, refused)
-            self._wallet.eopx.birth(name, left)
-        glyph = bytearray(self._wallet.eopx.glyph(left))
-        granted = (sha256(glyph) == self._wallet.eopx.opx[name][1]
-                   and self._wallet.verdict(bytes(glyph), self._wallet.eopx.glyph(right)) == POE_TRUE)
-        if not granted:
-            glyph[:] = bytes(len(glyph))
-            return self._issue(name, refused)
-        self._glyphs[name] = glyph
-        return self._issue(name, POE_CODES["POE"])
-
-    def _issue(self, name: str, poe: int) -> int:
-        self._poe[name] = poe
-        return poe
-
-    def poe(self, name: str) -> int:
-        """NAME's .poe in this session; there is none outside it."""
-        if not self._open or name not in self._poe:
-            raise ValueError(f"no .poe for {name!r} in this session")
-        return self._poe[name]
-
-
 def cgs(handler: Callable[[Request], int]) -> Callable[[Sequence[str] | None], int]:
     """Decorator for the entry point: accept one PRIME CGS selector, then delegate."""
 
@@ -577,28 +352,24 @@ def _emit(payload: Mapping[str, object]) -> int:
     return 0
 
 
-def prove(request: Request, authorization: Authorization, env: Mapping[str, str] | None = None) -> dict[str, str]:
-    """@cgs <LAYER> prove NAME LEFT RIGHT: the selector is the requester; only the .poe comes out."""
-    _, name, left, right = request.args
-    path = (os.environ if env is None else env).get(REGISTER_ENV)
-    if not path:
-        raise ValueError(f"prove needs the OPX register: set {REGISTER_ENV}")
-    register = Register(Path(path))
-    if name not in register and request.layer == "OPX":
-        authorization.require("OPX")  # birth through EOPX
-    seeds = Path(left).read_bytes(), Path(right).read_bytes()
-    with tempfile.TemporaryDirectory(prefix="cgs-microcode-") as tmp:
-        eopx = EOPX(build("eopx", Path(tmp)), register)
-        with POEX(build("poex", Path(tmp)), eopx).session() as session:
-            poe = session.prove(name, *seeds, request.layer)
-    return {"layer": request.layer, "name": name, "poe": format(poe, "04b")}
+def public_answer(table: MountTable) -> dict[str, object]:
+    """PUB: read-only PUBLIC view; never touches PRIVATE mounts or the core."""
+    mount = table.public()
+    return {
+        "layer": "PUB",
+        "frontier": {".poe": list(dict(FRONTIERS)[".poe"])},
+        "requestable": "*G",
+        PUBLIC: mount.public_view() if mount else {"evidence": Evidence.UNAVAILABLE.value},
+    }
 
 
 @cgs
 def main(request: Request) -> int:
     table, authorization = MountTable.from_env(), Authorization.from_env()
-    if request.args and request.args[0] == "prove":
-        return _emit(prove(request, authorization))
+    if request.args and request.args[0] in IDENTITY_VERBS:
+        from atcgs.commands import dispatch  # the identity layer: README § 3
+
+        return _emit(dispatch(request, authorization))
     if request.args and request.args[0] in MOUNT_POLICY:
         name = request.args[0]
         mount = table.resolve(name, request.layer, authorization)
@@ -627,13 +398,10 @@ def run(argv: Sequence[str] | None = None) -> int:
     try:
         require_pixi()
         return main(argv)
-    except Unauthorized as exc:
+    except PermissionError as exc:  # Unauthorized, AccessRefused
         print(f"@cgs: {exc}", file=sys.stderr)
         return 3
     except (ValueError, OSError, tomllib.TOMLDecodeError) as exc:
         print(f"@cgs: {exc}", file=sys.stderr)
         return 2
 
-
-if __name__ == "__main__":
-    raise SystemExit(run())

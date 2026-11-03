@@ -27,8 +27,8 @@ Do not turn a file suffix into a mutation order.
 
 ```bash
 pixi run contract-inspect
-pixi run poex-candidate
-pixi run contract-candidate
+pixi run identity-demo
+pixi run local-remote
 pixi run test
 ```
 
@@ -72,8 +72,8 @@ Do not run `release freeze` on a real project without context.
 ## 7. Validation criteria
 
 Fixtures must preserve all fields and their positions.
-POEX packets must be complete, ordered and reconstructible.
-The candidate must stay `NOT_PUBLISHED` without a reliable checkpoint.
+Journals must verify end to end; a GLYPH must open only with its login and password.
+Nothing is `published` without a reliable checkpoint.
 Publication must be independent of the internal GitTree's rights.
 Integration must not modify historical schema-1 hashes.
 The PR status must be observed, not guessed.

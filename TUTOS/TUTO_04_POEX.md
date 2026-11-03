@@ -2,6 +2,11 @@
 
 **Goal:** generate and verify an ordered binary commitment.
 
+> **Legacy (removed in 1.6.0-alpha).** The `poex` microcode, the 4×256 packet
+> simulator and `candidate.json` no longer exist; their commands below no longer run.
+> Kept as the record of the 1.5 design. The 256×256-bit format lives on as the
+> GLYPH envelope: see README § 3.5 and TUTO 05.
+
 ## 1. Starting matrix
 
 ```text

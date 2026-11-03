@@ -210,3 +210,46 @@ Until decided, implement the proposal and leave the question in this table.
 - The README § 11 boxes for the journals, the GLYPH and the agent are ticked.
 - On closing: stamp this file `YYYYMMDD_IdentityJournals_DevPlanTicket.md`,
   move it to `.archive/`, and use one commit message for the work.
+
+## Closed 2026-11-03 (1.6.0-alpha)
+
+M0–M6 implemented; M7 moves to the short ticket `github-deploy-keys.md`.
+
+- `atcgs.py` is now the package `atcgs/`: `identity.py` (M1), `journal.py` (M2),
+  `glyph.py` (M3), `session.py` and `commands.py` (M4). `python -m atcgs` and
+  `pixi run '@cgs'` are unchanged.
+- M0 `pixi run identity-demo` and M5 `pixi run local-remote` both run, and
+  `tests/test_scripts.py` runs them in CI (M5 skipped without sshd/git-shell).
+  M5 shows DEV pushing, USR refused on push by the forced command, and a key
+  revoked mid-session refused by sshd itself.
+- M6: `microcode/`, the simulator, `candidate.json`, `prove`, `Cred`, the old
+  `Register`, `c-compiler` and the three legacy Pixi tasks are gone.
+  `spec/contracts.toml` has `[identity]` and an extended `[glyph]`, checked
+  against the code by `contract-inspect`; `[key]` keeps its rows, without the
+  `sha256(GLYPH)` definition. README § 3, ALPHA.md, TUTO 05 rewritten; TUTO 04
+  marked legacy; TUTO 06 commands updated. Version 1.6.0-alpha.
+- `cryptography` 50 from conda-forge has Argon2id: no `argon2-cffi` needed.
+- `pixi run test` now runs `tests/` only. It used to collect the nested
+  ComplexGitSync and stop on its missing AgenticManifest.md.
+  `test_no_stale_version_literal` now scans atCGS's tracked files only; it
+  used to crash on a dangling link and, past it, flag ComplexGitSync's own
+  CGS-ALPHA identity version.
+
+Decisions taken as proposed (§ 3), still the owner's to revisit: D1 derived
+key, D2 pin in `spec/contracts.toml`, D3 GLYPH in `~/.cgs/.glyph/<UID>.glyph`,
+D4 `real`/`test` profiles, D5 codes kept and KEY definition dropped, D6
+simulator dropped.
+
+Changes from the plan, found while building:
+- The access journal stores the ssh **public key**, not only its fingerprint:
+  OPX needs the key itself to install it (M5's authorized_keys, M7's deploy keys).
+- A broken journal is refused as a whole, never partly ignored (README § 11 updated).
+- `writable` is not written in the Twin's `.cgs`: cgitsync refuses it on a
+  non-private repo, and write access is the remote's to enforce anyway.
+- The KDF profile is part of the salt (`atCGS/id/v1/<profile>/<login>`).
+- `ssh-agent` sockets go under `/tmp` when `$TMPDIR` is too deep for a Unix socket path.
+
+Not done: OPX's key is not pinned (owner: `@cgs OPX init`); the identity
+journal is not yet projected to `.omniscience`; DEV/USR need a copy of the
+journals to log in, which nothing distributes yet. All three are in
+`github-deploy-keys.md`.

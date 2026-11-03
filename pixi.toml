@@ -1,6 +1,6 @@
 [workspace]
 name = "atCGS"
-version = "1.5.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.6.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 # Same channels, platforms and Python as the pinned ComplexGitSync pixi.toml,
 # so @cgs and cgitsync observe one environment (cgitsync env check).
 channels = ["conda-forge"]
@@ -16,26 +16,26 @@ project = "CGS"
 # Every command runs under Pixi only; @cgs refuses to start outside it.
 [tasks]
 "@cgs" = "python -m atcgs"
-test = "python -m pytest"
+test = "python -m pytest tests"  # atCGS only: the nested ComplexGitSync has its own suite
 lint = "ruff check ."
 contract-inspect = "python scripts/contract_check.py inspect"
-contract-candidate = "python scripts/contract_check.py candidate candidate.json"
-poex-candidate = "python scripts/poex_4x256_simulator.py --output candidate.json"
-microcode-test = "python -m pytest microcode"
+identity-demo = "python scripts/identity_demo.py"
+local-remote = "python scripts/local_remote.py"
 
 [dependencies]
 python = "3.11.*"
 pytest = "*"
 ruff = "*"
 hypothesis = "*"
-# The POEX and EOPX microcodes need a C11 compiler; the wallet tests need ssh-keygen.
-c-compiler = "*"
+# Ed25519, Argon2id (>= 44), HKDF and ChaCha20-Poly1305 for the identity layer.
+cryptography = ">=44"
 
 [pypi-dependencies]
 # Immutable ComplexGitSync 8.6.2 head inspected on 2026-10-31; the installed
 # CLI continues to own all release/integrity/environment semantics.
 complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "9594d7e51ab9008458335cda09c80538f1a0bf98" }
 
-# conda-forge has no openssh for win-64, where Windows ships ssh-keygen itself.
+# ssh-agent, ssh-add (sessions) and sshd (local-remote). conda-forge has no openssh
+# for win-64, where Windows ships OpenSSH itself.
 [target.unix.dependencies]
 openssh = "*"
