@@ -38,8 +38,8 @@ cryptography = ">=44"
 #            CGS-ALPHA is live at once.  pixi run -e dogfood '@cgs' ...
 # The installed CLI continues to own all release/integrity/environment semantics.
 [feature.pinned.pypi-dependencies]
-# ComplexGitSync 8.7.0, CGS-ALPHA head dd3472b inspected on 2026-11-03.
-complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "dd3472b7b02ebd3028854413620197936a2f5f0e" }
+# ComplexGitSync 8.7.1, CGS-ALPHA head f56d814 (MemorySetupBranch) inspected on 2026-11-03.
+complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "f56d8148cb4d484a228a9d8550c4e84fccdb9f19" }
 
 [feature.dogfood.pypi-dependencies]
 complexgitsync = { path = "./ComplexGitSync", editable = true }

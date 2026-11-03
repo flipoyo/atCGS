@@ -1,7 +1,8 @@
 # The DEV tree for atCGS (ComplexGraphSync), one of cgs-{opx,dev,usr}.cgs.
 # Each file is named for the level it installs; the project is cgs, on CGS-ALPHA,
 # falling back to main where a repository has no such branch. POEX.cgs at the root is the PUB install.
-# DEV: atCGS and its agent records. .omniscience is not mounted: OPX writes the ledger.
+# DEV: atCGS and its agent records, backed up in .cgitsync/.memory. .omniscience is not
+# mounted: OPX writes the ledger.
 #   .agent/.distant  .ticketing, DevSpec, DocSpec, shared and read-only
 #   .agent/.local    .dev, .localSpec, .claude, atCGS's own, writable (cgs_CGS-ALPHA)
 #     pixi run cgitsync bootstrap examples/cgs-dev.cgs cgs
@@ -14,6 +15,7 @@ project = { name = "cgs", default_branch = "dev", fallback_branch = "CGS-ALPHA" 
 
 repos = [
     { repository = "github:flipoyo/atCGS", relative_path = ".", fallback_branch = "main", nested_config = "disabled" },
+    { repository = "github:flipoyo/.memory", relative_path = ".cgitsync/.memory", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
 
     # .distant — shared, read-only, the same for every conforming project
     { repository = "github:flipoyo/.ticketing", relative_path = ".agent/.distant/ticket", default_branch = "main", fallback_branch = "main", private = true },

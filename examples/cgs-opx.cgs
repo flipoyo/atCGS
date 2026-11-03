@@ -2,7 +2,7 @@
 # Each file is named for the level it installs; the project is cgs, on CGS-ALPHA,
 # falling back to main where a repository has no such branch. POEX.cgs at the root is the PUB install.
 # OPX: the operational frontier .opx {.cgitsync, .omniscience, .gts}. .cgitsync is
-# cgitsync's own directory, not a mount.
+# cgitsync's own directory, not a mount; only its .memory is (cgitsync >= 8.7.1).
 #   .omniscience  github:flipoyo/omniscience, the ledger, writable at OPX only
 #     .cgitsync/.memory/.register  atCGS's register: identity.jsonl + access.jsonl (README § 3), in the memory
 #   .agent/.distant  .ticketing, DevSpec, DocSpec, shared and read-only
@@ -18,6 +18,7 @@ project = { name = "cgs", default_branch = "opx", fallback_branch = "CGS-ALPHA" 
 repos = [
     { repository = "github:flipoyo/atCGS", relative_path = ".", fallback_branch = "main", nested_config = "disabled" },
     { repository = "github:flipoyo/omniscience", relative_path = ".omniscience", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
+    { repository = "github:flipoyo/.memory", relative_path = ".cgitsync/.memory", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
 
     # .distant — shared, read-only, the same for every conforming project
     { repository = "github:flipoyo/.ticketing", relative_path = ".agent/.distant/ticket", default_branch = "main", fallback_branch = "main", private = true },

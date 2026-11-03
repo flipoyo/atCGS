@@ -81,8 +81,18 @@ class LayerTreeTests(unittest.TestCase):
         for layer in LAYERS:
             mounts = by_path(load(layer)[1])
             with self.subTest(layer=layer):
-                self.assertFalse(any(path.startswith(".cgitsync") for path in mounts))
+                cgitsync = {path for path in mounts if path.startswith(".cgitsync")}
+                self.assertEqual(cgitsync, {".cgitsync/.memory"} if layer != "usr" else set())
                 self.assertFalse(any("register" in r["repository"] for r in mounts.values()))
+
+    def test_opx_and_dev_declare_the_memory_memory_setup_proposes(self):
+        # The cgitsync >= 8.7.1 entry: no default_branch, the branch is derived (MemorySetupBranch).
+        for layer in ("opx", "dev"):
+            memory = dict(by_path(load(layer)[1])[".cgitsync/.memory"])
+            with self.subTest(layer=layer):
+                self.assertEqual(memory, {"repository": "github:flipoyo/.memory", "relative_path": ".cgitsync/.memory",
+                                          "fallback_branch": "main", "private": True, "writable": True,
+                                          "nested_config": "disabled"})
 
     def test_agentic_structure_follows_complexgitsync(self):
         distant = {".agent/.distant/ticket", ".agent/.distant/dev-sync", ".agent/.distant/documentation"}
