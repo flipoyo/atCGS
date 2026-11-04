@@ -16,7 +16,9 @@ environment = { tools = { python = "3.11", git = "2.30", pixi = "0.65" }, manife
 project = { name = "cgs", default_branch = "opx", fallback_branch = "CGS-ALPHA" }
 
 repos = [
-    { repository = "github:flipoyo/atCGS", relative_path = ".", fallback_branch = "main", nested_config = "disabled" },
+    { repository = "github:flipoyo/atCGS", relative_path = ".", nested_config = "disabled" },
+    { repository = "github:flipoyo/ComplexGitSync", fallback_branch = "CGS-ALPHA", nested_config = "disabled" },
+
     { repository = "github:flipoyo/omniscience", relative_path = ".omniscience", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
     { repository = "github:flipoyo/.memory", relative_path = ".cgitsync/.memory", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
 
