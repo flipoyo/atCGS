@@ -1,28 +1,54 @@
 [workspace]
 name = "atCGS"
-version = "0.1.1-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.7.1-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 # Same channels, platforms and Python as the pinned ComplexGitSync pixi.toml,
 # so @cgs and cgitsync observe one environment (cgitsync env check).
 channels = ["conda-forge"]
 platforms = ["linux-64", "win-64", "osx-arm64"]
 
+# Project name 'CGS'. The build is the executable in the Pixi environment; its
+# name is lower-case(project) unless build-name is set, and is the prefix of
+# commit subjects: <build-name>-<version>. cgs and cgitsync name the same build.
+[tool.cgs]
+project = "CGS"
+# build-name = "cgs"
+
 # Every command runs under Pixi only; @cgs refuses to start outside it.
 [tasks]
 "@cgs" = "python -m atcgs"
-test = "python -m pytest"
+test = "python -m pytest tests"  # atCGS only: the nested ComplexGitSync has its own suite
 lint = "ruff check ."
 contract-inspect = "python scripts/contract_check.py inspect"
-contract-candidate = "python scripts/contract_check.py candidate candidate.json"
-poex-candidate = "python scripts/poex_4x256_simulator.py --output candidate.json"
-microcode-test = "python microcode/test_poex.py"
+identity-demo = "python scripts/identity_demo.py"
+local-remote = "python scripts/local_remote.py"
+deploy-keys = "python scripts/deploy_keys.py"
 
 [dependencies]
 python = "3.11.*"
 pytest = "*"
 ruff = "*"
 hypothesis = "*"
+# Ed25519, Argon2id (>= 44), HKDF and ChaCha20-Poly1305 for the identity layer.
+cryptography = ">=44"
 
-[pypi-dependencies]
-# Immutable ComplexGitSync 8.6.2 head inspected on 2026-10-31; the installed
-# CLI continues to own all release/integrity/environment semantics.
-complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "9594d7e51ab9008458335cda09c80538f1a0bf98" }
+# ComplexGitSync, in one of two places (a feature cannot override a dependency the
+# default environment also declares, so each source is its own feature):
+#   default  the pinned CGS-ALPHA head; a plain atCGS clone (POEX.cgs) installs it
+#   dogfood  the ./ComplexGitSync checkout, editable: a change on either side of
+#            CGS-ALPHA is live at once.  pixi run -e dogfood '@cgs' ...
+# The installed CLI continues to own all release/integrity/environment semantics.
+[feature.pinned.pypi-dependencies]
+# ComplexGitSync 8.7.1, CGS-ALPHA head f56d814 (MemorySetupBranch) inspected on 2026-11-03.
+complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "f56d8148cb4d484a228a9d8550c4e84fccdb9f19" }
+
+[feature.dogfood.pypi-dependencies]
+complexgitsync = { path = "./ComplexGitSync", editable = true }
+
+[environments]
+default = ["pinned"]
+dogfood = ["dogfood"]
+
+# ssh-agent, ssh-add (sessions) and sshd (local-remote). conda-forge has no openssh
+# for win-64, where Windows ships OpenSSH itself.
+[target.unix.dependencies]
+openssh = "*"
