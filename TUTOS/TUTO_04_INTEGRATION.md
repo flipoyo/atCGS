@@ -33,14 +33,14 @@ Expected results:
 `local-remote` needs `sshd` and `git-shell`. The test suite skips it when they are
 missing, so a green `test` run does not prove it ran.
 
-## 2. The dogfood environment
+## 2. The development manifest, @cgs
 
 ```bash
-pixi run -e dogfood test
+pixi run -m @cgs test
 ```
 
-This runs the same suite against the `./ComplexGitSync` checkout instead of the
-pinned revision. Use it when changing both repositories.
+This runs the same suite from `@cgs/pixi.toml`, against the `./ComplexGitSync` checkout
+instead of the pinned revision. Use it when changing both repositories.
 
 ## 3. Built and checked
 
@@ -63,7 +63,6 @@ Each item is stated in README § 8:
 - Deploy keys are printed, not installed: OPX runs the printed `gh api` commands.
 - `@cgs … commit` keeps only one line of a commit message.
 - Only `identity.jsonl` is projected to `.omniscience` (`@cgs OPX publish`, branch `CGS-MOLO`, not yet `main`).
-- A plain atCGS clone needs `PIXI_FROZEN=true` (README § 1): the `dogfood` environment cannot be re-solved without `./ComplexGitSync`.
 - MOLONARI is administered by OPX only; no DEV or USR is admitted on it yet.
 - No checkpoint is verified; every evidence value is `unverified`.
 

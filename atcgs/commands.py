@@ -227,6 +227,43 @@ def revoke(authorization: Authorization, args: tuple[str, ...],
     return {"uid": args[0], "revoked": args[1]}
 
 
+def _promote(session: Session, args: tuple[str, ...], env: Mapping[str, str] | None = None) -> dict[str, object]:
+    """Fast-forward branch TO of one repository of this tree to FROM, on its remote, through the session.
+
+    cgitsync moves a whole tree, and moves ComplexGitSync behind a gate only on `<project>_<branch>`;
+    promoting a branch (CGS-ALPHA -> main) is one repository's affair. Only a fast-forward is pushed:
+    anything else is refused, never forced. The push uses the session's key for that repository.
+    """
+    if len(args) != 3:
+        raise ValueError("promote takes DIR FROM TO, e.g. promote ComplexGitSync CGS-ALPHA main")
+    where, source, target = args
+    base = project_root(env).resolve()
+    repo = (base / where).resolve()
+    if repo != base and base not in repo.parents:
+        raise ValueError(f"{where} is not inside this tree ({base})")
+    if not (repo / ".git").exists():
+        raise ValueError(f"{repo} is not a git repository")
+    origin = _git(session, "config", "--get", "remote.origin.url", cwd=repo)
+    if _repo_of(origin) not in {repo_path(r) for r in session.grants}:
+        raise AccessRefused(f"this session holds no grant for {origin}")
+    _git(session, "fetch", "origin", source, target, cwd=repo)
+    new = _git(session, "rev-parse", f"refs/remotes/origin/{source}", cwd=repo)
+    old = _git(session, "rev-parse", f"refs/remotes/origin/{target}", cwd=repo)
+    done: dict[str, object] = {"repo": _repo_of(origin), "from": source, "to": target, "old": old[:12], "new": new[:12]}
+    if old == new:
+        return {**done, "pushed": False, "reason": "already up to date"}
+    ancestor = subprocess.run(["git", "merge-base", "--is-ancestor", old, new], cwd=repo, env=session.env())
+    if ancestor.returncode:
+        raise ValueError(f"{target} is not an ancestor of {source}: not a fast-forward, nothing pushed")
+    _git(session, "push", "origin", f"{new}:refs/heads/{target}", cwd=repo)
+    current = _git(session, "branch", "--show-current", cwd=repo)
+    local = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{target}"], cwd=repo,
+                           env=session.env(), capture_output=True, text=True)
+    if current != target and local.returncode == 0:
+        _git(session, "fetch", "origin", f"{target}:{target}", cwd=repo)  # the local branch follows, fast-forward only
+    return {**done, "pushed": True, "commits": int(_git(session, "rev-list", "--count", f"{old}..{new}", cwd=repo))}
+
+
 def login(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = None) -> dict[str, object]:
     twin, op = args[0], args[1:]
     home = _env(env).get("CGSHOME")
@@ -254,6 +291,9 @@ def login(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = Non
             # The login only: which repos and keys a session holds is the register's business.
             "agent_keys": len(session.loaded()),
         }
+        if op and op[0] == "promote":
+            result["promote"] = _promote(session, op[1:], env)
+            op = ()
         if op == ("bootstrap",):
             # A bare bootstrap is the level's own command: one rule for the file name (op_levels).
             named = LevelCommand.of(twin, layer)

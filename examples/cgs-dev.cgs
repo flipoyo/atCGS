@@ -15,7 +15,7 @@ project = { name = "cgs", default_branch = "dev", fallback_branch = "CGS-ALPHA" 
 
 repos = [
     { repository = "github:flipoyo/atCGS", relative_path = ".", fallback_branch = "main", nested_config = "disabled" },
-    # ./ComplexGitSync: the editable checkout of the dogfood environment (pixi.toml), at OPX and DEV.
+    # ./ComplexGitSync: the editable checkout of @cgs/pixi.toml, at OPX and DEV.
     { repository = "github:flipoyo/ComplexGitSync", relative_path = "ComplexGitSync", fallback_branch = "CGS-ALPHA", nested_config = "disabled" },
     { repository = "github:flipoyo/.memory", relative_path = ".cgitsync/.memory", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
 

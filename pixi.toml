@@ -31,22 +31,13 @@ hypothesis = "*"
 # Ed25519, Argon2id (>= 44), HKDF and ChaCha20-Poly1305 for the identity layer.
 cryptography = ">=44"
 
-# ComplexGitSync, in one of two places (a feature cannot override a dependency the
-# default environment also declares, so each source is its own feature):
-#   default  the pinned CGS-ALPHA head; a plain atCGS clone (POEX.cgs) installs it
-#   dogfood  the ./ComplexGitSync checkout, editable: a change on either side of
-#            CGS-ALPHA is live at once.  pixi run -e dogfood '@cgs' ...
+# ComplexGitSync, pinned: what every install of atCGS runs, a project's read-only gate
+# (.atcgs) included. The development Operating Space, where ./ComplexGitSync is live,
+# is declared apart in @cgs/pixi.toml:  pixi run -m @cgs '@cgs' ...
 # The installed CLI continues to own all release/integrity/environment semantics.
-[feature.pinned.pypi-dependencies]
-# ComplexGitSync 8.7.1, CGS-ALPHA head f56d814 (MemorySetupBranch) inspected on 2026-11-03.
-complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "f56d8148cb4d484a228a9d8550c4e84fccdb9f19" }
-
-[feature.dogfood.pypi-dependencies]
-complexgitsync = { path = "./ComplexGitSync", editable = true }
-
-[environments]
-default = ["pinned"]
-dogfood = ["dogfood"]
+[pypi-dependencies]
+# ComplexGitSync 8.8.0, CGS-ALPHA head 47d4100 (BehindGate), inspected on 2026-11-05.
+complexgitsync = { git = "https://github.com/flipoyo/ComplexGitSync.git", rev = "47d4100c0c78d633143b95ef13663106146c52ef" }
 
 # ssh-agent, ssh-add (sessions) and sshd (local-remote). conda-forge has no openssh
 # for win-64, where Windows ships OpenSSH itself.

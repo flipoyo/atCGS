@@ -23,18 +23,16 @@ pixi run local-remote      # the same against a local sshd (needs sshd and git-s
 pixi run '@cgs' --help
 ```
 
-`pixi run -e dogfood ...` uses the `./ComplexGitSync` checkout instead of the pinned
-ComplexGitSync, so a change in either repository is live at once.
+Two manifests:
 
-**A clone without `./ComplexGitSync`** (the read-only atCGS a project mounts at `.atcgs`) cannot
-re-solve the `dogfood` environment, and pixi does so on every plain `pixi install`/`pixi run`
-("failed to solve ... environment 'dogfood'"). Use the lockfile as it is:
+| Manifest | ComplexGitSync | For | Run as |
+|---|---|---|---|
+| `pixi.toml` | pinned (git rev) | any install of atCGS, a project's read-only gate (`.atcgs`) included | `pixi run '@cgs' …` |
+| `@cgs/pixi.toml` | `./ComplexGitSync`, editable | the development Operating Space, where atCGS and ComplexGitSync are developed together | `pixi run -m @cgs '@cgs' …` |
 
-```bash
-export PIXI_FROZEN=true          # or add --frozen to each pixi command
-pixi install -e default
-pixi run '@cgs' --version
-```
+The root manifest never names `./ComplexGitSync`, so a clone without it installs with a
+plain `pixi install`. `@cgs/` declares the development space: its tasks are the root's,
+run from atCGS's root, and a test keeps the two manifests equal but for that one line.
 
 ## 2. What runs today
 
@@ -52,6 +50,7 @@ pixi run '@cgs' --version
 | Identities published to `.omniscience` (branch `CGS-MOLO`) from a throwaway worktree | `@cgs OPX publish` | `test_project_register` |
 | A read-only atCGS serves the register of the project that mounts it; identities are copied, grants stay local | `@cgs OPX login TWIN <op>` inside a project tree | `test_project_register` |
 | MOLONARI tree with atCGS as its gate | `pixi run cgitsync validate examples/molonari.cgs` | `test_layers` |
+| One repository's branch fast-forwarded on its remote (CGS-ALPHA → main), never forced | `@cgs OPX login TWIN promote DIR FROM TO` | `test_project_register` |
 
 ## 3. Levels
 
@@ -183,8 +182,6 @@ The 4-bit codes survive as the level codes of § 3.
 - **`login` runs the level's command only for a bare `bootstrap`.** Any other verb
   runs as given on the command line.
 - **Deploy keys are not installed.** `deploy-keys` prints them; M7 would run them.
-- **A plain clone needs `PIXI_FROZEN=true`.** The lockfile records the `dogfood` environment's
-  editable `./ComplexGitSync`, so pixi cannot re-solve it where that folder is missing (§ 1).
 - **One-line commit messages.** `@cgs … commit` keeps only the first line.
 - **The projection is `identity.jsonl` only.** `.omniscience` holds no hash record (short ticket
   opx-agentic-mounts) and no chain head beyond `atcgs/identity.head`.

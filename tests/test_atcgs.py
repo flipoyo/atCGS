@@ -354,7 +354,8 @@ class EntryPointTests(unittest.TestCase):
 
     def test_runs_under_pixi_only(self):
         require_pixi({PIXI_ENV: str(ROOT)})
-        for env in ({}, {PIXI_ENV: ""}, {PIXI_ENV: str(ROOT.parent)}):
+        require_pixi({PIXI_ENV: str(ROOT / "@cgs")})  # the development manifest
+        for env in ({}, {PIXI_ENV: ""}, {PIXI_ENV: str(ROOT.parent)}, {PIXI_ENV: str(ROOT / "tests")}):
             with self.subTest(env=env), self.assertRaises(ValueError):
                 require_pixi(env)
         core, modules = fake_core()

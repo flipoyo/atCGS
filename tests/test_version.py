@@ -40,6 +40,7 @@ class VersionTests(unittest.TestCase):
 
     def test_manifests_match(self):
         self.assertEqual(toml("pixi.toml")["workspace"]["version"], __version__)
+        self.assertEqual(toml("@cgs/pixi.toml")["workspace"]["version"], __version__)
         self.assertEqual(toml("spec/contracts.toml")["contract"]["version"], __version__)
         self.assertEqual(inspect()["version"], __version__)
 

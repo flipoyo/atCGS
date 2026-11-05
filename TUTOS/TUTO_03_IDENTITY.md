@@ -84,13 +84,15 @@ IDPUB, the proof and the ssh public keys: nothing secret.
 |---|---|
 | USR | `status`, `view-tree`, `fetch`, `pull`, `validate` |
 | DEV | those, plus `add`, `rm`, `commit`, `push`, `branch`, `checkout`, `merge`, `autofix` |
-| OPX | those, plus `tag`, `release`, `bootstrap`, `initialise`, `omniscience`, `memory`, `env`, `verify`, `unlock`, `self-history` |
+| OPX | those, plus `tag`, `release`, `bootstrap`, `initialise`, `omniscience`, `memory`, `env`, `verify`, `unlock`, `self-history`, `promote` |
 
 A verb outside the list is refused before anything runs. The remote enforces the
 rest: a key is a deploy key of one repository only. `login` writes `TWIN.cgs`
 only when run alone or for `bootstrap`/`initialise`, never inside a tracked repo.
 A bare `login TWIN bootstrap` runs `bootstrap <twin>-<level>.cgs`, the command
-ComplexGitSync's `LevelCommand` names.
+ComplexGitSync's `LevelCommand` names. `promote DIR FROM TO` is not a cgitsync verb: it
+fast-forwards branch TO of the one repository at DIR to FROM on its remote, with that
+repository's key, and refuses anything that is not a fast-forward.
 
 ## 7. What each party sees
 
@@ -116,7 +118,7 @@ and `revoke UID` work. In a tree that mounts atCGS read-only (`.atcgs` in
 
 ```bash
 # in the cgs workspace, once per new identity
-ATCGS_AUTHORIZE=OPX pixi run -e dogfood '@cgs' OPX publish
+ATCGS_AUTHORIZE=OPX pixi run -m @cgs '@cgs' OPX publish
 # → branch CGS-MOLO of .omniscience gets atcgs/identity.jsonl and atcgs/identity.head
 ```
 
@@ -127,8 +129,7 @@ It does nothing if the published head already equals the register's.
 ```bash
 # in the MOLONARI tree, from its own atCGS
 cd ~/.cgs/MOLONARI-<timestamp>/.atcgs
-export PIXI_FROZEN=true                          # no ./ComplexGitSync here: do not re-solve (README § 1)
-pixi install -e default
+pixi install                                     # the root manifest: ComplexGitSync pinned
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit molo.json   # copies the identities, writes the grants
 pixi run '@cgs' OPX login MOLONARI fetch
 ```

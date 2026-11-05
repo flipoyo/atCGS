@@ -45,7 +45,7 @@ explains the journals; this one only uses them.
 In the cgs workspace:
 
 ```bash
-ATCGS_AUTHORIZE=OPX pixi run -e dogfood '@cgs' OPX publish
+ATCGS_AUTHORIZE=OPX pixi run -m @cgs '@cgs' OPX publish
 # { "published": true, "branch": "CGS-MOLO", "lines": 1, "head": "678b66c2…" }
 ```
 
@@ -61,7 +61,7 @@ Still in the cgs workspace, so the GLYPH gets them. **Do not run `admit` here:**
 the cgs register must not receive these grants.
 
 ```bash
-pixi run -e dogfood '@cgs' OPX request molo.json \
+pixi run -m @cgs '@cgs' OPX request molo.json \
   github:flipoyo/MOLONARI1D OPX     github:flipoyo/MOLONARI-API OPX \
   github:flipoyo/MOLONARI-data OPX  github:flipoyo/MOLONARI-hardware OPX \
   github:flipoyo/MOLONARI-gate OPX  github:flipoyo/MOLONARI-computo OPX
@@ -94,13 +94,13 @@ the first stays an empty copy of `main`. Delete it when you are done (§ 9).
 
 ```bash
 cd ~/.cgs/MOLONARI-<timestamp>/.atcgs
-export PIXI_FROZEN=true          # no ./ComplexGitSync here: do not re-solve (README § 1)
-pixi install -e default
-pixi run test                    # 136 passed, 2 skipped
+pixi install                     # the root manifest: ComplexGitSync pinned
+pixi run test
 ```
 
-Without `PIXI_FROZEN`, pixi tries to solve the `dogfood` environment, whose
-editable path does not exist here, and fails.
+The gate uses atCGS's root `pixi.toml`, which pins ComplexGitSync and never names
+`./ComplexGitSync`. (Before 1.7.2-alpha the development environment shared that
+manifest and this step needed `PIXI_FROZEN=true`.)
 
 ## 6. Grant, in the project's register
 
@@ -165,7 +165,6 @@ points at the same commit as `main` (`gh api -X DELETE repos/flipoyo/.memory/git
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| `failed to solve … environment 'dogfood'` | the read-only atCGS has no `./ComplexGitSync` | `export PIXI_FROZEN=true`, `pixi install -e default` |
 | `… is done in the master register` | `init`, `publish`, `revoke UID` or an unknown identity in a project | do it in the cgs workspace, then `publish` |
 | `differs from the published one: refused` | the project register enrolled something the master never did | restore its `identity.jsonl` from `.omniscience/atcgs/` |
 | `CGSHOME … is not the project this register belongs to` | `CGSHOME` names another tree | unset it, or `cd` into the project |

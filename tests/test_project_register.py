@@ -306,3 +306,87 @@ class PublishTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+@unittest.skipUnless(shutil.which("git") and shutil.which("ssh-agent") and shutil.which("ssh-add"), "needs git and ssh-agent")
+class PromoteTests(unittest.TestCase):
+    """`@cgs OPX login TWIN promote DIR FROM TO`: one repository, fast-forward only, through the session."""
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(prefix="cgs-promote-"))
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        self.root = self.dir / "tree"
+        (self.root / ".cgitsync" / ".memory").mkdir(parents=True)
+        self.remote = self.dir / "lib.git"
+        git(self.dir, "init", "-q", "--bare", "-b", "main", str(self.remote))
+        self.url = "https://example.test/flipoyo/lib.git"
+        self.repo = self.root / "lib"
+        git(self.dir, "clone", "-q", str(self.remote), str(self.repo))
+        git(self.repo, "config", f"url.file://{self.remote}.insteadOf", self.url)
+        git(self.repo, "remote", "set-url", "origin", self.url)
+        (self.repo / "a").write_text("a\n")
+        git(self.repo, "add", "a")
+        git(self.repo, "commit", "-qm", "a")
+        git(self.repo, "push", "-q", "origin", "HEAD:main")
+        git(self.repo, "checkout", "-qb", "dev")
+        (self.repo / "b").write_text("b\n")
+        git(self.repo, "add", "b")
+        git(self.repo, "commit", "-qm", "b")
+        git(self.repo, "push", "-q", "origin", "dev")
+        env = {"ATCGS_KDF_PROFILE": "test", "ATCGS_OPX_PUB": base64.b64encode(OPX.pub).decode(),
+               "ATCGS_GLYPHS": str(self.dir / "glyphs"), "ATCGS_REGISTER": str(self.dir / "register")}
+        patch = mock.patch.dict(os.environ, env)
+        patch.start()
+        self.addCleanup(patch.stop)
+        os.environ.pop("CGSHOME", None)
+        root = mock.patch.object(cmd, "ROOT", self.root)
+        root.start()
+        self.addCleanup(root.stop)
+        enrolled(self.dir / "register")
+        with mock.patch.object(cmd, "ask", side_effect=["opx", "opx passphrase", "opx passphrase"]):
+            cmd.request("OPX", (str(self.dir / "req.json"), self.url, "OPX"))
+        with mock.patch.object(cmd, "ask", side_effect=["opx", "opx passphrase"]):
+            cmd.admit(AUTH, (str(self.dir / "req.json"),))
+
+    def promote(self, *args):
+        with mock.patch.object(cmd, "ask", side_effect=["opx", "opx passphrase"]):
+            return cmd.login("OPX", ("t", "promote", *args))
+
+    def test_a_fast_forward_is_pushed(self):
+        dev = git(self.remote, "rev-parse", "dev")
+        out = self.promote("lib", "dev", "main")["promote"]
+        self.assertEqual((out["pushed"], out["commits"], out["to"]), (True, 1, "main"))
+        self.assertEqual(git(self.remote, "rev-parse", "main"), dev)
+        self.assertEqual(git(self.repo, "branch", "--show-current"), "dev")  # the checkout did not move
+
+    def test_the_local_target_branch_follows(self):
+        self.promote("lib", "dev", "main")
+        self.assertEqual(git(self.repo, "rev-parse", "main"), git(self.remote, "rev-parse", "dev"))
+
+    def test_twice_is_already_up_to_date(self):
+        self.promote("lib", "dev", "main")
+        self.assertFalse(self.promote("lib", "dev", "main")["promote"]["pushed"])
+
+    def test_anything_but_a_fast_forward_is_refused_and_nothing_pushed(self):
+        git(self.repo, "checkout", "-q", "main")
+        (self.repo / "c").write_text("c\n")
+        git(self.repo, "add", "c")
+        git(self.repo, "commit", "-qm", "c")
+        git(self.repo, "push", "-q", "origin", "main")
+        before = git(self.remote, "rev-parse", "main")
+        with self.assertRaises(ValueError):
+            self.promote("lib", "dev", "main")
+        self.assertEqual(git(self.remote, "rev-parse", "main"), before)
+
+    def test_a_repository_outside_the_tree_or_ungranted_is_refused(self):
+        with self.assertRaises(ValueError):
+            self.promote("..", "dev", "main")
+        git(self.repo, "remote", "set-url", "origin", "https://example.test/flipoyo/other.git")
+        with self.assertRaises(AccessRefused):
+            self.promote("lib", "dev", "main")
+
+    def test_promote_is_an_opx_verb_only(self):
+        from atcgs import _identity_request
+        self.assertTrue(_identity_request("OPX", ["login", "t", "promote", "lib", "dev", "main"]))
+        for layer in ("DEV", "USR"):
+            self.assertFalse(_identity_request(layer, ["login", "t", "promote", "lib", "dev", "main"]))

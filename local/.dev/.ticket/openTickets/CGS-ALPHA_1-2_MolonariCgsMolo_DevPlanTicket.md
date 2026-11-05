@@ -89,7 +89,7 @@ graph LR
 
 ### S1 — Publish the identities to `.omniscience` (1 h)
 
-- New verb: `ATCGS_AUTHORIZE=OPX pixi run -e dogfood '@cgs' OPX publish`. It
+- New verb: `ATCGS_AUTHORIZE=OPX pixi run -m @cgs '@cgs' OPX publish`. It
   copies the cgs register's `identity.jsonl` verbatim to
   `.omniscience/atcgs/identity.jsonl`, plus its chain head, `sha256` of the
   last line, on branch **`CGS-MOLO`** of `.omniscience` (D2).
@@ -167,11 +167,11 @@ repos = [
 ### S5 — Grant the keys (owner, 20 min)
 
 ```bash
-pixi run -e dogfood '@cgs' OPX request molo.json \
+pixi run -m @cgs '@cgs' OPX request molo.json \
   github:flipoyo/MOLONARI1D OPX     github:flipoyo/MOLONARI-API OPX \
   github:flipoyo/MOLONARI-data OPX  github:flipoyo/MOLONARI-hardware OPX \
   github:flipoyo/MOLONARI-gate OPX  github:flipoyo/MOLONARI-computo OPX
-pixi run -e dogfood deploy-keys -- --repo github:flipoyo/MOLONARI1D …     # the 6 only
+pixi run -m @cgs deploy-keys -- --repo github:flipoyo/MOLONARI1D …     # the 6 only
 ```
 
 `request` puts the 6 keys in your GLYPH: 16 / 17 (B7). The `admit` waits for
@@ -185,7 +185,7 @@ The bootstrap runs from the cgs workspace, so the first `@cgs` is not yet the
 gate:
 
 ```bash
-pixi run -e dogfood '@cgs' OPX login ComplexGraphSync bootstrap examples/molonari.cgs MOLONARI
+pixi run -m @cgs '@cgs' OPX login ComplexGraphSync bootstrap examples/molonari.cgs MOLONARI
 cd ~/.cgs/MOLONARI-<timestamp>/.atcgs          # from here on, MOLONARI's own gate
 pixi install                                    # default environment, pinned ComplexGitSync
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit ~/.cgs/cgs-20261105060302/molo.json
@@ -327,3 +327,20 @@ Follow-ups, not done:
    commit as `main`, unprotected, no PR). `MOLONARI_CGS-MOLO` (the register) and
    `main` untouched.
 3. **TUTO 05** written from this run. D2's closing step is still open.
+
+## Two manifests, promote, up-to-date branches — 2026-11-05
+
+- **`@cgs/pixi.toml`** (owner: *"putting dogfood in a second manifest
+  corresponds to declare @cgs"*): the development Operating Space, with
+  `./ComplexGitSync` editable; tasks are the root's, run from atCGS's root.
+  `pixi run -m @cgs '@cgs' …` replaces `pixi run -e dogfood '@cgs' …`. The root
+  `pixi.toml` has no feature or environment any more and never names the
+  checkout: a plain clone installs with `pixi install` (verified in a copy
+  without `./ComplexGitSync`). `PIXI_FROZEN` is no longer needed. A test keeps
+  both manifests equal but for the ComplexGitSync source.
+- **Pin moved** from `f56d814` (8.7.1) to `47d4100` (8.8.0), the ComplexGitSync
+  `CGS-ALPHA` head; the root lock no longer holds an editable path.
+- **`@cgs OPX login TWIN promote DIR FROM TO`**: fast-forwards branch TO of the
+  one repository at DIR to FROM on its remote, with that repository's key;
+  anything else refused. For promotions cgitsync cannot do from this tree
+  (ComplexGitSync behind the gate is moved only on `cgs_<branch>`).

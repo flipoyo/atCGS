@@ -55,9 +55,9 @@ class LayerTreeTests(unittest.TestCase):
                 self.assertEqual(root["repository"], "github:flipoyo/atCGS")
                 self.assertEqual(root["nested_config"], "disabled")
 
-    def test_complexgitsync_is_the_dogfood_checkout_at_opx_and_dev_only(self):
+    def test_complexgitsync_is_the_live_checkout_at_opx_and_dev_only(self):
         # .cgitsync is cgitsync's own directory, never a mount point of the tree.
-        # OPX and DEV mount ./ComplexGitSync, the editable path of the dogfood environment.
+        # OPX and DEV mount ./ComplexGitSync, the editable path of @cgs/pixi.toml.
         for layer in LAYERS:
             mounts = by_path(load(layer)[1])
             with self.subTest(layer=layer):
@@ -69,9 +69,9 @@ class LayerTreeTests(unittest.TestCase):
                     continue
                 self.assertEqual(at, ["ComplexGitSync"])
                 self.assertEqual(mounts["ComplexGitSync"]["fallback_branch"], "CGS-ALPHA")
-        with (ROOT / "pixi.toml").open("rb") as handle:
-            dogfood = tomllib.load(handle)["feature"]["dogfood"]["pypi-dependencies"]["complexgitsync"]
-        self.assertEqual(dogfood["path"], "./ComplexGitSync")
+        with (ROOT / "@cgs" / "pixi.toml").open("rb") as handle:
+            live = tomllib.load(handle)["pypi-dependencies"]["complexgitsync"]
+        self.assertEqual(live["path"], "../ComplexGitSync")  # ./ComplexGitSync, from @cgs/
 
     def test_omniscience_is_the_ledger_written_at_opx_only(self):
         ledger = dict(by_path(load("opx")[1])[".omniscience"])
@@ -140,15 +140,32 @@ class EnvironmentAgreementTests(unittest.TestCase):
         # ComplexGitSync's dependencies, plus only the identity layer's cryptography.
         self.assertEqual(self.pixi["dependencies"], {**CGS_DEPENDENCIES, "cryptography": ">=44"})
         self.assertEqual(self.pixi["target"], {"unix": {"dependencies": {"openssh": "*"}}})
-        self.assertNotIn("pypi-dependencies", self.pixi)  # ComplexGitSync comes from one feature only
-        pin = self.pixi["feature"]["pinned"]["pypi-dependencies"]["complexgitsync"]
+        self.assertNotIn("feature", self.pixi)  # one source of ComplexGitSync per manifest
+        self.assertNotIn("environments", self.pixi)
+        pin = self.pixi["pypi-dependencies"]["complexgitsync"]
         self.assertEqual(pin["git"], "https://github.com/flipoyo/ComplexGitSync.git")
         self.assertRegex(pin["rev"], r"^[0-9a-f]{40}$")
 
-    def test_dogfood_runs_the_nested_checkout_and_default_does_not(self):
-        live = self.pixi["feature"]["dogfood"]["pypi-dependencies"]["complexgitsync"]
-        self.assertEqual(live, {"path": "./ComplexGitSync", "editable": True})
-        self.assertEqual(self.pixi["environments"], {"default": ["pinned"], "dogfood": ["dogfood"]})
+    def test_the_cgs_manifest_is_the_root_one_with_complexgitsync_live(self):
+        with (ROOT / "@cgs" / "pixi.toml").open("rb") as handle:
+            dev = tomllib.load(handle)
+        self.assertEqual(dev["pypi-dependencies"], {"complexgitsync": {"path": "../ComplexGitSync", "editable": True}})
+        for table in ("dependencies", "target"):
+            with self.subTest(table=table):
+                self.assertEqual(dev[table], self.pixi[table])
+        for key in ("version", "channels", "platforms"):
+            with self.subTest(key=key):
+                self.assertEqual(dev["workspace"][key], self.pixi["workspace"][key])
+        # the same tasks, run from atCGS's root
+        self.assertEqual({name: task["cmd"] for name, task in dev["tasks"].items()}, self.pixi["tasks"])
+        self.assertEqual({task["cwd"] for task in dev["tasks"].values()}, {".."})
+
+    def test_the_root_manifest_never_names_the_checkout(self):
+        text = (ROOT / "pixi.toml").read_text(encoding="utf-8")
+        self.assertNotIn("path =", text)
+        lock = (ROOT / "pixi.lock").read_text(encoding="utf-8")
+        self.assertNotIn("ComplexGitSync\n", lock.replace("/ComplexGitSync.git", ""))
+        self.assertNotIn("editable: true", lock)
 
     def test_lint_contract_matches_complexgitsync(self):
         with (ROOT / "ruff.toml").open("rb") as handle:

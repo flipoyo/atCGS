@@ -81,7 +81,7 @@ IDENTITY_VERBS = frozenset({"init", "request", "admit", "revoke", "login", "publ
 # what the remote accepts; this list only keeps a level to the commands it needs.
 _USR_OPS = frozenset({"status", "view-tree", "fetch", "pull", "validate"})
 _DEV_OPS = _USR_OPS | {"add", "rm", "commit", "push", "branch", "checkout", "merge", "autofix"}
-_OPX_OPS = _DEV_OPS | {"tag", "release", "bootstrap", "initialise", "omniscience", "memory",
+_OPX_OPS = _DEV_OPS | {"tag", "release", "bootstrap", "initialise", "omniscience", "memory", "promote",
                        "env", "verify", "unlock", "self-history"}
 LOGIN_OPS: Mapping[str, frozenset[str]] = {"USR": _USR_OPS, "DEV": _DEV_OPS, "OPX": _OPX_OPS}
 
@@ -120,6 +120,8 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
                                reached with its own key only. USR: status, fetch, pull;
                                DEV: + add, commit, push, branch, checkout, merge;
                                OPX: + tag, release, bootstrap, initialise, memory ...
+                               OPX promote DIR FROM TO: fast-forward branch TO of the repo at
+                               DIR (in this tree) to FROM, pushed with that repo's key only.
                                TWIN.cgs is written only by a bare login, where it was typed.
 
 Run it as: pixi run '@cgs' ..."""
@@ -404,11 +406,16 @@ def main(request: Request) -> int:
     return cgitsync_main(request.args)
 
 
+# The two manifests of this repository: atCGS as installed (pinned ComplexGitSync), and
+# @cgs, the development Operating Space with ./ComplexGitSync live.
+MANIFEST_ROOTS = (ROOT, ROOT / "@cgs")
+
+
 def require_pixi(env: Mapping[str, str] | None = None) -> None:
-    """Refuse to run outside this repository's Pixi environment."""
+    """Refuse to run outside this repository's Pixi environments (root, or @cgs)."""
     root = (os.environ if env is None else env).get(PIXI_ENV, "")
-    if not root or Path(root).resolve() != ROOT:
-        raise ValueError(f"run under Pixi only: pixi run <task> from {ROOT.name}")
+    if not root or Path(root).resolve() not in MANIFEST_ROOTS:
+        raise ValueError(f"run under Pixi only: pixi run <task> from {ROOT.name}, or pixi run -m @cgs <task>")
 
 
 def run(argv: Sequence[str] | None = None) -> int:

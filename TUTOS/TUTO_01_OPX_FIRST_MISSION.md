@@ -12,7 +12,7 @@ When you are done:
 
 - `spec/contracts.toml` pins your public key: OPX exists.
 - `.cgitsync/.memory/.register` says which key may write which repository.
-- Every everyday git operation goes through `pixi run -e dogfood '@cgs' OPX login …`.
+- Every everyday git operation goes through `pixi run -m @cgs '@cgs' OPX login …`.
 
 ## 0. What you need
 
@@ -36,18 +36,18 @@ your workspace from now on: `cd` into it. The tree is atCGS at the root,
 ComplexGitSync at `./ComplexGitSync`, and 8 more repositories (`.memory`,
 `.omniscience`, `.agent/…`).
 
-Check that the dogfood environment sees both repositories live:
+Check that the development manifest, `@cgs/pixi.toml`, sees both repositories live:
 
 ```bash
-pixi run -e dogfood python -c "import ComplexGitSync; print(ComplexGitSync.__file__)"
+pixi run -m @cgs python -c "import ComplexGitSync; print(ComplexGitSync.__file__)"
 # …/ComplexGitSync/src/ComplexGitSync/__init__.py
-pixi run -e dogfood test        # passed, no failures
+pixi run -m @cgs test        # passed, no failures
 ```
 
 ## 2. Create your identity
 
 ```bash
-ATCGS_AUTHORIZE=OPX pixi run -e dogfood '@cgs' OPX init
+ATCGS_AUTHORIZE=OPX pixi run -m @cgs '@cgs' OPX init
 ```
 
 It asks for your login and your password twice, then prints:
@@ -71,7 +71,7 @@ opx_pub = "qL1FhYN4yQrRd6/cOa92zPG6rsu2t8JXirlntzsYDMo="
 Then run `init` again with **the same** login and password:
 
 ```bash
-ATCGS_AUTHORIZE=OPX pixi run -e dogfood '@cgs' OPX init
+ATCGS_AUTHORIZE=OPX pixi run -m @cgs '@cgs' OPX init
 # { "layer": "OPX", "uid": "35c6…d104", "pinned": true, "enrolled": true }
 ```
 
@@ -83,13 +83,13 @@ The register now exists: `.cgitsync/.memory/.register/identity.jsonl`.
 List every repository of the OPX tree, each with the role `OPX`:
 
 ```bash
-pixi run -e dogfood '@cgs' OPX request req.json \
+pixi run -m @cgs '@cgs' OPX request req.json \
   github:flipoyo/atCGS OPX          github:flipoyo/ComplexGitSync OPX \
   github:flipoyo/omniscience OPX    github:flipoyo/.memory OPX \
   github:flipoyo/.ticketing OPX     github:flipoyo/DevSpec OPX \
   github:flipoyo/DocSpec OPX        github:flipoyo/.dev OPX \
   github:flipoyo/.localSpec OPX     github:flipoyo/.claude OPX
-ATCGS_AUTHORIZE=OPX pixi run -e dogfood '@cgs' OPX admit req.json
+ATCGS_AUTHORIZE=OPX pixi run -m @cgs '@cgs' OPX admit req.json
 ```
 
 `request` generates 10 keys and seals them in your GLYPH (outside the
@@ -99,7 +99,7 @@ prints one grant per repository, with its fingerprint, and writes `access.jsonl`
 ## 5. Install the deploy keys on GitHub
 
 ```bash
-pixi run -e dogfood deploy-keys
+pixi run -m @cgs deploy-keys
 # 10 deploy key(s) from the access journal; review, then run:
 # gh api repos/flipoyo/atcgs/keys -f 'title=atCGS OPX 35c65c668cb8' -f 'key=ssh-ed25519 …' -F read_only=false
 ```
@@ -110,7 +110,7 @@ Review them, then run them. Each one answers with a JSON object carrying `"id"`.
 ## 6. Prove the keys, read-only
 
 ```bash
-pixi run -e dogfood '@cgs' OPX login ComplexGraphSync fetch
+pixi run -m @cgs '@cgs' OPX login ComplexGraphSync fetch
 # fetched cgs: origin … fetched ComplexGitSync: origin
 # fetched=10 skipped=0
 # { …, "agent_keys": 10, "cgitsync": 0, "closed": true }
@@ -127,7 +127,7 @@ On the first install `opx` exists nowhere, so every repository sits on its
 fallback and `commit` refuses with `branch misalignment`. Create the branches:
 
 ```bash
-pixi run -e dogfood '@cgs' OPX login ComplexGraphSync checkout opx
+pixi run -m @cgs '@cgs' OPX login ComplexGraphSync checkout opx
 ```
 
 ```text
@@ -144,9 +144,9 @@ two projects never share a branch of the tool. Uncommitted work comes along.
 ## 8. The first dogfooded commit and push
 
 ```bash
-pixi run -e dogfood '@cgs' OPX login ComplexGraphSync commit --all "cgs-1.7.1-alpha …"
+pixi run -m @cgs '@cgs' OPX login ComplexGraphSync commit --all "cgs-1.7.1-alpha …"
 # committed .memory: b7349e8…   committed cgs: 6a8589f…
-pixi run -e dogfood '@cgs' OPX login ComplexGraphSync push --all
+pixi run -m @cgs '@cgs' OPX login ComplexGraphSync push --all
 # pushed cgs: origin/opx (upstream set) … pushed=6 skipped=1
 ```
 
@@ -160,10 +160,10 @@ Give the message on one line: `@cgs` does not keep a multi-line message.
 level's work by a merge:
 
 ```bash
-pixi run -e dogfood '@cgs' OPX login ComplexGraphSync merge opx --into CGS-ALPHA
+pixi run -m @cgs '@cgs' OPX login ComplexGraphSync merge opx --into CGS-ALPHA
 # fast-forwarded cgs: CGS-ALPHA <- opx
-pixi run -e dogfood '@cgs' OPX login ComplexGraphSync checkout CGS-ALPHA
-pixi run -e dogfood '@cgs' OPX login ComplexGraphSync push
+pixi run -m @cgs '@cgs' OPX login ComplexGraphSync checkout CGS-ALPHA
+pixi run -m @cgs '@cgs' OPX login ComplexGraphSync push
 # pushed ComplexGitSync: origin/cgs_CGS-ALPHA (upstream set)
 # pushed cgs: origin/CGS-ALPHA (+1)
 ```
