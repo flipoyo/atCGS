@@ -23,7 +23,7 @@ from ComplexGitSync.orchestre.op_levels import LEVELS
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.7.1-alpha"
+__version__ = "1.7.2-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.

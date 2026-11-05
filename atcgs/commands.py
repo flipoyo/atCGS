@@ -171,7 +171,7 @@ def login(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = Non
         result: dict[str, object] = {
             "layer": layer, "code": ROLE_CODES[layer], "uid": me.uid, "twin": twin,
             "cgs": str(cgs) if cgs else None,
-            "repos": [{"repo": r, "fingerprint": g.fingerprint} for r, g in sorted(session.grants.items())],
+            # The login only: which repos and keys a session holds is the register's business.
             "agent_keys": len(session.loaded()),
         }
         if op == ("bootstrap",):
