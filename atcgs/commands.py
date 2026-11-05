@@ -214,6 +214,24 @@ def admit(authorization: Authorization, args: tuple[str, ...],
     return {"uid": doc["uid"], "granted": granted}
 
 
+def enrol(authorization: Authorization, args: tuple[str, ...],
+          env: Mapping[str, str] | None = None) -> dict[str, object]:
+    """Enrol the identity of a request in the master register, and grant nothing.
+
+    A user's access belongs to each twin's own register: `OPX publish`, then `OPX admit REQUEST`
+    from that twin's gate, which copies the identity and writes the grants there.
+    """
+    authorization.require("OPX")
+    _master_only("enrolling an identity", env)
+    doc = json.loads(Path(args[0]).read_text(encoding="utf-8"))
+    reg = register(env)
+    opx = _opx(reg)
+    if reg.state().known(doc["uid"]):
+        return {"uid": doc["uid"], "enrolled": False, "reason": "already known"}
+    reg.enrol(opx, base64.b64decode(doc["pub"], validate=True), base64.b64decode(doc["proof"], validate=True))
+    return {"uid": doc["uid"], "enrolled": True, "next": "OPX publish, then OPX admit REQUEST from the twin's gate"}
+
+
 def revoke(authorization: Authorization, args: tuple[str, ...],
            env: Mapping[str, str] | None = None) -> dict[str, object]:
     authorization.require("OPX")
@@ -376,6 +394,8 @@ def dispatch(req: Request, authorization: Authorization) -> dict[str, object]:
         return request(req.layer, args)
     if verb == "admit":
         return admit(authorization, args)
+    if verb == "enrol":
+        return enrol(authorization, args)
     if verb == "revoke":
         return revoke(authorization, args)
     if verb == "publish":

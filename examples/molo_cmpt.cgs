@@ -1,0 +1,18 @@
+# MOLO-CMPT — the computation subtwin (MOLONARI-computo, pyheatmy)
+# A twin of the MOLONARI infrastructure, on CGS-MOLO, gated by @cgs (README).
+# Install:  pixi run cgitsync bootstrap examples/molo_cmpt.cgs MOLO-CMPT
+# Then, in the tree:  cd .atcgs && pixi install && pixi run cgs OPX login MOLO-CMPT status
+# No environment is declared: each MOLONARI repository keeps its own pixi.toml and lock.
+
+project = { name = "MOLO-CMPT", default_branch = "CGS-MOLO", fallback_branch = "main" }
+
+repos = [
+    { repository = "github:flipoyo/MOLONARI-computo", relative_path = ".", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled" },
+
+    # the gate: atCGS, read-only; its pixi.toml pins ComplexGitSync
+    { repository = "github:flipoyo/atCGS", relative_path = ".atcgs", default_branch = "CGS-ALPHA", fallback_branch = "CGS-ALPHA", nested_config = "disabled", private = true },
+    # this twin's memory, its state-space, and its register (.cgitsync/.memory/.register)
+    { repository = "github:flipoyo/.memory", relative_path = ".cgitsync/.memory", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
+    # the identities OPX publishes, read-only
+    { repository = "github:flipoyo/omniscience", relative_path = ".omniscience", default_branch = "CGS-MOLO", fallback_branch = "CGS-MOLO", nested_config = "disabled", private = true },
+]

@@ -1,4 +1,4 @@
-# atCGS — ComplexGraphSync 1.8.0-alpha
+# atCGS — ComplexGraphSync 1.9.0-alpha
 
 atCGS is the Pixi-run front end of ComplexGitSync (`cgitsync`). It decides which
 level a user is, opens a session for that level, and runs `cgitsync` through it.

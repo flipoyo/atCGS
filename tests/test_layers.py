@@ -232,63 +232,65 @@ class OpFrontierSharedTests(unittest.TestCase):
 
         self.assertEqual(body(ROOT / "examples" / "ComplexGraphSync.cgs"), body(copy))
 
-class MolonariTreeTests(unittest.TestCase):
-    """examples/molonari.cgs: MOLONARI on CGS-MOLO, with a read-only atCGS as its gate."""
+class MolonariTwinTests(unittest.TestCase):
+    """examples/molo_*.cgs: the MOLONARI twins on CGS-MOLO, each with a read-only atCGS as its gate."""
 
-    path = ROOT / "examples" / "molonari.cgs"
-    MOLONARI = ("MOLONARI1D", "MOLONARI-API", "MOLONARI-data", "MOLONARI-hardware", "MOLONARI-gate", "MOLONARI-computo")
+    SUBTWINS = {"molo_hrdw.cgs": ("MOLO-HRDW", "MOLONARI-hardware"),
+                "molo_data.cgs": ("MOLO-DATA", "MOLONARI-data"),
+                "molo_cmpt.cgs": ("MOLO-CMPT", "MOLONARI-computo")}
+    GATE = {"github:flipoyo/atCGS", "github:flipoyo/.memory", "github:flipoyo/omniscience"}
 
-    def load(self):
-        with self.path.open("rb") as handle:
+    def load(self, name):
+        with (ROOT / "examples" / name).open("rb") as handle:
             data = tomllib.load(handle)
         return data, {repo["repository"]: repo for repo in data["repos"]}
 
-    def test_cgitsync_accepts_the_tree(self):
-        document = CgsDocument.from_toml(self.path)
-        document.validate()
-        self.assertEqual((document.project_name, document.default_branch), ("MOLONARI", "CGS-MOLO"))
+    def names(self):
+        return [*self.SUBTWINS, "molo_twx.cgs"]
 
-    def test_no_environment_is_declared_so_molonari1d_is_not_relocked(self):
-        data, _ = self.load()
-        self.assertNotIn("environment", data)
-        self.assertNotIn("environment_root", data)
+    def test_cgitsync_accepts_every_twin_and_none_is_read_as_a_level_file(self):
+        from ComplexGitSync.tree.named_cgs import NamedCgs
 
-    def test_the_six_molonari_repositories_follow_cgs_molo(self):
-        _, repos = self.load()
-        for name in self.MOLONARI:
-            with self.subTest(repo=name):
-                repo = repos[f"github:flipoyo/{name}"]
-                self.assertEqual((repo["default_branch"], repo["fallback_branch"]), ("CGS-MOLO", "main"))
-                self.assertNotIn("private", repo)
+        for name in self.names():
+            with self.subTest(twin=name):
+                path = ROOT / "examples" / name
+                self.assertIsNone(NamedCgs.parse(path))  # molo-twx.cgs would read as project molo, branch twx
+                document = CgsDocument.from_toml(path)
+                document.validate()
+                self.assertEqual(document.default_branch, "CGS-MOLO")
+
+    def test_each_subtwin_is_one_repository_at_its_root(self):
+        for name, (project, repo) in self.SUBTWINS.items():
+            with self.subTest(twin=name):
+                data, repos = self.load(name)
+                self.assertEqual(data["project"]["name"], project)
+                self.assertEqual(set(repos) - self.GATE, {f"github:flipoyo/{repo}"})
+                self.assertEqual(repos[f"github:flipoyo/{repo}"]["relative_path"], ".")
+
+    def test_the_twx_composes_the_subtwins_under_molonari1d(self):
+        data, repos = self.load("molo_twx.cgs")
+        self.assertEqual(data["project"]["name"], "MOLO-TWX")
         self.assertEqual(repos["github:flipoyo/MOLONARI1D"]["relative_path"], ".")
+        self.assertEqual(set(repos) - self.GATE - {"github:flipoyo/MOLONARI1D"},
+                         {f"github:flipoyo/{repo}" for _, repo in self.SUBTWINS.values()})
 
-    def test_atcgs_is_the_read_only_gate_and_complexgitsync_is_not_mounted(self):
-        _, repos = self.load()
-        gate = repos["github:flipoyo/atCGS"]
-        self.assertEqual((gate["relative_path"], gate["default_branch"]), (".atcgs", "CGS-ALPHA"))
-        self.assertTrue(gate["private"])
-        self.assertNotIn("writable", gate)
-        self.assertNotIn("github:flipoyo/ComplexGitSync", repos)
-
-    def test_the_register_is_writable_and_the_identities_are_read_only_on_cgs_molo(self):
-        _, repos = self.load()
-        memory = repos["github:flipoyo/.memory"]
-        self.assertEqual(memory["relative_path"], ".cgitsync/.memory")
-        self.assertTrue(memory["private"] and memory["writable"])
-        published = repos["github:flipoyo/omniscience"]
-        self.assertEqual((published["relative_path"], published["default_branch"]), (".omniscience", "CGS-MOLO"))
-        self.assertTrue(published["private"])
-        self.assertNotIn("writable", published)
-
-    def test_complexgitsync_copy_names_the_same_molonari_repositories(self):
-        copy = ROOT / "ComplexGitSync" / "examples" / "molonari.cgs"
-        if not copy.exists():
-            self.skipTest("the ComplexGitSync checkout is not here")
-        with copy.open("rb") as handle:
-            theirs = {r["repository"] for r in tomllib.load(handle)["repos"]}
-        _, repos = self.load()
-        self.assertEqual({f"github:flipoyo/{n}" for n in self.MOLONARI}, theirs - {"github:flipoyo/ComplexGitSync"})
-        self.assertLessEqual({f"github:flipoyo/{n}" for n in self.MOLONARI}, set(repos))
+    def test_every_twin_has_the_same_gate(self):
+        for name in self.names():
+            with self.subTest(twin=name):
+                data, repos = self.load(name)
+                self.assertNotIn("environment", data)  # each repository keeps its own pixi.lock
+                gate = repos["github:flipoyo/atCGS"]
+                self.assertEqual((gate["relative_path"], gate["default_branch"], gate["private"]), (".atcgs", "CGS-ALPHA", True))
+                self.assertNotIn("writable", gate)
+                memory = repos["github:flipoyo/.memory"]
+                self.assertTrue(memory["private"] and memory["writable"])
+                published = repos["github:flipoyo/omniscience"]
+                self.assertEqual((published["relative_path"], published["default_branch"]), (".omniscience", "CGS-MOLO"))
+                self.assertNotIn("writable", published)
+                self.assertNotIn("github:flipoyo/ComplexGitSync", repos)
+                for repo, entry in repos.items():
+                    if repo not in self.GATE:
+                        self.assertEqual((entry["default_branch"], entry["fallback_branch"]), ("CGS-MOLO", "main"))
 
 
 if __name__ == "__main__":

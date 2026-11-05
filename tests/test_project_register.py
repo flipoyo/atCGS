@@ -390,3 +390,84 @@ class PromoteTests(unittest.TestCase):
         self.assertTrue(_identity_request("OPX", ["login", "t", "promote", "lib", "dev", "main"]))
         for layer in ("DEV", "USR"):
             self.assertFalse(_identity_request(layer, ["login", "t", "promote", "lib", "dev", "main"]))
+
+
+class EnrolTests(Project):
+    """`OPX enrol REQUEST`: the identity only, in the master; the twin's register gets the grants."""
+
+    def request(self, user, repo="github:flipoyo/MOLONARI-hardware"):
+        key = cmd.SshKey.generate(repo, "DEV")
+        path = self.dir / f"{user.uid[:8]}.json"
+        path.write_text(json.dumps({
+            "uid": user.uid, "pub": base64.b64encode(user.pub).decode(),
+            "proof": base64.b64encode(user.sign(cmd.enrol_statement(user.pub))).decode(),
+            "keys": [{"repo": key.repo, "role": "DEV", "ssh": key.public}]}))
+        return path
+
+    def test_enrol_writes_the_identity_and_no_grant(self):
+        master = enrolled(self.dir / "master")
+        path = self.request(ALICE)
+        with mock.patch.dict(os.environ, {"ATCGS_REGISTER": str(master.directory)}), \
+                mock.patch.object(cmd, "ask", side_effect=["opx", "opx passphrase"]):
+            out = cmd.enrol(AUTH, (str(path),))
+        self.assertTrue(out["enrolled"])
+        self.assertTrue(master.state().is_active(ALICE.uid))
+        self.assertEqual(master.access.entries(), [])
+
+    def test_then_the_twin_admits_the_grants_only(self):
+        master = enrolled(self.dir / "master")
+        path = self.request(ALICE)
+        with mock.patch.dict(os.environ, {"ATCGS_REGISTER": str(master.directory)}), \
+                mock.patch.object(cmd, "ask", side_effect=["opx", "opx passphrase"]):
+            cmd.enrol(AUTH, (str(path),))
+        shutil.copy(master.identity.path, self.published)  # what OPX publish does
+        with mock.patch.object(cmd, "ask", side_effect=["opx", "opx passphrase"]):
+            cmd.admit(AUTH, (str(path),))
+        twin = self.project_register().state()
+        self.assertEqual(twin.roles(ALICE.uid)["github:flipoyo/MOLONARI-hardware"].role, "DEV")
+        self.assertEqual(master.access.entries(), [])
+
+    def test_enrol_twice_changes_nothing_and_a_twin_never_enrols(self):
+        master = enrolled(self.dir / "master", ALICE)
+        with mock.patch.dict(os.environ, {"ATCGS_REGISTER": str(master.directory)}), \
+                mock.patch.object(cmd, "ask", side_effect=["opx", "opx passphrase"]):
+            self.assertFalse(cmd.enrol(AUTH, (str(self.request(ALICE)),))["enrolled"])
+        with mock.patch.object(cmd, "ask", side_effect=["opx", "opx passphrase"]), self.assertRaises(Unauthorized):
+            cmd.enrol(AUTH, (str(self.request(BOB)),))
+
+
+@unittest.skipUnless(shutil.which("ssh-agent") and shutil.which("ssh-add"), "needs ssh-agent")
+class ReadGrantTests(unittest.TestCase):
+    """A DEV session also loads the UID's USR grants: it reads a twin's gate, it never writes it."""
+
+    def setUp(self):
+        self.dir = Path(tempfile.mkdtemp(prefix="cgs-reads-"))
+        self.addCleanup(shutil.rmtree, self.dir, True)
+        self.reg = enrolled(self.dir / "register", ALICE)
+        self.keys = [cmd.SshKey.generate("github:flipoyo/MOLONARI-hardware", "DEV"),
+                     cmd.SshKey.generate("github:flipoyo/atCGS", "USR")]
+        for key in self.keys:
+            self.reg.grant(OPX, ALICE.uid, key.repo, key.role, key.public)
+        self.glyph = cmd.reseal(ALICE, None, self.keys)
+
+    def session(self, layer):
+        from atcgs.session import Session
+        return Session(ALICE, self.reg, self.glyph, "MOLO-HRDW", layer)
+
+    def test_a_dev_session_holds_its_dev_and_usr_keys(self):
+        with self.session("DEV") as s:
+            self.assertEqual({r: g.role for r, g in s.grants.items()},
+                             {"github:flipoyo/MOLONARI-hardware": "DEV", "github:flipoyo/atCGS": "USR"})
+            self.assertEqual(len(s.loaded()), 2)
+
+    def test_a_usr_session_holds_only_usr_keys(self):
+        with self.session("USR") as s:
+            self.assertEqual(set(s.grants), {"github:flipoyo/atCGS"})
+
+    def test_usr_grants_alone_do_not_open_a_dev_session(self):
+        reg = enrolled(self.dir / "r2", BOB)
+        key = cmd.SshKey.generate("github:flipoyo/atCGS", "USR")
+        reg.grant(OPX, BOB.uid, key.repo, "USR", key.public)
+        from atcgs.session import Session
+        with self.assertRaises(AccessRefused), Session(BOB, reg, cmd.reseal(BOB, None, [key]), "t", "DEV"):
+            pass

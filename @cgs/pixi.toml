@@ -10,7 +10,7 @@
 # source must equal the root pixi.toml: tests/test_layers.py checks it.
 [workspace]
 name = "atCGS-dev"
-version = "1.8.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.9.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 channels = ["conda-forge"]
 platforms = ["linux-64", "win-64", "osx-arm64"]
 
@@ -22,6 +22,7 @@ contract-inspect = { cmd = "python scripts/contract_check.py inspect", cwd = "..
 identity-demo = { cmd = "python scripts/identity_demo.py", cwd = ".." }
 local-remote = { cmd = "python scripts/local_remote.py", cwd = ".." }
 deploy-keys = { cmd = "python scripts/deploy_keys.py", cwd = ".." }
+bump-version = { cmd = "python .agent/.local/.dev/scripts/bump_version.py", cwd = ".." }
 
 [dependencies]
 python = "3.11.*"

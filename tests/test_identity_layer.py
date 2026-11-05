@@ -222,11 +222,15 @@ class SessionTests(Lab):
         self.usr = self.grant(ALICE, OTHER, "USR")
         self.glyph = seal(ALICE, [self.dev, self.usr])
 
-    def test_loads_only_the_requested_role(self):
+    def test_loads_its_role_and_the_read_only_usr_grants(self):
+        # A DEV also reads what it may read (USR, read-only deploy keys); a USR never gets a DEV key.
+        with Session(ALICE, self.reg, self.glyph, "demo", "USR") as s:
+            self.assertEqual(s.loaded(), [fingerprint(self.usr.public)])
+            self.assertNotIn(REPO, s.cgs())
         with Session(ALICE, self.reg, self.glyph, "demo", "DEV") as s:
-            self.assertEqual(s.loaded(), [fingerprint(self.dev.public)])
+            self.assertEqual(sorted(s.loaded()), sorted([fingerprint(self.dev.public), fingerprint(self.usr.public)]))
             self.assertIn(REPO, s.cgs())
-            self.assertNotIn(OTHER, s.cgs())
+            self.assertIn(OTHER, s.cgs())
             socket = Path(s.env()["SSH_AUTH_SOCK"])
             self.assertTrue(socket.exists())
         self.assertFalse(socket.parent.exists())

@@ -55,6 +55,10 @@ exec "@SSH@" -F /dev/null -o BatchMode=yes -o IdentitiesOnly=yes -o IdentityFile
 """
 
 
+# The grants a session of each level loads: its own, plus the read-only USR ones.
+READS = {"OPX": frozenset({"OPX", "USR"}), "DEV": frozenset({"DEV", "USR"}), "USR": frozenset({"USR"})}
+
+
 class AccessRefused(PermissionError):
     """The journals do not let this UID act as the requested layer."""
 
@@ -124,10 +128,12 @@ class Session:
         statement = challenge(nonce, uid, self.twin, when)
         if not verify(state.active[uid], self.identity.sign(statement), statement):
             raise AccessRefused("proof of possession failed")
-        grants = {repo: g for repo, g in state.roles(uid).items() if g.role == self.layer}
-        if not grants:
+        mine = state.roles(uid)
+        if not any(g.role == self.layer for g in mine.values()):
             raise AccessRefused(f"this UID holds no {self.layer} grant")
-        return grants
+        # A session acts at its level, and also reads what the UID may read: its USR grants
+        # (read-only deploy keys), such as a twin's gate repositories for a DEV.
+        return {repo: g for repo, g in mine.items() if g.role in READS[self.layer]}
 
     def _keys(self) -> list[SshKey]:
         held = {(k.repo, fingerprint(k.public)): k for k in open_glyph(self.identity, self._glyph)}

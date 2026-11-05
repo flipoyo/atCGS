@@ -23,7 +23,7 @@ from ComplexGitSync.orchestre.op_levels import LEVELS
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.8.0-alpha"
+__version__ = "1.9.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -75,7 +75,7 @@ CORE_OPERATIONS = frozenset(
     {"bootstrap", "initialise", "status", "view-tree", "env", "--version", "--help", "-h"}
 )
 CORE_RELEASE = frozenset({("release", "freeze"), ("release", "list"), ("release", "load")})
-IDENTITY_VERBS = frozenset({"init", "request", "admit", "revoke", "login", "publish"})
+IDENTITY_VERBS = frozenset({"init", "request", "enrol", "admit", "revoke", "login", "publish"})
 # The cgitsync commands `<LAYER> login TWIN <op ...>` may run, by level: the everyday
 # loop, so atCGS is developed through @cgs (Dogfooding). The keys a level gets decide
 # what the remote accepts; this list only keeps a level to the commands it needs.
@@ -111,6 +111,7 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
   OPX init                     enrol OPX itself, with the key pinned in spec/contracts.toml
   <layer> request OUT REPO ROLE [REPO ROLE ...]
                                new ssh keys, sealed in your GLYPH; OUT is the request for OPX
+  OPX enrol REQUEST            enrol the requester only (master register); no grant
   OPX admit REQUEST            enrol the requester and grant what it asks
   OPX revoke UID [REPO]        revoke a UID, or only its grant on REPO
   OPX publish                  copy the identity journal to .omniscience (branch CGS-MOLO); projects copy it
@@ -212,6 +213,8 @@ def _identity_request(layer: str, args: Sequence[str]) -> bool:
     if verb == "request":
         return len(rest) >= 3 and len(rest) % 2 == 1
     if verb == "admit":
+        return layer == "OPX" and len(rest) == 1
+    if verb == "enrol":
         return layer == "OPX" and len(rest) == 1
     if verb == "revoke":
         return layer == "OPX" and len(rest) in (1, 2)
