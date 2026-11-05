@@ -155,13 +155,13 @@ The 4-bit codes survive as the level codes of § 3.
 
 ## 8. Not implemented yet
 
-- **OPX key pinning.** `spec/contracts.toml [identity] opx_pub` is empty until OPX runs
-  `OPX init` and the key is copied in. Until then, `admit` and `revoke` refuse.
-- **DEV and USR cannot log in.** The register is mounted only at OPX.
-- **`login` does not run the level's command.** `login` runs the `cgitsync` operation
-  given on the command line. It does not run the command that ComplexGitSync's
-  `LevelCommand` names for a level.
+- **DEV and USR login are not proven on their own trees.** OPX is pinned and
+  dogfoods this workspace (TUTO 01); no DEV or USR has been admitted on
+  `cgs-dev.cgs` or `cgs-usr.cgs` yet.
+- **`login` runs the level's command only for a bare `bootstrap`.** Any other verb
+  runs as given on the command line.
 - **Deploy keys are not installed.** `deploy-keys` prints them; M7 would run them.
+- **One-line commit messages.** `@cgs … commit` keeps only the first line.
 - **No projection to `.omniscience`.** The anonymous projection is not built.
 - **No version tag.** Releases are identified by the commit subject (`cgs-<version>`); no tag is created.
 

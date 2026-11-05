@@ -1,4 +1,4 @@
-# TUTO 03 — The four levels and the OpFrontier
+# TUTO 02 — The four levels and the OpFrontier
 
 **Goal:** ask `@cgs` for a level's outgoing transition, know which commands each
 level may run, and know what the OpFrontier does and does not do.
@@ -55,7 +55,7 @@ forms below; anything else is refused.
 | no argument | `@cgs DEV` | no |
 | a public mount | `@cgs USR .omniscience` | no |
 | a private mount | `@cgs DEV .cgitsync` | yes, OPX and/or DEV |
-| identity verb | `@cgs OPX init`, `@cgs DEV request …`, `@cgs DEV login TWIN …` | depends on verb (see TUTO 05) |
+| identity verb | `@cgs OPX init`, `@cgs DEV request …`, `@cgs DEV login TWIN …` | depends on verb (see TUTO 03) |
 | a cgitsync verb | `@cgs DEV status` | yes |
 
 `ATCGS_AUTHORIZE` names the private levels the operator grants, for example
@@ -75,7 +75,7 @@ pixi run '@cgs' USR .omniscience
 
 ## 6. What the gate does
 
-- `login` (TUTO 05) allows a fixed list of cgitsync verbs per level. A verb outside
+- `login` (TUTO 03) allows a fixed list of cgitsync verbs per level. A verb outside
   the list is refused before anything runs.
 - The layer a command is run as decides the list. A USR login cannot push.
 - The remote enforces the rest: a DEV key cannot push to a repo it is not granted.
@@ -84,7 +84,8 @@ pixi run '@cgs' USR .omniscience
 
 - No transition moves artifacts between levels. `cgitsync` does the work.
 - No evidence is ever `verified`.
-- The `LevelCommand` of ComplexGitSync is not yet the command `login` runs (README § 8).
+- Only a bare `login TWIN bootstrap` runs the command ComplexGitSync's `LevelCommand`
+  names (`bootstrap <twin>-<level>.cgs`); every other verb runs as given.
 
 ## 8. Definition of done for this tutorial
 

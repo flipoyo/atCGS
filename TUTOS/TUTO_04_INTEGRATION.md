@@ -1,4 +1,4 @@
-# TUTO 06 — Integration: what is checked, and what is still open
+# TUTO 04 — Integration: what is checked, and what is still open
 
 **Goal:** run every check this repository has, in one place, and see which parts of
 the system are not yet built.
@@ -56,10 +56,12 @@ pinned revision. Use it when changing both repositories.
 ## 4. Not built
 
 Each item is stated in README § 8:
-- OPX key pinning is a manual step for the owner.
-- DEV and USR cannot log in; the register is mounted at OPX only.
-- `login` does not run ComplexGitSync's `LevelCommand`.
-- Deploy keys are printed, not installed.
+- OPX key pinning is a manual step for the owner (TUTO 01 § 3); it is done for
+  this workspace.
+- DEV and USR login is not yet proven on their own trees (`cgs-dev.cgs`,
+  `cgs-usr.cgs`).
+- Deploy keys are printed, not installed: OPX runs the printed `gh api` commands.
+- `@cgs … commit` keeps only one line of a commit message.
 - Nothing is projected to `.omniscience`.
 - No checkpoint is verified; every evidence value is `unverified`.
 
