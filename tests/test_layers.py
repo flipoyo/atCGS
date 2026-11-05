@@ -211,6 +211,59 @@ class OpFrontierSharedTests(unittest.TestCase):
 
         self.assertEqual(body(ROOT / "examples" / "ComplexGraphSync.cgs"), body(copy))
 
+class MolonariTreeTests(unittest.TestCase):
+    """examples/molonari.cgs: MOLONARI on CGS-MOLO, with a read-only atCGS as its gate."""
+
+    path = ROOT / "examples" / "molonari.cgs"
+    MOLONARI = ("MOLONARI1D", "MOLONARI-API", "MOLONARI-data", "MOLONARI-hardware", "MOLONARI-gate", "MOLONARI-computo")
+
+    def load(self):
+        with self.path.open("rb") as handle:
+            data = tomllib.load(handle)
+        return data, {repo["repository"]: repo for repo in data["repos"]}
+
+    def test_cgitsync_accepts_the_tree(self):
+        document = CgsDocument.from_toml(self.path)
+        document.validate()
+        self.assertEqual((document.project_name, document.default_branch), ("MOLONARI", "CGS-MOLO"))
+
+    def test_the_six_molonari_repositories_follow_cgs_molo(self):
+        _, repos = self.load()
+        for name in self.MOLONARI:
+            with self.subTest(repo=name):
+                repo = repos[f"github:flipoyo/{name}"]
+                self.assertEqual((repo["default_branch"], repo["fallback_branch"]), ("CGS-MOLO", "main"))
+                self.assertNotIn("private", repo)
+        self.assertEqual(repos["github:flipoyo/MOLONARI1D"]["relative_path"], ".")
+
+    def test_atcgs_is_the_read_only_gate_and_complexgitsync_is_not_mounted(self):
+        _, repos = self.load()
+        gate = repos["github:flipoyo/atCGS"]
+        self.assertEqual((gate["relative_path"], gate["default_branch"]), (".atcgs", "CGS-ALPHA"))
+        self.assertTrue(gate["private"])
+        self.assertNotIn("writable", gate)
+        self.assertNotIn("github:flipoyo/ComplexGitSync", repos)
+
+    def test_the_register_is_writable_and_the_identities_are_read_only_on_cgs_molo(self):
+        _, repos = self.load()
+        memory = repos["github:flipoyo/.memory"]
+        self.assertEqual(memory["relative_path"], ".cgitsync/.memory")
+        self.assertTrue(memory["private"] and memory["writable"])
+        published = repos["github:flipoyo/omniscience"]
+        self.assertEqual((published["relative_path"], published["default_branch"]), (".omniscience", "CGS-MOLO"))
+        self.assertTrue(published["private"])
+        self.assertNotIn("writable", published)
+
+    def test_complexgitsync_copy_names_the_same_molonari_repositories(self):
+        copy = ROOT / "ComplexGitSync" / "examples" / "molonari.cgs"
+        if not copy.exists():
+            self.skipTest("the ComplexGitSync checkout is not here")
+        with copy.open("rb") as handle:
+            theirs = {r["repository"] for r in tomllib.load(handle)["repos"]}
+        _, repos = self.load()
+        self.assertEqual({f"github:flipoyo/{n}" for n in self.MOLONARI}, theirs - {"github:flipoyo/ComplexGitSync"})
+        self.assertLessEqual({f"github:flipoyo/{n}" for n in self.MOLONARI}, set(repos))
+
 
 if __name__ == "__main__":
     unittest.main()

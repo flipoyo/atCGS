@@ -1,0 +1,35 @@
+# The MOLONARI tree, administered through @cgs (ticket MolonariCgsMolo).
+# Project MOLONARI on CGS-MOLO, falling back to main where a repository has no such branch.
+# Derived from ComplexGitSync/examples/molonari.cgs (8.5.0), with the gate added:
+#   .atcgs            atCGS on CGS-ALPHA, READ-ONLY. Its @cgs gates this Operating Space with
+#                     this project's own register (.cgitsync/.memory/.register). Its default
+#                     Pixi environment installs the pinned ComplexGitSync, so ComplexGitSync is
+#                     not mounted here: MOLONARI is never a place where it is developed.
+#   .cgitsync/.memory the shared memory repository; this project's register lives there.
+#   .omniscience      the identities OPX publishes (atcgs/identity.jsonl), READ-ONLY, on CGS-MOLO
+#                     until the development is validated, then main.
+# Identity is global (copied from .omniscience into the register), access is local (the grants).
+# MOLONARI1D's .gitignore must list .atcgs, .cgitsync/ and .omniscience.
+#   pixi run cgitsync validate examples/molonari.cgs
+#   pixi run -e dogfood '@cgs' OPX login ComplexGraphSync bootstrap examples/molonari.cgs MOLONARI
+
+environment_root = "root"
+environment = { tools = { python = "3.11", git = "2.30", pixi = "0.65" }, manifests = ["pixi.toml"] }
+
+project = { name = "MOLONARI", default_branch = "CGS-MOLO", fallback_branch = "main" }
+
+repos = [
+    { repository = "github:flipoyo/MOLONARI1D", relative_path = ".", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled" },
+    { repository = "github:flipoyo/MOLONARI-API", relative_path = "Molonaviz", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled" },
+    { repository = "github:flipoyo/MOLONARI-data", relative_path = "data", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled" },
+    { repository = "github:flipoyo/MOLONARI-hardware", relative_path = "hardware", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled" },
+    { repository = "github:flipoyo/MOLONARI-gate", relative_path = "molonari.io", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled" },
+    { repository = "github:flipoyo/MOLONARI-computo", relative_path = "pyheatmy", default_branch = "CGS-MOLO", fallback_branch = "main", nested_config = "disabled" },
+
+    # the gate: read-only, on a branch of its own
+    { repository = "github:flipoyo/atCGS", relative_path = ".atcgs", default_branch = "CGS-ALPHA", fallback_branch = "CGS-ALPHA", nested_config = "disabled", private = true },
+    # this project's register, in its own branch of the shared memory
+    { repository = "github:flipoyo/.memory", relative_path = ".cgitsync/.memory", fallback_branch = "main", private = true, writable = true, nested_config = "disabled" },
+    # the published identities, read-only
+    { repository = "github:flipoyo/omniscience", relative_path = ".omniscience", default_branch = "CGS-MOLO", fallback_branch = "CGS-MOLO", nested_config = "disabled", private = true },
+]

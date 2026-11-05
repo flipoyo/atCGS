@@ -75,7 +75,7 @@ CORE_OPERATIONS = frozenset(
     {"bootstrap", "initialise", "status", "view-tree", "env", "--version", "--help", "-h"}
 )
 CORE_RELEASE = frozenset({("release", "freeze"), ("release", "list"), ("release", "load")})
-IDENTITY_VERBS = frozenset({"init", "request", "admit", "revoke", "login"})
+IDENTITY_VERBS = frozenset({"init", "request", "admit", "revoke", "login", "publish"})
 # The cgitsync commands `<LAYER> login TWIN <op ...>` may run, by level: the everyday
 # loop, so atCGS is developed through @cgs (Dogfooding). The keys a level gets decide
 # what the remote accepts; this list only keeps a level to the commands it needs.
@@ -113,13 +113,14 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
                                new ssh keys, sealed in your GLYPH; OUT is the request for OPX
   OPX admit REQUEST            enrol the requester and grant what it asks
   OPX revoke UID [REPO]        revoke a UID, or only its grant on REPO
+  OPX publish                  copy the identity journal to .omniscience (branch CGS-MOLO); projects copy it
   OPX | DEV | USR login TWIN [op ...]
                                open a session: load the granted ssh keys into a private
                                ssh-agent and run `cgitsync op ...` through it, each repo
                                reached with its own key only. USR: status, fetch, pull;
                                DEV: + add, commit, push, branch, checkout, merge;
                                OPX: + tag, release, bootstrap, initialise, memory ...
-                               TWIN.cgs is written only for bootstrap/initialise, or alone.
+                               TWIN.cgs is written only by a bare login, where it was typed.
 
 Run it as: pixi run '@cgs' ..."""
 
@@ -212,6 +213,8 @@ def _identity_request(layer: str, args: Sequence[str]) -> bool:
         return layer == "OPX" and len(rest) == 1
     if verb == "revoke":
         return layer == "OPX" and len(rest) in (1, 2)
+    if verb == "publish":
+        return layer == "OPX" and not rest
     if verb == "login":
         return layer in LOGIN_OPS and len(rest) >= 1 and (len(rest) == 1 or rest[1] in LOGIN_OPS[layer])
     return False

@@ -70,7 +70,7 @@ ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init     # once: prints idpub to pin
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init     # OPX enrols itself
 pixi run '@cgs' DEV request req.json github:flipoyo/atCGS DEV
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit req.json
-pixi run deploy-keys                             # prints the gh api commands; OPX runs them
+pixi run deploy-keys [--repo github:o/n]      # prints the gh api commands; OPX runs them
 pixi run '@cgs' DEV login cgs fetch              # DEV keys in a private agent, cgitsync fetch
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX revoke <UID> github:flipoyo/atCGS
 ```
@@ -107,7 +107,36 @@ repository's key, with `-F /dev/null` and `IdentitiesOnly`: nothing from
 `~/.ssh` is used. The role codes are ComplexGitSync's PoE vectors: OPX `0000`
 (OPX is POE), DEV `1000`, USR `1100`, PUB `1111`. PUB is the absence of a grant.
 
-## 8. Inspect the contract
+## 8. One identity, many projects
+
+The register belongs to the project that holds atCGS. In the cgs workspace atCGS is the root:
+that register is the **master**, and the only place where `OPX init`, `admit` of a new identity
+and `revoke UID` work. In a tree that mounts atCGS read-only (`.atcgs` in
+`examples/molonari.cgs`) the register is that project's own, in its `.cgitsync/.memory/.register`.
+
+```bash
+# in the cgs workspace, once per new identity
+ATCGS_AUTHORIZE=OPX pixi run -e dogfood '@cgs' OPX publish
+# → branch CGS-MOLO of .omniscience gets atcgs/identity.jsonl and atcgs/identity.head
+```
+
+`publish` opens an OPX session, writes the branch in a throwaway git worktree inside the session's
+private directory, pushes it, and removes it: the checkout of `.omniscience` in the tree never moves.
+It does nothing if the published head already equals the register's.
+
+```bash
+# in the MOLONARI tree, from its own atCGS
+cd ~/.cgs/MOLONARI-<timestamp>/.atcgs
+ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit molo.json   # copies the identities, writes the grants
+pixi run '@cgs' OPX login MOLONARI fetch
+```
+
+Every `login` and `admit` first copies the published identities into the project register,
+verified against the pinned OPX key. A copy that cannot be reproduced from the published file
+(a line the published journal lacks) is refused, never merged. Grants (`access.jsonl`) are the
+project's own: a user known to atCGS has no access to a project until OPX grants it there.
+
+## 9. Inspect the contract
 
 ```bash
 pixi run contract-inspect
@@ -117,7 +146,7 @@ Expected: `"status": "VALIDATED_SYNTAX"` and `"opx_pinned": true` once OPX's key
 is pinned. `[identity]` and `[glyph]` are compared with the code (Argon2id cost,
 GLYPH layout, role codes): change one and it refuses.
 
-## 9. Definition of done
+## 10. Definition of done
 
 - `identity-demo` ends with four `REFUSED` lines; `local-remote` passes.
 - No login, password or private key is on disk after a session.

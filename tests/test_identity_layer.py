@@ -304,6 +304,21 @@ class DeployKeysTests(Lab):
         self.assertIn("read_only=false", mine)
         self.assertNotIn("PRIVATE", "".join(lines))
 
+    def test_only_the_named_repos(self):
+        import sys as _sys
+
+        _sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
+        from deploy_keys import commands
+
+        self.enrol(ALICE)
+        self.grant(ALICE, REPO, "DEV")
+        self.grant(ALICE, OTHER, "DEV")
+        self.assertEqual(len(commands(self.reg.state())), 2)
+        only = commands(self.reg.state(), frozenset({OTHER}))
+        self.assertEqual(len(only), 1)
+        self.assertIn("repos/flipoyo/other/keys", only[0])
+        self.assertEqual(commands(self.reg.state(), frozenset({"github:flipoyo/absent"})), [])
+
 
 class SelectorTests(unittest.TestCase):
     def test_identity_verbs(self):
@@ -335,7 +350,7 @@ class CommandTests(unittest.TestCase):
         self.env = {
             "ATCGS_KDF_PROFILE": "test", "ATCGS_REGISTER": str(self.dir / "register"),
             "ATCGS_OPX_PUB": base64.b64encode(OPX.pub).decode(), "ATCGS_GLYPHS": str(self.dir / "glyphs"),
-            "ATCGS_AUTHORIZE": "OPX",
+            "ATCGS_AUTHORIZE": "OPX", "INIT_CWD": str(self.dir),
         }
         cwd = os.getcwd()
         os.chdir(self.dir)

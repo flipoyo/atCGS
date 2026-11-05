@@ -240,3 +240,35 @@ whose identities came from `.omniscience`.
   `molonari.cgs` to mount `.omniscience` on `main` (D2); stamp
   `YYYYMMDD_MolonariCgsMolo_DevPlanTicket.md`, move it to `.archive/`, update
   `github-deploy-keys.md`.
+
+## Progress — 2026-11-05
+
+- **S1 done.** `@cgs OPX publish` (`commands.publish`): verifies the master
+  identity journal, writes `atcgs/identity.jsonl` and `atcgs/identity.head` on
+  branch `CGS-MOLO` of `.omniscience` from a throwaway worktree in a private
+  directory, pushes with the session's `.omniscience` key, removes the worktree.
+  Tested against a local bare remote: the tree's checkout never moves, nothing
+  but identities is published, a second run changes nothing, an OPX without a
+  grant on the remote is refused.
+- **S2 done, with one change.** `project_root()` is the nearest directory at or
+  above atCGS holding `.cgitsync/`; the register is that project's. The master
+  register is where atCGS is that root. The twin/project guard of the ticket
+  is replaced by a guard on `CGSHOME`: `TWIN` is only the name of the `.cgs`
+  (the cgs workspace is project `cgs`, its twin is `ComplexGraphSync`), but
+  `cgitsync` obeys `CGSHOME`, so `login` refuses when it names another tree.
+- **S3 done.** `sync_identities` runs on `login` and `admit`: verbatim copy,
+  verified against `opx_pub`, refused when the project holds a line the
+  published copy lacks. In a project register `OPX init`, `publish`, `revoke UID`
+  and `admit` of an unknown identity are refused (`Unauthorized`, exit 3);
+  `admit` of a known one writes grants only.
+- **S4 done.** `examples/molonari.cgs`: the 6 MOLONARI repositories on
+  `CGS-MOLO`, atCGS at `.atcgs` (`CGS-ALPHA`, private, read-only), `.memory`
+  writable, `.omniscience` read-only on `CGS-MOLO`; ComplexGitSync not mounted.
+  `DECLARED` under both the pinned 8.7.1 and the dogfood 8.8.0. B6 fixed:
+  a bare `login` writes `TWIN.cgs` in `INIT_CWD` (where the command was typed),
+  refused in atCGS's root; `bootstrap` writes nothing. `deploy-keys --repo`
+  prints only the named repositories.
+- **To do, owner:** S5 and S6. First `publish`, then `request`, then the
+  bootstrap. MOLONARI1D's `.gitignore` on `CGS-MOLO` must list `.atcgs`,
+  `.cgitsync/` and `.omniscience` before the bootstrap: that is the change for
+  the first administered commit. B7 (GLYPH 16 / 17) and B8 are as stated.

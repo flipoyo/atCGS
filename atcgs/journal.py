@@ -266,6 +266,10 @@ class Register:
         _replay_access(self.access.entries(), self.opx_pub, state)
         return state
 
+    def verify_identities(self, entries: list[dict]) -> State:
+        """Replay *entries* as an identity journal against the pinned OPX key; JournalError if it fails."""
+        return _replay_identity(entries, self.opx_pub)
+
     def _append(self, journal: Journal, op: str, uid: str, body: dict, signer: Identity) -> dict:
         entries = journal.entries()
         entries.append(journal.draft(entries, op, uid, body, signer))

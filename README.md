@@ -38,7 +38,10 @@ ComplexGitSync, so a change in either repository is live at once.
 | Session: keys in a private ssh-agent, one key per repo, never `~/.ssh` | `@cgs DEV login TWIN <op>` | `test_identity_layer`, `local-remote` |
 | Level trees `examples/cgs-{opx,dev,usr}.cgs` | `pixi run cgitsync validate examples/cgs-dev.cgs` | `test_layers` |
 | Workspace tree `examples/ComplexGraphSync.cgs` | `pixi run cgitsync validate examples/ComplexGraphSync.cgs` | `test_layers` |
-| GitHub deploy keys as commands (printed, not run) | `pixi run deploy-keys` | `test_identity_layer` |
+| GitHub deploy keys as commands (printed, not run), all or per repo | `pixi run deploy-keys [--repo github:o/n]` | `test_identity_layer` |
+| Identities published to `.omniscience` (branch `CGS-MOLO`) from a throwaway worktree | `@cgs OPX publish` | `test_project_register` |
+| A read-only atCGS serves the register of the project that mounts it; identities are copied, grants stay local | `@cgs OPX login TWIN <op>` inside a project tree | `test_project_register` |
+| MOLONARI tree with atCGS as its gate | `pixi run cgitsync validate examples/molonari.cgs` | `test_layers` |
 
 ## 3. Levels
 
@@ -131,6 +134,15 @@ A session runs these steps in order (`atcgs/session.py`):
   revoke) live in the register: `.cgitsync/.memory/.register`, or the directory that
   `ATCGS_REGISTER` names. Each line is signed and chained by `prev = sha256(previous
   line)`. Reading refuses the whole file at the first fault.
+- **Project registers.** The register belongs to the project that holds atCGS: the nearest
+  directory at or above atCGS with a `.cgitsync/`. Where atCGS is the project's root it is the
+  *master* register, the only one that enrols and revokes identities. Where atCGS is a read-only
+  mount (`.atcgs` in `examples/molonari.cgs`), the register is that project's own: `@cgs OPX publish`
+  copies the master `identity.jsonl` to `.omniscience/atcgs/` (branch `CGS-MOLO`, then `main`) and
+  every `login`/`admit` of a project copies it into its register, verified against the pinned OPX
+  key. A project register that holds a line the published copy lacks is refused, never merged.
+  Identity is global; `access.jsonl` is local to the project. `login` refuses when `CGSHOME` names
+  another tree.
 - **GLYPH.** 8 192 bytes: `"CGSG" | version | nonce | ChaCha20-Poly1305 ciphertext | tag`,
   keyed by HKDF of the IDSEED. It holds the user's private ssh keys, one per (repo, role),
   zero-padded to a fixed length. Without the login and password it is noise, and one
@@ -162,7 +174,10 @@ The 4-bit codes survive as the level codes of § 3.
   runs as given on the command line.
 - **Deploy keys are not installed.** `deploy-keys` prints them; M7 would run them.
 - **One-line commit messages.** `@cgs … commit` keeps only the first line.
-- **No projection to `.omniscience`.** The anonymous projection is not built.
+- **The projection is `identity.jsonl` only.** `.omniscience` holds no hash record (short ticket
+  opx-agentic-mounts) and no chain head beyond `atcgs/identity.head`.
+- **MOLONARI is not bootstrapped yet.** The code and the tree spec are here; `request`, `admit`
+  and the first push on `CGS-MOLO` are the owner's steps (ticket MolonariCgsMolo S5, S6).
 - **No version tag.** Releases are identified by the commit subject (`cgs-<version>`); no tag is created.
 
 ## 9. Repository layout
