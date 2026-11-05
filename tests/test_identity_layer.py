@@ -1,4 +1,4 @@
-"""IdentityJournals M1-M4: identity key, journals, GLYPH, session and @cgs verbs (README § 3)."""
+"""IdentityJournals M1-M4: identity key, journals, GLYPH, session and @cgs verbs (REFERENCE.md § 6)."""
 
 import base64
 import io

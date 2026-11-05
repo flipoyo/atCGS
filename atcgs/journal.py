@@ -1,4 +1,4 @@
-"""The identity and access journals (README § 3.3 and § 3.4).
+"""The identity and access journals (REFERENCE.md § 6 and § 3.4).
 
 Two JSON-lines files in one register directory, append-only and hash-chained:
 

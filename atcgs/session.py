@@ -1,4 +1,4 @@
-"""A session, from login to an activated Twin (README § 3.6).
+"""A session, from login to an activated Twin (REFERENCE.md § 6).
 
     1  login, password       -> IDSK, IDPUB, UID, in memory      (the caller: identity.derive)
     2  identity journal      UID enrolled and not revoked?
@@ -202,7 +202,7 @@ class Session:
         ]
         for repo, grant in sorted(self.grants.items()):
             name = repo.rstrip("/").rsplit("/", 1)[-1].removesuffix(".git")
-            # Write access is the remote's to enforce (README § 3.4), not a .cgs field.
+            # Write access is the remote's to enforce (REFERENCE.md § 6), not a .cgs field.
             lines.append(f'    {{ repository = "{repo}", relative_path = "{name}", default_branch = "main", '
                          f'fallback_branch = "main", access_protocol = "ssh" }},  # {grant.role}')
         return "\n".join([*lines, "]", ""])

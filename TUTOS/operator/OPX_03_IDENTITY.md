@@ -1,10 +1,10 @@
-# TUTO 03 — Identity: journals, GLYPH and sessions
+# OPX 03 — Identity: journals, GLYPH and sessions
 
 **Status: current (1.8.0-alpha).** Every command below runs; each is covered by a
-test, by `identity-demo` / `local-remote`, or by TUTO 01.
+test, by `identity-demo` / `local-remote`, or by OPX 01.
 
 **Goal:** identify a user and open their ssh keys without ever storing a name or
-a password (README § 3). TUTO 01 runs this cycle for OPX on the real tree; this
+a password (REFERENCE.md § 3). OPX 01 runs this cycle for OPX on the real tree; this
 tutorial explains what each piece is.
 
 ## 1. Watch it work first
@@ -114,7 +114,7 @@ repository's key, with `-F /dev/null` and `IdentitiesOnly`: nothing from
 The register belongs to the project that holds atCGS. In the cgs workspace atCGS is the root:
 that register is the **master**, and the only place where `OPX init`, `admit` of a new identity
 and `revoke UID` work. In a tree that mounts atCGS read-only (`.atcgs` in
-`examples/molonari.cgs`) the register is that project's own, in its `.cgitsync/.memory/.register`.
+`examples/molo_*.cgs`) the register is that project's own, in its `.cgitsync/.memory/.register`.
 
 ```bash
 # in the cgs workspace, once per new identity

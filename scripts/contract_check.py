@@ -111,7 +111,7 @@ def inspect(path=SPEC):
         "noncanonical frontiers",
     )
     demand("holder" not in data["key"] and "definition" not in data["key"],
-           "KEY no longer hashes a GLYPH (README § 3.7)")
+           "KEY no longer hashes a GLYPH (REFERENCE.md § 6)")
     check_glyph(data["glyph"])
     check_identity(data["identity"])
     return {

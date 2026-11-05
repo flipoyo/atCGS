@@ -1,6 +1,8 @@
-# TUTO 05 — OPX, the second mission: put a project under the gate
+# OPX 05 — OPX, the second mission: put a project under the gate
 
-**Status: current (1.8.0-alpha).** Run on 2026-11-05 on `flipoyo/MOLONARI1D`,
+**Status: historical record (1.8.0-alpha).** The first run of this mission, on 2026-11-05, with
+`examples/molonari.cgs` (6 repositories). 1.9.0-alpha replaced that file by the MOLO twins
+`examples/molo_*.cgs`; for the current steps read `TUTOS/TUTO_02_TWIN.md`. The run below was on `flipoyo/MOLONARI1D`,
 branch `CGS-MOLO` (ticket MolonariCgsMolo). Outputs are the real ones, abridged.
 
 **Goal:** administer a second project with `@cgs`. The project's tree mounts
@@ -8,7 +10,7 @@ atCGS **read-only** at `.atcgs`; that atCGS gates the project with the
 project's **own register**. You publish the identities once, admit the keys in
 the project's register, and make a first commit and push through the gate.
 
-Read TUTO 01 first: it founds the master register and the first tree. TUTO 03
+Read OPX 01 first: it founds the master register and the first tree. OPX 03
 explains the journals; this one only uses them.
 
 ## 0. The idea in four lines
@@ -25,7 +27,7 @@ explains the journals; this one only uses them.
 
 ## 1. Before you start
 
-- TUTO 01 done: OPX pinned and enrolled in the cgs workspace, `deploy-keys`
+- OPX 01 done: OPX pinned and enrolled in the cgs workspace, `deploy-keys`
   known, `gh` logged in with admin on the project's repositories.
 - A tree spec for the project **in atCGS**, `examples/<project>.cgs`:
   `examples/molonari.cgs` is the model. It declares the project's repositories on
@@ -76,7 +78,7 @@ pixi run cgitsync bootstrap examples/molonari.cgs MOLONARI
 ```
 
 The gate does not exist before this, so this install uses your normal ssh, like
-step 1 of TUTO 01. Nothing is written to the repositories, with one exception.
+step 1 of OPX 01. Nothing is written to the repositories, with one exception.
 The install warns that `.memory` has no branch yet and asks `Run it now?
 (y/N)`. Answer **`y`**: it creates the project's memory branch and pushes it.
 The tree lands in `~/.cgs/MOLONARI-<timestamp>/`; `cd` into its `.atcgs`.

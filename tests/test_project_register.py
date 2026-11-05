@@ -471,3 +471,12 @@ class ReadGrantTests(unittest.TestCase):
         from atcgs.session import Session
         with self.assertRaises(AccessRefused), Session(BOB, reg, cmd.reseal(BOB, None, [key]), "t", "DEV"):
             pass
+
+
+class RefusalMessageTests(unittest.TestCase):
+    def test_a_forbidden_login_operation_is_named_with_what_the_profile_may_run(self):
+        from atcgs import OpFrontier
+        with self.assertRaises(ValueError) as caught:
+            OpFrontier().accept(["DEV", "login", "MOLO-HRDW", "tag", "v1"])
+        self.assertIn("DEV may not run 'tag'", str(caught.exception))
+        self.assertIn("commit", str(caught.exception))

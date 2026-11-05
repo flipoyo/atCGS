@@ -1,4 +1,4 @@
-"""The GLYPH, the cover of a user's ssh keys (README § 3.5).
+"""The GLYPH, the cover of a user's ssh keys (REFERENCE.md § 6).
 
     GLYPH = "CGSG" | version (1) | nonce (12) | ChaCha20-Poly1305(key, plaintext) | tag (16)
           = 4 + 1 + 12 + 8 159 + 16 = 8 192 bytes = 256 x 256 bits

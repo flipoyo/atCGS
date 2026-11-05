@@ -23,7 +23,7 @@ from ComplexGitSync.orchestre.op_levels import LEVELS
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.9.0-alpha"
+__version__ = "1.9.1-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -202,11 +202,14 @@ class OpFrontier:
             return Request(layer, args)
         if _identity_request(layer, args):
             return Request(layer, args)
+        if args[0] == "login" and layer in LOGIN_OPS and len(args) >= 3:
+            raise ValueError(f"{layer} may not run {args[2]!r} through login; {layer} runs: "
+                             f"{', '.join(sorted(LOGIN_OPS[layer]))}")
         raise ValueError(f"unsupported @cgs {layer} argument: {args[0]!r}")
 
 
 def _identity_request(layer: str, args: Sequence[str]) -> bool:
-    """The identity verbs and their arity (README § 3); the arguments are never secrets."""
+    """The identity verbs and their arity (REFERENCE.md § 6); the arguments are never secrets."""
     verb, rest = args[0], args[1:]
     if verb == "init":
         return layer == "OPX" and not rest
@@ -389,7 +392,7 @@ def public_answer(table: MountTable) -> dict[str, object]:
 def main(request: Request) -> int:
     table, authorization = MountTable.from_env(), Authorization.from_env()
     if request.args and request.args[0] in IDENTITY_VERBS:
-        from atcgs.commands import dispatch  # the identity layer: README § 3
+        from atcgs.commands import dispatch  # the identity layer: REFERENCE.md § 6
 
         return _emit(dispatch(request, authorization))
     if request.args and request.args[0] in MOUNT_POLICY:

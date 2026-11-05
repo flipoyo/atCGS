@@ -1,10 +1,10 @@
-# TUTO 04 — Integration: what is checked, and what is still open
+# OPX 04 — Integration: what is checked, and what is still open
 
 **Goal:** run every check this repository has, in one place, and see which parts of
 the system are not yet built.
 
 This tutorial replaces the earlier 24-hour roadmap. It listed windows and deliverables
-that were planning, not software state. Open work is now listed in README § 8 and in
+that were planning, not software state. Open work is now listed in REFERENCE.md § 8 and in
 the open tickets under `local/.dev/.ticket/`.
 
 ## 1. Run every check
@@ -55,8 +55,8 @@ instead of the pinned revision. Use it when changing both repositories.
 
 ## 4. Not built
 
-Each item is stated in README § 8:
-- OPX key pinning is a manual step for the owner (TUTO 01 § 3); it is done for
+Each item is stated in REFERENCE.md § 8:
+- OPX key pinning is a manual step for the owner (OPX 01 § 3); it is done for
   this workspace.
 - DEV and USR login is not yet proven on their own trees (`cgs-dev.cgs`,
   `cgs-usr.cgs`).
@@ -72,4 +72,4 @@ A change to atCGS is integrated when:
 - `pixi run lint` and `pixi run test` pass;
 - `pixi run contract-inspect` passes after any change to `spec/contracts.toml`;
 - each level tree still validates with `cgitsync validate`;
-- README § 2 and § 8 match what the change did.
+- REFERENCE.md § 2 and § 8 match what the change did.

@@ -1,4 +1,4 @@
-# TUTO 02 — The four levels and the OpFrontier
+# OPX 02 — The four levels and the OpFrontier
 
 **Goal:** ask `@cgs` for a level's outgoing transition, know which commands each
 level may run, and know what the OpFrontier does and does not do.
@@ -8,7 +8,7 @@ command gate. It does not move data itself; `cgitsync` does.
 
 ## 1. The four levels
 
-The levels and their codes come from ComplexGitSync (`op_levels.py`); README § 3 has
+The levels and their codes come from ComplexGitSync (`op_levels.py`); REFERENCE.md § 3 has
 the table. OPX is POE (`0000`).
 
 ## 2. The three transitions
@@ -55,7 +55,7 @@ forms below; anything else is refused.
 | no argument | `@cgs DEV` | no |
 | a public mount | `@cgs USR .omniscience` | no |
 | a private mount | `@cgs DEV .cgitsync` | yes, OPX and/or DEV |
-| identity verb | `@cgs OPX init`, `@cgs DEV request …`, `@cgs DEV login TWIN …` | depends on verb (see TUTO 03) |
+| identity verb | `@cgs OPX init`, `@cgs DEV request …`, `@cgs DEV login TWIN …` | depends on verb (see OPX 03) |
 | a cgitsync verb | `@cgs DEV status` | yes |
 
 `ATCGS_AUTHORIZE` names the private levels the operator grants, for example
@@ -75,7 +75,7 @@ pixi run cgs USR .omniscience
 
 ## 6. What the gate does
 
-- `login` (TUTO 03) allows a fixed list of cgitsync verbs per level. A verb outside
+- `login` (OPX 03) allows a fixed list of cgitsync verbs per level. A verb outside
   the list is refused before anything runs.
 - The layer a command is run as decides the list. A USR login cannot push.
 - The remote enforces the rest: a DEV key cannot push to a repo it is not granted.

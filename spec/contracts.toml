@@ -1,7 +1,7 @@
-# atCGS 1.9.0-alpha — ordered literal tuples; not .cgs grammar.
+# atCGS 1.9.1-alpha — ordered literal tuples; not .cgs grammar.
 [contract]
 project = "ComplexGraphSync"
-version = "1.9.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.9.1-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 state = "DECLARED_ONLY"
 prime_g = ["NAME", "NODE", "EDGE", "OP"]
 prime_cgs = ["OPX", "DEV", "USR", "PUB"]
@@ -53,12 +53,12 @@ sequence = [
  ["HASH", "DELTA", "CGS", "OPX"],
  [".cgs", "USR", "PUB", ".toml"],
 ]
-[key]  # prototype of the class KEY; since 1.6.0 it no longer hashes a GLYPH (README § 3.7)
+[key]  # prototype of the class KEY; since 1.6.0 it no longer hashes a GLYPH (REFERENCE.md § 6)
 prototype = [
  ["PUB", "DELTA", "POEX", "KEY"],
  ["KEY", "OPX", "CGS", "PUB"],
 ]
-[glyph]  # the GLYPH covers a user's ssh keys: a sealed 256x256-bit envelope (README § 3.5)
+[glyph]  # the GLYPH covers a user's ssh keys: a sealed 256x256-bit envelope (REFERENCE.md § 6)
 sequence = [
  ["NAME", "GLYPH", "POEX", "OPX"],
  ["NAME", "GLYPH", "PUB", ".toml"],
@@ -70,7 +70,7 @@ sizes = [4, 1, 12, 8159, 16]
 aead = "ChaCha20-Poly1305"
 key = "HKDF-SHA256(IDSEED, info = atCGS/glyph/v1)"
 published = false  # a GLYPH is never published, even sealed
-[identity]  # login, password -> Ed25519; only the public key is registered (README § 3.2)
+[identity]  # login, password -> Ed25519; only the public key is registered (REFERENCE.md § 6)
 # OPX's IDPUB, base64: the root of trust. Empty until the owner runs `@cgs OPX init`.
 opx_pub = "qL1FhYN4yQrRd6/cOa92zPG6rsu2t8JXirlntzsYDMo="
 kdf = "Argon2id"

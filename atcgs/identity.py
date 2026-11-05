@@ -1,4 +1,4 @@
-"""Identity key: login, password -> Ed25519 key pair (README § 3.2).
+"""Identity key: login, password -> Ed25519 key pair (REFERENCE.md § 6).
 
 Nothing here is stored. The same login and password always give the same key,
 so the system never needs to look a login up: the client recomputes the UID and
@@ -93,7 +93,7 @@ def _normalise(text: str, what: str) -> bytes:
 
 
 def derive(login: str, password: str, profile: str | None = None) -> Identity:
-    """README § 3.2: IDSEED = Argon2id(password, salt = prefix || profile || login)."""
+    """REFERENCE.md § 6: IDSEED = Argon2id(password, salt = prefix || profile || login)."""
     profile = profile or profile_from_env()
     if profile not in KDF_PROFILES:
         raise ValueError(f"unknown KDF profile: {profile!r}")

@@ -1,4 +1,4 @@
-"""The @cgs identity verbs: init, request, admit, revoke, login (README § 3).
+"""The @cgs identity verbs: init, request, admit, revoke, login (REFERENCE.md § 6).
 
 Logins and passwords are asked with getpass: never read from argv, the
 environment or a file, and never printed. Outputs carry UIDs, public keys,

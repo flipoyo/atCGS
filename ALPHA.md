@@ -7,7 +7,7 @@ Its `OpFrontier` accepts exactly four case-sensitive System Layer selectors,
 selector, then passed unchanged to `ComplexGitSync.cli.main`, which routes
 mutating operations via `RoutedClient -> Op`.
 
-Inner version: `1.9.0-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
+Inner version: `1.9.1-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
 prerelease). Its single source is `atcgs.__version__`; `@cgs --version` prints it.
 
 **Build name.** The project is `CGS`; its build is the executable in the Pixi
@@ -20,12 +20,12 @@ build). The name is lower-case(project), or `build-name` when set, in
 Pixi environment (`PIXI_PROJECT_ROOT`, exit `2`). `pixi.toml` keeps the pinned
 ComplexGitSync's channels, platforms, Python and tools, and `ruff.toml` its lint
 rules, so `@cgs` and `cgitsync` share one environment. Every command is a task:
-`@cgs`, `test`, `lint`, `contract-inspect`, `identity-demo`, `local-remote`.
+`cgs`, `test`, `lint`, `contract-inspect`, `identity-demo`, `local-remote`.
 
 ```bash
 pixi install
 pixi run cgs --help
-pixi run cgs --version    # ComplexGraphSync 1.9.0-alpha (local, no cgitsync)
+pixi run cgs --version    # ComplexGraphSync 1.9.1-alpha (local, no cgitsync)
 pixi run cgs OPX          # emits .gts OPX DEV .cgs (evidence: unverified)
 pixi run cgs DEV          # emits .cgs DEV USR .toml
 pixi run cgs USR          # emits .toml USR PUB .omniscience
@@ -37,7 +37,7 @@ ATCGS_AUTHORIZE=DEV pixi run cgs DEV status
 ATCGS_AUTHORIZE=DEV pixi run cgs DEV release freeze "ALPHA release" --dry-run
 ATCGS_AUTHORIZE=OPX,DEV pixi run cgs DEV .cgitsync   # resolve the PRIVATE mount
 ATCGS_AUTHORIZE=DEV pixi run cgs DEV env check --cgs examples/cgs-dev.cgs
-# Identity and access (README § 3); logins and passwords are asked, never passed:
+# Identity and access (REFERENCE.md § 6); logins and passwords are asked, never passed:
 pixi run identity-demo                      # the whole flow on throwaway data
 pixi run local-remote                       # the same against a local sshd: DEV pushes, USR only fetches
 # The register is .cgitsync/.memory/.register (identity.jsonl + access.jsonl); ATCGS_REGISTER overrides it.
