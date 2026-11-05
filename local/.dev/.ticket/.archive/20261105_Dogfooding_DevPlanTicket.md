@@ -205,6 +205,13 @@ then `… push`. The push succeeds with GLYPH keys only, and the same push with
   atCGS on `opx`, ComplexGitSync on `cgs_opx` (behind_gate), the private repos
   on `cgs_opx`, `.memory` on `ComplexGitSync_cgs_opx`. `CGS-ALPHA` receives
   this work by a merge from `opx`.
+- **Negative proof (B5).** The owner's own ssh reaches GitHub as `Hi flipoyo!`
+  (personal key, `~/.ssh/config`), so a push working proves nothing by itself.
+  Under the session's rules (`-F /dev/null`, `IdentitiesOnly=yes`, no agent) and
+  no session key, `git ls-remote` on atCGS is refused: `Permission denied
+  (publickey)`, exit 128; `ssh -G` offers only the session's IdentityFile.
+  GitHub's `last_used` shows the 10 `atCGS OPX` deploy keys used at
+  2026-11-05T10:51Z, the `@cgs … fetch`.
 - **Goal 1:** this closing is committed and pushed with
   `pixi run -e dogfood '@cgs' OPX login ComplexGraphSync commit|push --all`.
 
