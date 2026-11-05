@@ -1,7 +1,7 @@
 # @cgs — the development Operating Space of atCGS: atCGS with the ./ComplexGitSync
 # checkout live (editable), so a change on either side of CGS-ALPHA is seen at once.
 #
-#   pixi run -m @cgs '@cgs' OPX login ComplexGraphSync status
+#   pixi run cgs OPX login ComplexGraphSync status      (the root task hands over here)
 #   pixi run -m @cgs test
 #
 # The root pixi.toml is atCGS as any project installs it (ComplexGitSync pinned); a
@@ -15,7 +15,7 @@ channels = ["conda-forge"]
 platforms = ["linux-64", "win-64", "osx-arm64"]
 
 [tasks]
-"@cgs" = { cmd = "python -m atcgs", cwd = ".." }
+cgs = { cmd = "python -m atcgs", cwd = ".." }
 test = { cmd = "python -m pytest tests", cwd = ".." }
 lint = { cmd = "ruff check .", cwd = ".." }
 contract-inspect = { cmd = "python scripts/contract_check.py inspect", cwd = ".." }

@@ -25,7 +25,7 @@ artifact. PUB is terminal. There is no fourth transition.
 ## 3. Ask for a transition
 
 ```bash
-pixi run '@cgs' OPX
+pixi run cgs OPX
 ```
 
 Real output (abridged):
@@ -38,7 +38,7 @@ Run the same with `DEV` and `USR` to see the other two rows. `PUB` prints the
 public view instead:
 
 ```bash
-pixi run '@cgs' PUB
+pixi run cgs PUB
 ```
 
 `"evidence": "unverified"` is the only value a transition can carry today. No
@@ -59,7 +59,7 @@ forms below; anything else is refused.
 | a cgitsync verb | `@cgs DEV status` | yes |
 
 `ATCGS_AUTHORIZE` names the private levels the operator grants, for example
-`ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV status`. A level may be granted only if it
+`ATCGS_AUTHORIZE=DEV pixi run cgs DEV status`. A level may be granted only if it
 is OPX or DEV, and USR never has a private mount.
 
 ## 5. Mounts
@@ -69,7 +69,7 @@ Public and private mounts are described by `ATCGS_MOUNTS`, a TOML file of
 answers `"evidence": "unavailable"`:
 
 ```bash
-pixi run '@cgs' USR .omniscience
+pixi run cgs USR .omniscience
 # {"mount": ".omniscience", "evidence": "unavailable"}
 ```
 
@@ -89,6 +89,6 @@ pixi run '@cgs' USR .omniscience
 
 ## 8. Definition of done for this tutorial
 
-- `pixi run '@cgs' OPX` prints the `.gts OPX DEV .cgs` transition.
+- `pixi run cgs OPX` prints the `.gts OPX DEV .cgs` transition.
 - You can list which selectors are accepted, and which forms need `ATCGS_AUTHORIZE`.
 - You can explain why `"evidence": "unverified"` is the only value you will see.

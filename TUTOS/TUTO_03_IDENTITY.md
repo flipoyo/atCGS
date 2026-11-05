@@ -65,14 +65,14 @@ about 17 Ed25519 keys, one per (repo, role), and never says how many.
 ## 5. The cycle, command by command
 
 ```bash
-ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init     # once: prints idpub to pin
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX init     # once: prints idpub to pin
 #   copy idpub into spec/contracts.toml [identity] opx_pub, then:
-ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init     # OPX enrols itself
-pixi run '@cgs' DEV request req.json github:flipoyo/atCGS DEV
-ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit req.json
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX init     # OPX enrols itself
+pixi run cgs DEV request req.json github:flipoyo/atCGS DEV
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX admit req.json
 pixi run deploy-keys [--repo github:o/n]      # prints the gh api commands; OPX runs them
-pixi run '@cgs' DEV login cgs fetch              # DEV keys in a private agent, cgitsync fetch
-ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX revoke <UID> github:flipoyo/atCGS
+pixi run cgs DEV login cgs fetch              # DEV keys in a private agent, cgitsync fetch
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX revoke <UID> github:flipoyo/atCGS
 ```
 
 Every login and password is asked with `getpass`. `req.json` carries the UID,
@@ -118,7 +118,7 @@ and `revoke UID` work. In a tree that mounts atCGS read-only (`.atcgs` in
 
 ```bash
 # in the cgs workspace, once per new identity
-ATCGS_AUTHORIZE=OPX pixi run -m @cgs '@cgs' OPX publish
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX publish
 # → branch CGS-MOLO of .omniscience gets atcgs/identity.jsonl and atcgs/identity.head
 ```
 
@@ -130,8 +130,8 @@ It does nothing if the published head already equals the register's.
 # in the MOLONARI tree, from its own atCGS
 cd ~/.cgs/MOLONARI-<timestamp>/.atcgs
 pixi install                                     # the root manifest: ComplexGitSync pinned
-ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit molo.json   # copies the identities, writes the grants
-pixi run '@cgs' OPX login MOLONARI fetch
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX admit molo.json   # copies the identities, writes the grants
+pixi run cgs OPX login MOLONARI fetch
 ```
 
 Every `login` and `admit` first copies the published identities into the project register,

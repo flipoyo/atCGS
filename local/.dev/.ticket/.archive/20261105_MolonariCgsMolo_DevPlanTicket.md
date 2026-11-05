@@ -344,3 +344,19 @@ Follow-ups, not done:
   one repository at DIR to FROM on its remote, with that repository's key;
   anything else refused. For promotions cgitsync cannot do from this tree
   (ComplexGitSync behind the gate is moved only on `cgs_<branch>`).
+
+## Closing — 2026-11-05
+
+- **Goal reached:** MOLONARI1D `CGS-MOLO` is administered through `@cgs`, from
+  the read-only atCGS in the MOLONARI tree, gated by MOLONARI's own register
+  whose identities come from `.omniscience`. First administered commit
+  `56dd11d`.
+- **One command:** `pixi run cgs …` (1.8.0-alpha). `scripts/cgs.py` hands over
+  to `@cgs/pixi.toml` where `./ComplexGitSync` is checked out, and runs the
+  pinned ComplexGitSync anywhere else (`ATCGS_PINNED=1` forces it).
+- **Branches level:** atCGS `main` = `opx` = `CGS-ALPHA`; ComplexGitSync
+  `main` = `CGS-ALPHA` = `cgs_CGS-ALPHA` = `47d4100`, via `OPX promote`.
+- **Carried over:** D2's closing step (merge `.omniscience` `CGS-MOLO` into
+  `main`, mount `main` in `molonari.cgs`) moves to the short ticket
+  `omniscience-identities-main.md`; it waits for the owner's validation.
+  B7 (GLYPH 16 / 17) and B8 (one-line commit messages) stand.

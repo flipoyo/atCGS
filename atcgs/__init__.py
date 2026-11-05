@@ -124,7 +124,7 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
                                DIR (in this tree) to FROM, pushed with that repo's key only.
                                TWIN.cgs is written only by a bare login, where it was typed.
 
-Run it as: pixi run '@cgs' ..."""
+Run it as: pixi run cgs ..."""
 
 
 class Evidence(str, Enum):
@@ -415,7 +415,7 @@ def require_pixi(env: Mapping[str, str] | None = None) -> None:
     """Refuse to run outside this repository's Pixi environments (root, or @cgs)."""
     root = (os.environ if env is None else env).get(PIXI_ENV, "")
     if not root or Path(root).resolve() not in MANIFEST_ROOTS:
-        raise ValueError(f"run under Pixi only: pixi run <task> from {ROOT.name}, or pixi run -m @cgs <task>")
+        raise ValueError(f"run under Pixi only: pixi run cgs ... from {ROOT.name}")
 
 
 def run(argv: Sequence[str] | None = None) -> int:

@@ -24,27 +24,27 @@ rules, so `@cgs` and `cgitsync` share one environment. Every command is a task:
 
 ```bash
 pixi install
-pixi run '@cgs' --help
-pixi run '@cgs' --version    # ComplexGraphSync 1.8.0-alpha (local, no cgitsync)
-pixi run '@cgs' OPX          # emits .gts OPX DEV .cgs (evidence: unverified)
-pixi run '@cgs' DEV          # emits .cgs DEV USR .toml
-pixi run '@cgs' USR          # emits .toml USR PUB .omniscience
-pixi run '@cgs' PUB          # read-only PUBLIC answer: .poe {.omniscience, .cgs, *G}
-pixi run '@cgs' USR .omniscience   # resolve the PUBLIC mount
+pixi run cgs --help
+pixi run cgs --version    # ComplexGraphSync 1.8.0-alpha (local, no cgitsync)
+pixi run cgs OPX          # emits .gts OPX DEV .cgs (evidence: unverified)
+pixi run cgs DEV          # emits .cgs DEV USR .toml
+pixi run cgs USR          # emits .toml USR PUB .omniscience
+pixi run cgs PUB          # read-only PUBLIC answer: .poe {.omniscience, .cgs, *G}
+pixi run cgs USR .omniscience   # resolve the PUBLIC mount
 # Stateful operations need an explicit owner grant (OPX and/or DEV):
-ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX bootstrap example.cgs
-ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV status
-ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV release freeze "ALPHA release" --dry-run
-ATCGS_AUTHORIZE=OPX,DEV pixi run '@cgs' DEV .cgitsync   # resolve the PRIVATE mount
-ATCGS_AUTHORIZE=DEV pixi run '@cgs' DEV env check --cgs examples/cgs-dev.cgs
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX bootstrap example.cgs
+ATCGS_AUTHORIZE=DEV pixi run cgs DEV status
+ATCGS_AUTHORIZE=DEV pixi run cgs DEV release freeze "ALPHA release" --dry-run
+ATCGS_AUTHORIZE=OPX,DEV pixi run cgs DEV .cgitsync   # resolve the PRIVATE mount
+ATCGS_AUTHORIZE=DEV pixi run cgs DEV env check --cgs examples/cgs-dev.cgs
 # Identity and access (README § 3); logins and passwords are asked, never passed:
 pixi run identity-demo                      # the whole flow on throwaway data
 pixi run local-remote                       # the same against a local sshd: DEV pushes, USR only fetches
 # The register is .cgitsync/.memory/.register (identity.jsonl + access.jsonl); ATCGS_REGISTER overrides it.
-ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX init                  # prints the key to pin, then enrols OPX
-pixi run '@cgs' DEV request req.json github:flipoyo/atCGS DEV  # new ssh key, sealed in your GLYPH
-ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit req.json        # enrol + grant
-pixi run '@cgs' DEV login cgs                                 # cgs.cgs + the DEV keys in a private agent
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX init                  # prints the key to pin, then enrols OPX
+pixi run cgs DEV request req.json github:flipoyo/atCGS DEV  # new ssh key, sealed in your GLYPH
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX admit req.json        # enrol + grant
+pixi run cgs DEV login cgs                                 # cgs.cgs + the DEV keys in a private agent
 pixi run test
 pixi run lint
 ```

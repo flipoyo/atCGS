@@ -45,7 +45,7 @@ explains the journals; this one only uses them.
 In the cgs workspace:
 
 ```bash
-ATCGS_AUTHORIZE=OPX pixi run -m @cgs '@cgs' OPX publish
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX publish
 # { "published": true, "branch": "CGS-MOLO", "lines": 1, "head": "678b66c2…" }
 ```
 
@@ -61,7 +61,7 @@ Still in the cgs workspace, so the GLYPH gets them. **Do not run `admit` here:**
 the cgs register must not receive these grants.
 
 ```bash
-pixi run -m @cgs '@cgs' OPX request molo.json \
+pixi run cgs OPX request molo.json \
   github:flipoyo/MOLONARI1D OPX     github:flipoyo/MOLONARI-API OPX \
   github:flipoyo/MOLONARI-data OPX  github:flipoyo/MOLONARI-hardware OPX \
   github:flipoyo/MOLONARI-gate OPX  github:flipoyo/MOLONARI-computo OPX
@@ -107,7 +107,7 @@ manifest and this step needed `PIXI_FROZEN=true`.)
 Still in `.atcgs`:
 
 ```bash
-ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit ~/.cgs/<cgs-workspace>/molo.json
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX admit ~/.cgs/<cgs-workspace>/molo.json
 # granted: MOLONARI1D, -API, -data, -hardware, -gate, -computo  (role OPX)
 ```
 
@@ -136,10 +136,10 @@ other deploy keys (MOLONARI-API had one for a VPS): yours is added beside it.
 ## 8. Align, commit and push through the gate
 
 ```bash
-pixi run '@cgs' OPX login MOLONARI fetch                 # fetched=9, "agent_keys": 9
-pixi run '@cgs' OPX login MOLONARI checkout CGS-MOLO     # .memory → MOLONARI_CGS-MOLO
-pixi run '@cgs' OPX login MOLONARI commit --all "message on one line"
-pixi run '@cgs' OPX login MOLONARI push --all
+pixi run cgs OPX login MOLONARI fetch                 # fetched=9, "agent_keys": 9
+pixi run cgs OPX login MOLONARI checkout CGS-MOLO     # .memory → MOLONARI_CGS-MOLO
+pixi run cgs OPX login MOLONARI commit --all "message on one line"
+pixi run cgs OPX login MOLONARI push --all
 # pushed MOLONARI: origin/CGS-MOLO (+1)      .memory pushed by its own fold
 ```
 

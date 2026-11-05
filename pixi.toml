@@ -15,7 +15,7 @@ project = "CGS"
 
 # Every command runs under Pixi only; @cgs refuses to start outside it.
 [tasks]
-"@cgs" = "python -m atcgs"
+cgs = "python scripts/cgs.py"  # atCGS; hands over to @cgs/pixi.toml where ./ComplexGitSync is checked out
 test = "python -m pytest tests"  # atCGS only: the nested ComplexGitSync has its own suite
 lint = "ruff check ."
 contract-inspect = "python scripts/contract_check.py inspect"

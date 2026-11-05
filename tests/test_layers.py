@@ -156,8 +156,12 @@ class EnvironmentAgreementTests(unittest.TestCase):
         for key in ("version", "channels", "platforms"):
             with self.subTest(key=key):
                 self.assertEqual(dev["workspace"][key], self.pixi["workspace"][key])
-        # the same tasks, run from atCGS's root
-        self.assertEqual({name: task["cmd"] for name, task in dev["tasks"].items()}, self.pixi["tasks"])
+        # the same tasks, run from atCGS's root; only `cgs` differs: the root's hands over to this one
+        dev_tasks = {name: task["cmd"] for name, task in dev["tasks"].items()}
+        self.assertEqual(dev_tasks.pop("cgs"), "python -m atcgs")
+        root_tasks = dict(self.pixi["tasks"])
+        self.assertEqual(root_tasks.pop("cgs"), "python scripts/cgs.py")
+        self.assertEqual(dev_tasks, root_tasks)
         self.assertEqual({task["cwd"] for task in dev["tasks"].values()}, {".."})
 
     def test_the_root_manifest_never_names_the_checkout(self):
@@ -175,7 +179,7 @@ class EnvironmentAgreementTests(unittest.TestCase):
 
     def test_every_command_is_a_pixi_task(self):
         tasks = self.pixi["tasks"]
-        for name in ("@cgs", "test", "lint", "contract-inspect", "identity-demo", "local-remote"):
+        for name in ("cgs", "test", "lint", "contract-inspect", "identity-demo", "local-remote"):
             with self.subTest(task=name):
                 self.assertTrue(tasks[name].startswith("python ") or name == "lint")
 

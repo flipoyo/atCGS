@@ -20,26 +20,29 @@ pixi run lint
 pixi run contract-inspect  # checks spec/contracts.toml against the code
 pixi run identity-demo     # the identity flow on throwaway data; 4 refusals are shown
 pixi run local-remote      # the same against a local sshd (needs sshd and git-shell)
-pixi run '@cgs' --help
+pixi run cgs --help
 ```
 
-Two manifests:
+One command, `pixi run cgs …`, over two manifests:
 
-| Manifest | ComplexGitSync | For | Run as |
-|---|---|---|---|
-| `pixi.toml` | pinned (git rev) | any install of atCGS, a project's read-only gate (`.atcgs`) included | `pixi run '@cgs' …` |
-| `@cgs/pixi.toml` | `./ComplexGitSync`, editable | the development Operating Space, where atCGS and ComplexGitSync are developed together | `pixi run -m @cgs '@cgs' …` |
+| Manifest | ComplexGitSync | Used where |
+|---|---|---|
+| `pixi.toml` | pinned (git rev) | any install of atCGS, a project's read-only gate (`.atcgs`) included |
+| `@cgs/pixi.toml` | `./ComplexGitSync`, editable | the development Operating Space, where atCGS and ComplexGitSync are developed together |
 
-The root manifest never names `./ComplexGitSync`, so a clone without it installs with a
-plain `pixi install`. `@cgs/` declares the development space: its tasks are the root's,
-run from atCGS's root, and a test keeps the two manifests equal but for that one line.
+`pixi run cgs` (`scripts/cgs.py`) hands over to `@cgs/pixi.toml` wherever `./ComplexGitSync`
+is checked out, and runs atCGS on the pinned ComplexGitSync anywhere else; `ATCGS_PINNED=1`
+keeps the pinned one. The root manifest never names `./ComplexGitSync`, so a clone without it
+installs with a plain `pixi install`. The other tasks of `@cgs/` run with `-m`
+(`pixi run -m @cgs test`). A test keeps the two manifests equal but for the ComplexGitSync source
+and the `cgs` task.
 
 ## 2. What runs today
 
 | Capability | How to run it | Checked by |
 |---|---|---|
-| Four levels and their codes, taken from ComplexGitSync | `pixi run '@cgs' OPX` (or `DEV`, `USR`, `PUB`) | `test_layers`, `test_atcgs` |
-| OpFrontier transitions `.gts OPX DEV .cgs`, `.cgs DEV USR .toml`, `.toml USR PUB .omniscience` | `pixi run '@cgs' DEV` | `test_atcgs`, `contract-inspect` |
+| Four levels and their codes, taken from ComplexGitSync | `pixi run cgs OPX` (or `DEV`, `USR`, `PUB`) | `test_layers`, `test_atcgs` |
+| OpFrontier transitions `.gts OPX DEV .cgs`, `.cgs DEV USR .toml`, `.toml USR PUB .omniscience` | `pixi run cgs DEV` | `test_atcgs`, `contract-inspect` |
 | Identity key from login and password (Argon2id, Ed25519) | `@cgs … request`, `@cgs … login` | `test_identity_layer` |
 | Journals: who exists, and who holds which role on which repo | `@cgs OPX init`, `admit`, `revoke` | `test_identity_layer` |
 | GLYPH: a user's ssh keys sealed in 8 192 bytes | `@cgs … request` | `test_identity_layer` |
@@ -102,7 +105,7 @@ Reading the symbols:
 
 ## 5. Sessions and commands
 
-Run each command as `pixi run '@cgs' <LAYER> ...`.
+Run each command as `pixi run cgs <LAYER> ...`.
 
 | Command | Effect | Who may run it |
 |---|---|---|
