@@ -10,7 +10,7 @@
 # source must equal the root pixi.toml: tests/test_layers.py checks it.
 [workspace]
 name = "atCGS-dev"
-version = "1.7.2-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.8.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 channels = ["conda-forge"]
 platforms = ["linux-64", "win-64", "osx-arm64"]
 

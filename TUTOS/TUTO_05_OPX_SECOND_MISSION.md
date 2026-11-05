@@ -1,6 +1,6 @@
 # TUTO 05 — OPX, the second mission: put a project under the gate
 
-**Status: current (1.7.2-alpha).** Run on 2026-11-05 on `flipoyo/MOLONARI1D`,
+**Status: current (1.8.0-alpha).** Run on 2026-11-05 on `flipoyo/MOLONARI1D`,
 branch `CGS-MOLO` (ticket MolonariCgsMolo). Outputs are the real ones, abridged.
 
 **Goal:** administer a second project with `@cgs`. The project's tree mounts
@@ -99,7 +99,7 @@ pixi run test
 ```
 
 The gate uses atCGS's root `pixi.toml`, which pins ComplexGitSync and never names
-`./ComplexGitSync`. (Before 1.7.2-alpha the development environment shared that
+`./ComplexGitSync`. (Before 1.8.0-alpha the development environment shared that
 manifest and this step needed `PIXI_FROZEN=true`.)
 
 ## 6. Grant, in the project's register

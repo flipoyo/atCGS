@@ -1,6 +1,6 @@
 # TUTO 03 — Identity: journals, GLYPH and sessions
 
-**Status: current (1.7.2-alpha).** Every command below runs; each is covered by a
+**Status: current (1.8.0-alpha).** Every command below runs; each is covered by a
 test, by `identity-demo` / `local-remote`, or by TUTO 01.
 
 **Goal:** identify a user and open their ssh keys without ever storing a name or

@@ -1,6 +1,6 @@
 # TUTO 01 — OPX, the first mission
 
-**Status: current (1.7.2-alpha).** Every command below was run on 2026-11-05 to
+**Status: current (1.8.0-alpha).** Every command below was run on 2026-11-05 to
 close the Dogfooding ticket. The outputs are the real ones, abridged.
 
 **Goal:** you are OPX, the operator who holds the root of trust. Your first
