@@ -127,6 +127,8 @@ It does nothing if the published head already equals the register's.
 ```bash
 # in the MOLONARI tree, from its own atCGS
 cd ~/.cgs/MOLONARI-<timestamp>/.atcgs
+export PIXI_FROZEN=true                          # no ./ComplexGitSync here: do not re-solve (README § 1)
+pixi install -e default
 ATCGS_AUTHORIZE=OPX pixi run '@cgs' OPX admit molo.json   # copies the identities, writes the grants
 pixi run '@cgs' OPX login MOLONARI fetch
 ```

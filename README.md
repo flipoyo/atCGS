@@ -26,6 +26,16 @@ pixi run '@cgs' --help
 `pixi run -e dogfood ...` uses the `./ComplexGitSync` checkout instead of the pinned
 ComplexGitSync, so a change in either repository is live at once.
 
+**A clone without `./ComplexGitSync`** (the read-only atCGS a project mounts at `.atcgs`) cannot
+re-solve the `dogfood` environment, and pixi does so on every plain `pixi install`/`pixi run`
+("failed to solve ... environment 'dogfood'"). Use the lockfile as it is:
+
+```bash
+export PIXI_FROZEN=true          # or add --frozen to each pixi command
+pixi install -e default
+pixi run '@cgs' --version
+```
+
 ## 2. What runs today
 
 | Capability | How to run it | Checked by |
@@ -173,6 +183,8 @@ The 4-bit codes survive as the level codes of § 3.
 - **`login` runs the level's command only for a bare `bootstrap`.** Any other verb
   runs as given on the command line.
 - **Deploy keys are not installed.** `deploy-keys` prints them; M7 would run them.
+- **A plain clone needs `PIXI_FROZEN=true`.** The lockfile records the `dogfood` environment's
+  editable `./ComplexGitSync`, so pixi cannot re-solve it where that folder is missing (§ 1).
 - **One-line commit messages.** `@cgs … commit` keeps only the first line.
 - **The projection is `identity.jsonl` only.** `.omniscience` holds no hash record (short ticket
   opx-agentic-mounts) and no chain head beyond `atcgs/identity.head`.

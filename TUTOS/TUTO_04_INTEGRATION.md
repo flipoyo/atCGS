@@ -62,7 +62,9 @@ Each item is stated in README § 8:
   `cgs-usr.cgs`).
 - Deploy keys are printed, not installed: OPX runs the printed `gh api` commands.
 - `@cgs … commit` keeps only one line of a commit message.
-- Nothing is projected to `.omniscience`.
+- Only `identity.jsonl` is projected to `.omniscience` (`@cgs OPX publish`, branch `CGS-MOLO`, not yet `main`).
+- A plain atCGS clone needs `PIXI_FROZEN=true` (README § 1): the `dogfood` environment cannot be re-solved without `./ComplexGitSync`.
+- MOLONARI is administered by OPX only; no DEV or USR is admitted on it yet.
 - No checkpoint is verified; every evidence value is `unverified`.
 
 ## 5. Definition of done for an integration change

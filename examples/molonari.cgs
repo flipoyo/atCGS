@@ -13,6 +13,7 @@
 # MOLONARI1D's .gitignore must list .atcgs, .cgitsync/ and .omniscience.
 #   pixi run cgitsync validate examples/molonari.cgs
 #   pixi run cgitsync bootstrap examples/molonari.cgs MOLONARI    # the install: the gate does not exist yet
+# The gate (.atcgs) has no ./ComplexGitSync: install it with PIXI_FROZEN=true, pixi install -e default.
 
 project = { name = "MOLONARI", default_branch = "CGS-MOLO", fallback_branch = "main" }
 

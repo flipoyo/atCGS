@@ -209,6 +209,6 @@ the work. GitHub does not refresh it at every use, so it can lag behind.
 - Your commit is on `origin/CGS-ALPHA`, pushed by `@cgs`, and the check of § 10
   refuses without a session key.
 
-**Next mission:** admit a DEV. The DEV runs `@cgs DEV request` for the
+**Next mission:** put a second project under the gate (TUTO 05), or admit a DEV. The DEV runs `@cgs DEV request` for the
 repositories of `examples/cgs-dev.cgs`, you `admit` it, and the DEV bootstraps
 `cgs-dev.cgs` (branch `dev`). TUTO 03 has the identity commands.

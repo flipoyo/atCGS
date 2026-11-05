@@ -314,3 +314,16 @@ Follow-ups, not done:
    `OPX admit` in MOLONARI; revocation: `OPX revoke UID` in the cgs workspace,
    `publish`, and the next `login` in MOLONARI copies it.
 5. B7 (GLYPH 16 / 17) and B8 (one-line commit messages) stand.
+
+## Follow-ups — 2026-11-05, later
+
+1. **Pixi in a plain clone: documented, not fixed.** The lockfile records the
+   `dogfood` environment's editable `./ComplexGitSync`; without that folder
+   even `--locked` reports "lock-file not up-to-date". README § 1, TUTO 03 § 8
+   and `molonari.cgs` say `PIXI_FROZEN=true` + `pixi install -e default`. The
+   real fix is to move `dogfood` into a second manifest, which changes every
+   `pixi run -e dogfood`: owner's call.
+2. **Stray `.memory` branch deleted** (`ComplexGitSync_MOLONARI_CGS-MOLO`, same
+   commit as `main`, unprotected, no PR). `MOLONARI_CGS-MOLO` (the register) and
+   `main` untouched.
+3. **TUTO 05** written from this run. D2's closing step is still open.
