@@ -9,12 +9,10 @@
 #   .omniscience      the identities OPX publishes (atcgs/identity.jsonl), READ-ONLY, on CGS-MOLO
 #                     until the development is validated, then main.
 # Identity is global (copied from .omniscience into the register), access is local (the grants).
+# No `environment` is declared: MOLONARI1D has its own pixi.toml and pixi.lock, which cgitsync must not rebuild.
 # MOLONARI1D's .gitignore must list .atcgs, .cgitsync/ and .omniscience.
 #   pixi run cgitsync validate examples/molonari.cgs
-#   pixi run -e dogfood '@cgs' OPX login ComplexGraphSync bootstrap examples/molonari.cgs MOLONARI
-
-environment_root = "root"
-environment = { tools = { python = "3.11", git = "2.30", pixi = "0.65" }, manifests = ["pixi.toml"] }
+#   pixi run cgitsync bootstrap examples/molonari.cgs MOLONARI    # the install: the gate does not exist yet
 
 project = { name = "MOLONARI", default_branch = "CGS-MOLO", fallback_branch = "main" }
 

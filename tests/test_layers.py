@@ -227,6 +227,11 @@ class MolonariTreeTests(unittest.TestCase):
         document.validate()
         self.assertEqual((document.project_name, document.default_branch), ("MOLONARI", "CGS-MOLO"))
 
+    def test_no_environment_is_declared_so_molonari1d_is_not_relocked(self):
+        data, _ = self.load()
+        self.assertNotIn("environment", data)
+        self.assertNotIn("environment_root", data)
+
     def test_the_six_molonari_repositories_follow_cgs_molo(self):
         _, repos = self.load()
         for name in self.MOLONARI:

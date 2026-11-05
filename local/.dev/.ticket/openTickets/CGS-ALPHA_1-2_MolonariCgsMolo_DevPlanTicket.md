@@ -272,3 +272,45 @@ whose identities came from `.omniscience`.
   bootstrap. MOLONARI1D's `.gitignore` on `CGS-MOLO` must list `.atcgs`,
   `.cgitsync/` and `.omniscience` before the bootstrap: that is the change for
   the first administered commit. B7 (GLYPH 16 / 17) and B8 are as stated.
+
+## Progress — 2026-11-05, S5 and S6 run
+
+**Goal reached.** Commit `56dd11d` is on `origin/CGS-MOLO` of
+`flipoyo/MOLONARI1D` (3 lines of `.gitignore`), committed and pushed by
+MOLONARI's own `@cgs` (the read-only atCGS at `.atcgs`, 9 GLYPH keys, register
+`MOLONARI-20261105131200/.cgitsync/.memory/.register`). The register is on
+`flipoyo/.memory`, branch `MOLONARI_CGS-MOLO` (`0b27808`). The other five
+MOLONARI repositories were not touched.
+
+What the run changed in the plan:
+
+- **Order.** The ticket had the bootstrap go through `@cgs` from the cgs
+  workspace. A session there holds the 10 cgs keys only. The install is a plain
+  `pixi run cgitsync bootstrap examples/molonari.cgs MOLONARI`; the grants
+  (`admit`) and the deploy keys (`deploy-keys --repo`) come after, from the
+  MOLONARI tree. `.memory` needed its branch: answer `y` to the install's offer.
+- **Keys.** 6 new keys (GLYPH 16 / 17); the gate repositories (atCGS,
+  `.omniscience`, `.memory`) reuse the 3 keys already installed, granted in
+  MOLONARI's register from `molo-gate.json` (public data). A session reaches
+  only repositories it holds a key for, read-only mounts included.
+- **Spec fix.** `examples/molonari.cgs` declared an `environment`: the install
+  rebuilt MOLONARI1D's `pixi.lock`. Removed, and a test keeps it out.
+- **`.gitignore`.** cgitsync wrote `.atcgs`, `.omniscience` and `MOLONARI.lgr`
+  into MOLONARI1D's `.gitignore` itself: no manual step.
+
+Follow-ups, not done:
+
+1. **A plain atCGS clone cannot `pixi install`/`pixi run`** (the `dogfood`
+   environment's editable `./ComplexGitSync` is re-solved and missing). It
+   needs `PIXI_FROZEN=true` or `--frozen`. Breaks the Refusals line "no
+   editable path in the default environment".
+2. **Stray branch** `ComplexGitSync_MOLONARI_CGS-MOLO` on `flipoyo/.memory`
+   (`ee601f2`, an empty copy of `main`). The install's `memory branch` offer
+   named it; `checkout` then used `MOLONARI_CGS-MOLO`. Delete it when sure.
+3. **Closing (D2):** merge `.omniscience` `CGS-MOLO` into `main` and mount
+   `main` in `molonari.cgs`, once the development is validated; then stamp and
+   archive this ticket and update `github-deploy-keys.md`.
+4. **Next admission** of a user: `OPX publish` in the cgs workspace, then
+   `OPX admit` in MOLONARI; revocation: `OPX revoke UID` in the cgs workspace,
+   `publish`, and the next `login` in MOLONARI copies it.
+5. B7 (GLYPH 16 / 17) and B8 (one-line commit messages) stand.

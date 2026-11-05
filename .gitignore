@@ -18,3 +18,5 @@ ComplexGraphSync.lgr
 .agent/.local/.localSpec
 cgs.lgr
 req.json
+molo.json
+molo-gate.json
