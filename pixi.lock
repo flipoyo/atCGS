@@ -205,7 +205,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026e-h5d301ff_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/zstd-1.5.7-hb78ec9c_7.conda
       - pypi: https://files.pythonhosted.org/packages/c7/18/c86eb8e0202e32dd3df50d43d7ff9854f8e0603945ff398974c1d91ac1ef/tomli_w-1.2.0-py3-none-any.whl
-      - pypi: ../../.cgs/ComplexGitSync-20261103193353
+      - pypi: ./ComplexGitSync
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/bzip2-1.0.8-h4e30115_10.conda
@@ -247,7 +247,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/typing_extensions-4.16.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/tzdata-2026e-h5d301ff_0.conda
       - pypi: https://files.pythonhosted.org/packages/c7/18/c86eb8e0202e32dd3df50d43d7ff9854f8e0603945ff398974c1d91ac1ef/tomli_w-1.2.0-py3-none-any.whl
-      - pypi: ../../.cgs/ComplexGitSync-20261103193353
+      - pypi: ./ComplexGitSync
       win-64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/bzip2-1.0.8-h0ad9c76_10.conda
@@ -285,7 +285,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/win-64/vc14_runtime-14.51.36247-habf1de7_42.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/vcomp14-14.51.36247-habf1de7_42.conda
       - pypi: https://files.pythonhosted.org/packages/c7/18/c86eb8e0202e32dd3df50d43d7ff9854f8e0603945ff398974c1d91ac1ef/tomli_w-1.2.0-py3-none-any.whl
-      - pypi: ../../.cgs/ComplexGitSync-20261103193353
+      - pypi: ./ComplexGitSync
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
   build_number: 20
@@ -421,17 +421,17 @@ packages:
   - pkg:pypi/colorama?source=hash-mapping
   size: 27011
   timestamp: 1733218222191
-- pypi: ../../.cgs/ComplexGitSync-20261103193353
+- pypi: git+https://github.com/flipoyo/ComplexGitSync.git?rev=f56d8148cb4d484a228a9d8550c4e84fccdb9f19#f56d8148cb4d484a228a9d8550c4e84fccdb9f19
   name: complexgitsync
   version: 8.7.1
-  sha256: 2d88fac0ffc1da05271621169b9380c608a9abff2eda0bf445a56825952e016c
   requires_dist:
   - tomli-w>=1.0,<2
   - pyyaml>=6,<7 ; extra == 'yaml'
   requires_python: '>=3.11'
-- pypi: git+https://github.com/flipoyo/ComplexGitSync.git?rev=f56d8148cb4d484a228a9d8550c4e84fccdb9f19#f56d8148cb4d484a228a9d8550c4e84fccdb9f19
+- pypi: ./ComplexGitSync
   name: complexgitsync
-  version: 8.7.1
+  version: 8.8.0
+  sha256: 564aeb946dc23d198425217070e2d7b46ff25fe25eecc7a30a2c498fcede349a
   requires_dist:
   - tomli-w>=1.0,<2
   - pyyaml>=6,<7 ; extra == 'yaml'

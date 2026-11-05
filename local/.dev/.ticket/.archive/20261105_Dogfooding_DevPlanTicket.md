@@ -184,6 +184,30 @@ then `… push`. The push succeeds with GLYPH keys only, and the same push with
   working today), or change LinkAtCGS §7 so the dash names the level and not a
   branch. The level trees keep the underscore until then.
 
+## Closing — 2026-11-05
+
+- **S4 finished.** A bare `@cgs <LAYER> login TWIN bootstrap` runs the command
+  `LevelCommand.of(TWIN, LAYER)` names (`bootstrap <twin>-opx.cgs` ...): one rule
+  for the level file's name.
+- **ComplexGitSync mounted at OPX and DEV**, at `./ComplexGitSync` on `CGS-ALPHA`:
+  it is the dogfood environment's editable path. USR does not mount it;
+  `.cgitsync` is still never a mount. The 1.0.1-alpha ban predated S1.
+  `test_layers` and ALPHA.md follow.
+- **S2 done by the owner.** OPX pinned in `spec/contracts.toml`
+  (uid `35c65c66…d104`), enrolled in `.cgitsync/.memory/.register`; one request
+  for the 10 repos of `cgs-opx.cgs`, each `OPX`, admitted; 10 deploy keys
+  installed from `pixi run deploy-keys`.
+- **Keys proven:** `@cgs OPX login ComplexGraphSync fetch` fetched 10/10 with
+  the session's agent and wrapper only (`agent_keys = 10`, `cgitsync = 0`).
+- **The OPX tree moved to its level branch.** `cgs-opx.cgs` names branch `opx`
+  (D2), which existed nowhere, so every repo sat on its fallback and the commit
+  preflight refused. `@cgs OPX login ComplexGraphSync checkout opx` created it:
+  atCGS on `opx`, ComplexGitSync on `cgs_opx` (behind_gate), the private repos
+  on `cgs_opx`, `.memory` on `ComplexGitSync_cgs_opx`. `CGS-ALPHA` receives
+  this work by a merge from `opx`.
+- **Goal 1:** this closing is committed and pushed with
+  `pixi run -e dogfood '@cgs' OPX login ComplexGraphSync commit|push --all`.
+
 ## 4. Refusals
 
 - No `~/.ssh` key or config in a dogfooded git operation (B5): if it works only

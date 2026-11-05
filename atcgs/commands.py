@@ -16,7 +16,7 @@ import tomllib
 from pathlib import Path
 from typing import Callable, Mapping
 
-from ComplexGitSync.orchestre.op_levels import LEVELS
+from ComplexGitSync.orchestre.op_levels import LEVELS, LevelCommand
 
 from atcgs import PRIVATE, REGISTER_ENV, ROOT, Authorization, Request, Unauthorized
 from atcgs.glyph import SshKey, reseal
@@ -174,6 +174,12 @@ def login(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = Non
             "repos": [{"repo": r, "fingerprint": g.fingerprint} for r, g in sorted(session.grants.items())],
             "agent_keys": len(session.loaded()),
         }
+        if op == ("bootstrap",):
+            # A bare bootstrap is the level's own command: one rule for the file name (op_levels).
+            named = LevelCommand.of(twin, layer)
+            if named is None:
+                raise ValueError(f"{layer} has no bootstrap command")
+            op = tuple(named.split()[1:])
         if op:
             cgitsync = shutil.which("cgitsync")
             if cgitsync is None:

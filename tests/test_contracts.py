@@ -1,3 +1,4 @@
+import re
 import sys
 import unittest
 from pathlib import Path
@@ -7,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from contract_check import FIXTURES, inspect  # noqa: E402
 
 SPEC = Path(__file__).resolve().parents[1] / "spec/contracts.toml"
+PINNED = re.search(r"^opx_pub = \"[^\"]*\"$", SPEC.read_text(encoding="utf-8"), re.M).group(0)
 
 
 def refused(test: unittest.TestCase, old: str, new: str) -> None:
@@ -50,10 +52,10 @@ class TestContracts(unittest.TestCase):
         refused(self, "memory_kib = 262144", "memory_kib = 1024")
         refused(self, 'uid = "sha256(IDPUB)"', 'uid = "sha256(NAME)"')
         refused(self, 'DEV = "1000"', 'DEV = "1111"')
-        refused(self, 'opx_pub = ""', 'opx_pub = "c2hvcnQ="')
+        refused(self, PINNED, 'opx_pub = "c2hvcnQ="')
 
     def test_a_pinned_opx_key_is_accepted(self):
-        text = SPEC.read_text(encoding="utf-8").replace('opx_pub = ""', f'opx_pub = "{"A" * 43}="')
+        text = SPEC.read_text(encoding="utf-8").replace(PINNED, f'opx_pub = "{"A" * 43}="')
         with TemporaryDirectory() as d:
             f = Path(d) / "contracts.toml"
             f.write_text(text, encoding="utf-8")

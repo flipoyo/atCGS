@@ -13,3 +13,8 @@ __pycache__/
 .omniscience
 ComplexGitSync
 ComplexGraphSync.lgr
+.agent/.local/.claude
+.agent/.local/.dev
+.agent/.local/.localSpec
+cgs.lgr
+req.json

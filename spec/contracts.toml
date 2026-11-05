@@ -72,7 +72,7 @@ key = "HKDF-SHA256(IDSEED, info = atCGS/glyph/v1)"
 published = false  # a GLYPH is never published, even sealed
 [identity]  # login, password -> Ed25519; only the public key is registered (README § 3.2)
 # OPX's IDPUB, base64: the root of trust. Empty until the owner runs `@cgs OPX init`.
-opx_pub = ""
+opx_pub = "qL1FhYN4yQrRd6/cOa92zPG6rsu2t8JXirlntzsYDMo="
 kdf = "Argon2id"
 kdf_salt = "atCGS/id/v1/<profile>/<login>"
 kdf_cost = { memory_kib = 262144, iterations = 3, lanes = 1 }

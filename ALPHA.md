@@ -101,6 +101,8 @@ pixi run cgitsync bootstrap examples/cgs-dev.cgs cgs
 
 The Operating Space reads `.omniscience` and `.cgitsync`. `.cgitsync` is not a
 mount: it is cgitsync's own directory, which no tree mounts ComplexGitSync into.
+OPX and DEV mount ComplexGitSync at `./ComplexGitSync` instead, on `CGS-ALPHA`:
+it is the editable checkout of the `dogfood` environment. USR does not mount it.
 `.omniscience` holds the ledger at the tree's root, the way the gate holds the
 register in a GX4G Operating Space. The mount points are separate Git
 repositories, listed in `.gitignore` with `.cgitsync/`.

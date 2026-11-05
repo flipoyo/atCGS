@@ -55,14 +55,23 @@ class LayerTreeTests(unittest.TestCase):
                 self.assertEqual(root["repository"], "github:flipoyo/atCGS")
                 self.assertEqual(root["nested_config"], "disabled")
 
-    def test_no_tree_mounts_complexgitsync(self):
+    def test_complexgitsync_is_the_dogfood_checkout_at_opx_and_dev_only(self):
         # .cgitsync is cgitsync's own directory, never a mount point of the tree.
+        # OPX and DEV mount ./ComplexGitSync, the editable path of the dogfood environment.
         for layer in LAYERS:
             mounts = by_path(load(layer)[1])
             with self.subTest(layer=layer):
                 self.assertNotIn(".cgitsync", mounts)
                 self.assertNotIn(".computo", mounts)
-                self.assertFalse(any(r["repository"] == "github:flipoyo/ComplexGitSync" for r in mounts.values()))
+                at = [p for p, r in mounts.items() if r["repository"] == "github:flipoyo/ComplexGitSync"]
+                if layer == "usr":
+                    self.assertEqual(at, [])
+                    continue
+                self.assertEqual(at, ["ComplexGitSync"])
+                self.assertEqual(mounts["ComplexGitSync"]["fallback_branch"], "CGS-ALPHA")
+        with (ROOT / "pixi.toml").open("rb") as handle:
+            dogfood = tomllib.load(handle)["feature"]["dogfood"]["pypi-dependencies"]["complexgitsync"]
+        self.assertEqual(dogfood["path"], "./ComplexGitSync")
 
     def test_omniscience_is_the_ledger_written_at_opx_only(self):
         ledger = dict(by_path(load("opx")[1])[".omniscience"])
