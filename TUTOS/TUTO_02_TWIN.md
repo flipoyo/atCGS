@@ -7,7 +7,9 @@ the real ones, shortened.
 and your rights on it written in its register. "Emulate" means exactly this: the twin is
 rebuilt from its description and its memory, on any machine, identical every time.
 
-**Who acts:** OPX installs the twin and admits users. A user only needs TUTO 01 first.
+**Who acts:** OPX installs its own copy of the twin and admits users (steps 2 to 6). A
+user, after TUTO 01, installs **their own copy** on their machine, without any key
+(step 7) and then checks their access (step 8).
 
 ## 1. Choose the twin
 
@@ -112,7 +114,32 @@ Keep the user's lines (title `atCGS DEV e9b6c66e4af7`, `atCGS USR e9b6c66e4af7`)
 them, run them. A USR key is installed **read-only** (`read_only=true`): GitHub itself
 refuses a push with it.
 
-## 7. You: check your access
+## 7. You: install your own copy of the twin, with no key
+
+A twin is installed per machine: OPX's copy is not yours. `bootstrap` clones every
+repository over ssh (`git@github.com:`), and you have no GitHub key. The repositories are
+readable by anyone, so for this one command ask git to read them over https instead.
+It changes nothing on disk: the clones keep their ssh address, which your granted keys
+will use from now on.
+
+```bash
+cd ~/atCGS
+GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.https://github.com/.insteadOf \
+GIT_CONFIG_VALUE_0=git@github.com: \
+  pixi run cgitsync bootstrap examples/molo_hrdw.cgs MOLO-HRDW
+```
+
+```text
+READY ready=true complete=true gittree_created=true gittree_active=true root=/home/you/.cgs/MOLO-HRDW-20261106102658
+```
+
+- If it offers to create the memory branch (`Run it now? (y/N)`), answer **`n`**: that
+  is OPX's job (step 2) and your key could not push it anyway.
+- Then open the gate: `cd ~/.cgs/MOLO-HRDW-<timestamp>/.atcgs && pixi install`.
+- Install a twin of the other files of `examples/` the same way (`molo_twx.cgs`, …), as
+  far as OPX admitted you on it.
+
+## 8. You: check your access
 
 Now the user, with **their** login and password:
 
@@ -145,5 +172,6 @@ your first change.
 | `enrolling a new identity is done in the master register` at `admit` | the twin has not seen the published identity yet | `… OPX login <TWIN> pull`, then `admit` again |
 | `this UID holds no DEV grant` | not admitted on this twin (rights are per twin) | ask OPX to `admit` you here |
 | `no key is granted for this repository in this session` | a repository of the twin is missing from your request | `request` it, OPX `admit`s and installs the key |
-| `Permission denied (publickey)` | the deploy key is not on GitHub yet | step 6 |
+| `Permission denied (publickey)` at `bootstrap` | git used ssh and you have no key | step 7: the https rewrite, then keep your keys for `login` |
+| `Permission denied (publickey)` at `login` | the deploy key is not on GitHub yet | step 6 |
 | `branch misalignment … .memory` | the memory is still on `main` | `… OPX login <TWIN> checkout CGS-MOLO` |

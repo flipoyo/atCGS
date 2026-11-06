@@ -84,8 +84,9 @@ You need [Pixi](https://pixi.sh). Everything is `pixi run cgs …`, from a twin'
 folder.
 
 ```bash
-# inside an installed twin (TUTO 02 shows how to install one)
-cd ~/.cgs/MOLO-HRDW-<timestamp>/.atcgs
+# from nothing: no account, no key (TUTO 01 step 0)
+git clone --branch CGS-ALPHA https://github.com/flipoyo/atCGS.git ~/atCGS
+cd ~/atCGS
 pixi install
 pixi run cgs --help
 pixi run cgs DEV login MOLO-HRDW status     # asks your login and password
@@ -93,7 +94,7 @@ pixi run cgs DEV login MOLO-HRDW status     # asks your login and password
 
 The three tutorials take you from nothing to your first push on a MOLONARI twin:
 
-1. **[Register](TUTOS/TUTO_01_REGISTER.md)**: become a user atCGS knows.
+1. **[Register](TUTOS/TUTO_01_REGISTER.md)**: from nothing (no profile, no key), become a user atCGS knows.
 2. **[Emulate a twin](TUTOS/TUTO_02_TWIN.md)**: install MOLO-HRDW and MOLO-TWX, open their gates, get admitted.
 3. **[Work through subtwins](TUTOS/TUTO_03_SUBTWINS.md)**: change MOLO-HRDW as a DEV, and see it in MOLO-TWX.
 

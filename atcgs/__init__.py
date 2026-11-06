@@ -205,6 +205,9 @@ class OpFrontier:
         if args[0] == "login" and layer in LOGIN_OPS and len(args) >= 3:
             raise ValueError(f"{layer} may not run {args[2]!r} through login; {layer} runs: "
                              f"{', '.join(sorted(LOGIN_OPS[layer]))}")
+        if args[0] == "request":
+            raise ValueError(f"{layer} request needs OUT then at least one REPOSITORY ROLE pair: "
+                             f"{layer} request OUT github:owner/repo DEV [REPO ROLE ...]")
         raise ValueError(f"unsupported @cgs {layer} argument: {args[0]!r}")
 
 

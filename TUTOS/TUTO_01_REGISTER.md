@@ -3,6 +3,11 @@
 **Run on 2026-11-05** (atCGS 1.9.0-alpha), with a test DEV on MOLONARI's hardware twin.
 The outputs are the real ones, shortened.
 
+**Starting point.** Written for a new member of the MOLONARI team: you have no profile and
+no key yet. The only things that exist are the **owner** and **OPX**, one operator, already
+enrolled in atCGS's master register. Nobody else is known. Every repository is readable by
+anyone over https, so you need no key to start: you create them here.
+
 **What you get at the end:** an identity atCGS knows, and your ssh keys for the
 repositories you asked for, sealed in your GLYPH. You do not yet have any right on a
 twin: that is TUTO 02, where the operator admits you on a twin.
@@ -27,6 +32,23 @@ sequenceDiagram
 Your login and password never leave your machine. From them atCGS computes a key pair;
 only the public half, and a hash of it (your **UID**), are ever written anywhere.
 
+## Step 0 — You: start from nothing
+
+You need two tools, no account and no ssh key.
+
+1. [Pixi](https://pixi.sh) (it brings Python and everything else) and `git`.
+2. atCGS itself, over https. This is only a read-only copy of the program:
+
+```bash
+git clone --branch CGS-ALPHA https://github.com/flipoyo/atCGS.git ~/atCGS
+cd ~/atCGS
+pixi install
+pixi run cgs --help        # prints the usage: you are ready
+```
+
+You do **not** need a MOLONARI twin installed yet (that is TUTO 02, and it needs the
+rights you are about to ask for). Run every `pixi run cgs …` of this tutorial from `~/atCGS`.
+
 ## Step 1 — You: choose your login and password
 
 Pick them once and keep them. **Nothing stores them and nobody can recover them**: the
@@ -35,11 +57,12 @@ Use a long passphrase.
 
 ## Step 2 — You: ask for your keys
 
-From any atCGS (for MOLONARI, the gate `.atcgs` of an installed twin), name each
-repository you need and the profile you ask for on it:
+From your `~/atCGS`, name each repository you need and the profile you ask for on it.
+`request` needs the file to write, then **pairs** `REPOSITORY PROFILE`; the file alone
+is refused:
 
 ```bash
-cd ~/.cgs/MOLO-HRDW-<timestamp>/.atcgs
+cd ~/atCGS
 pixi run cgs DEV request ~/dev-hrdw.json \
   github:flipoyo/MOLONARI-hardware DEV \
   github:flipoyo/.memory DEV \
@@ -105,13 +128,14 @@ time someone logs in or is admitted there.
 
 ## Done
 
-You are a user atCGS knows. Next: [TUTO 02](TUTO_02_TWIN.md), where a twin is installed
-and OPX gives you your rights on it.
+You are a user atCGS knows. Next: [TUTO 02](TUTO_02_TWIN.md), where OPX gives you your
+rights on a twin and you install your own copy of it, still without any key of your own.
 
 ## If something goes wrong
 
 | You see | Why | Do |
 |---|---|---|
+| `unsupported @cgs DEV argument: 'request'` | `request` got no `REPOSITORY PROFILE` pair | `request OUT REPO ROLE [REPO ROLE …]`, as in step 2 |
 | `the two passwords differ` | a typo in the confirmation | run `request` again |
 | `"enrolled": false, "reason": "already known"` | this identity was enrolled before | nothing: go to publish |
 | `enrolling … is done in the master register` | `enrol` was run from a twin's gate | run it in the operator's workspace |
