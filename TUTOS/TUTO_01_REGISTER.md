@@ -51,9 +51,35 @@ rights you are about to ask for). Run every `pixi run cgs …` of this tutorial 
 
 ## Step 1 — You: choose your login and password
 
-Pick them once and keep them. **Nothing stores them and nobody can recover them**: the
-same pair always gives the same identity, a different pair gives a different person.
-Use a long passphrase.
+Nothing is typed here: you decide two things now, and write them down in your password
+manager before step 2. atCGS has no account, no server and no "forgot password": your
+identity **is** the pair, and the same pair always gives the same identity.
+
+**Login**: any non-empty text, e.g. `ada.lovelace` or `ada@molonari`.
+- It is not secret (it is only mixed into the key as a salt), and it is not checked
+  against anything: no e-mail, no GitHub name.
+- Pick one that is yours alone and that you will recognise: OPX will see your UID, not your
+  login.
+- Case and spaces count: `Ada` and `ada` are two people, and so is `ada ` with a trailing space.
+
+**Password**: a long passphrase, at least four unrelated words or about 20 characters.
+- It is the secret. Anyone who has your login and password has your identity and all
+  your keys; atCGS cannot revoke a password, only a UID (OPX `revoke`).
+- It is not stored, anywhere, and nobody can recover it. If you lose it, you start over
+  with a new pair (a new UID, new request, new grants).
+- Reuse none of your other passwords.
+
+**What to expect when you type them** (step 2):
+- Nothing is shown while you type, neither the login nor the password. The request asks
+  for the password **twice**: that is your only protection against a typo.
+- Commands later (`login`, step 7 of TUTO 02) ask them once, with no confirmation. A typo
+  there is not an error: it is another identity, and you see `this UID holds no grant`.
+  Retype slowly.
+- Each time takes under a second and 256 MiB of memory: that cost is the protection.
+  On a very small machine it can fail with a memory error.
+
+**Check it later**: step 2 prints your `uid`. Note it. From then on, if a command shows
+another `uid`, you mistyped the login or the password.
 
 ## Step 2 — You: ask for your keys
 

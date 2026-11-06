@@ -65,10 +65,15 @@ in; you never choose it.
 
 | Profile | Code | In a MOLONARI twin, it can | It cannot |
 |---|---|---|---|
-| **OPX** (operator) | `0000` | everything: install twins, admit users, publish identities, promote branches | — |
+| **OPX** (operator) | `0000` | run the twin: install, commit, push, tag, release, promote branches | admit, revoke, enrol or publish anyone (atCGS OPX only, below) |
 | **DEV** (developer) | `1000` | fetch, pull, commit, push, branch, merge on the repositories it is granted | write to the gate or the published identities; admit anyone |
 | **USR** (user) | `1100` | fetch, pull, status | write anything |
 | **PUB** (public) | `1111` | read what is public | log in |
+
+**One atCGS OPX, many project OPX.** atCGS has exactly one OPX: the key pinned in
+`spec/contracts.toml`, held by the owner. Only that key enrols identities, publishes them,
+and admits or revokes anyone in any twin. Being OPX *of a project* is a grant like DEV or
+USR: it lets you run that twin, not admit people. See [TUTO 04](TUTOS/TUTO_04_PROJECT_ENROL.md).
 
 **Identity is global, rights are local.** You register once with atCGS: every twin then
 knows who you are. But you have no right on a twin until the operator grants it *in that
@@ -97,6 +102,7 @@ The three tutorials take you from nothing to your first push on a MOLONARI twin:
 1. **[Register](TUTOS/TUTO_01_REGISTER.md)**: from nothing (no profile, no key), become a user atCGS knows.
 2. **[Emulate a twin](TUTOS/TUTO_02_TWIN.md)**: install MOLO-HRDW and MOLO-TWX, open their gates, get admitted.
 3. **[Work through subtwins](TUTOS/TUTO_03_SUBTWINS.md)**: change MOLO-HRDW as a DEV, and see it in MOLO-TWX.
+4. **[Enrol a team in a project](TUTOS/TUTO_04_PROJECT_ENROL.md)**: a MOLONARI OPX, a DEV and a USR, admitted by atCGS OPX.
 
 ## 5. For operators and developers
 
