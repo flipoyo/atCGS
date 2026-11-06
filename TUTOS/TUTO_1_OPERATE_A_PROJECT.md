@@ -61,11 +61,24 @@ operator, allow this OPX command on this machine". It is not a password.
    This workspace now holds the **master register**: the only place where people are enrolled.
 4. Ask for your own keys on the workspace's repositories, admit yourself, install the keys:
    ```bash
-   pixi run cgs OPX request ~/opx-cgs.json github:flipoyo/atCGS OPX github:flipoyo/omniscience OPX …
+   pixi run cgs OPX request ~/opx-cgs.json \
+     github:flipoyo/atCGS OPX          github:flipoyo/ComplexGitSync OPX \
+     github:flipoyo/omniscience OPX    github:flipoyo/.memory OPX \
+     github:flipoyo/.ticketing OPX     github:flipoyo/DevSpec OPX \
+     github:flipoyo/DocSpec OPX        github:flipoyo/.dev OPX \
+     github:flipoyo/.localSpec OPX     github:flipoyo/.claude OPX
    ATCGS_AUTHORIZE=OPX pixi run cgs OPX admit ~/opx-cgs.json
    pixi run deploy-keys          # prints gh commands: read them, run them
    pixi run cgs OPX login ComplexGraphSync fetch
    ```
+
+These ten are the repositories of `examples/cgs-opx.cgs`, the tree you installed in step 1: list
+them with `grep -o 'repository = "[^"]*"' examples/cgs-opx.cgs`, and give each the role `OPX`.
+To see what your register already holds, from the workspace:
+
+```bash
+python3 -c "import json;[print(e['body']['repo'], e['body']['role']) for e in map(json.loads, open('.cgitsync/.memory/.register/access.jsonl')) if e['op']=='grant']"
+```
 
 From now on, "your workspace" means `~/.cgs/cgs-<timestamp>`.
 
