@@ -3,6 +3,9 @@
 Source: IdentityJournals (archived 2026-11-03), M7 and its open points.
 
 To do:
+- 2026-11-06: the install side of M7 is done for onboarding: `OPX onboard` installs the deploy keys with `gh`
+  (idempotent, after the plan and one `y`; archived OwnerOnboarding). Not done: removal on `OPX revoke`
+  (the planned `offboard`), and installing from `OPX admit` alone.
 - M7: on `OPX admit` and `OPX revoke`, install or remove the grant's ssh public
   key as a GitHub deploy key (`gh api repos/{owner}/{repo}/keys`): write for
   DEV, read-only for USR. `scripts/local_remote.py` is the local model of it.

@@ -363,7 +363,7 @@ registers. Proposed as a follow-up once S1–S6 are proven.
 
 ## Closing — 2026-11-06
 
-Done in 1.9.1-alpha (not yet run on the real repositories):
+Done in 1.10.0-alpha (not yet run on the real repositories):
 
 - **S0.** `atcgs/registration.py`: format `atcgs-registration/1`, the role template, `intake`;
   `request --register` in `commands.py`; `examples/registration.toml`; a test checks that the
@@ -378,4 +378,4 @@ Done in 1.9.1-alpha (not yet run on the real repositories):
   project's `.memory` only (the one repository the run commits); the register commit is a plain
   git commit on the memory branch, without the cgitsync memory fold; `--plan` needs
   `ATCGS_AUTHORIZE=OPX` like every OPX verb.
-- **Next:** run it for real with one newcomer, then archive.
+- **Archived 2026-11-06** at the Owner's request, before a first real run: run it with one newcomer on MOLO-HRDW and report what breaks.
