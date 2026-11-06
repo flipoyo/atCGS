@@ -447,6 +447,30 @@ def publish(authorization: Authorization, env: Mapping[str, str] | None = None,
     return {"published": True, "branch": PUBLISH_BRANCH, "lines": len(entries), "head": head}
 
 
+def user_credential(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = None) -> dict[str, object]:
+    """`user-credential [--json] [--probe] [--tree PATH]...`: what atCGS knows of this login, read only."""
+    from atcgs import credential
+
+    flags, extra, rest = set(), [], list(args)
+    while rest:
+        word = rest.pop(0)
+        if word in ("--json", "--probe"):
+            flags.add(word)
+        elif word == "--tree" and rest:
+            extra.append(Path(rest.pop(0)).expanduser())
+        else:
+            raise ValueError("user-credential [--json] [--probe] [--tree PATH]...")
+    me = ask_identity(layer)
+    path = glyph_path(me.uid, env)
+    trees = [(p.name, p) for p in extra] if extra else credential.discover()
+    report = credential.collect(me, path.read_bytes() if path.exists() else None, trees, opx_pub(env),
+                                credential.probe_github if "--probe" in flags else None)
+    report["glyph"]["path"] = str(path)  # type: ignore[index]
+    if "--json" in flags:
+        return {**report, "__exit__": 0 if report["ok"] else 1}
+    return {"__text__": credential.render(report), "__exit__": 0 if report["ok"] else 1}
+
+
 REGISTRATION_ENV = "ATCGS_REGISTRATION"  # the Owner's folder of received registration files
 INTAKE_ENV = "ATCGS_INTAKE"  # where `OPX intake` writes the day's list
 
@@ -471,6 +495,8 @@ def dispatch(req: Request, authorization: Authorization) -> dict[str, object]:
         return revoke(authorization, args)
     if verb == "publish":
         return publish(authorization)
+    if verb == "user-credential":
+        return user_credential(req.layer, args)
     if verb == "intake":
         from atcgs import registration
         return registration.intake(_folder(REGISTRATION_ENV, "registration", args[:1]), _folder(INTAKE_ENV, "intake"),

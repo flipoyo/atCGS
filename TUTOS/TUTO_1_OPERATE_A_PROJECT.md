@@ -1,6 +1,6 @@
 # TUTO 1 — Operate a new project: who does what
 
-**atCGS 1.10.0-alpha, 2026-11-06.** The running example is the MOLONARI hardware twin,
+**atCGS 1.11.0-alpha, 2026-11-06.** The running example is the MOLONARI hardware twin,
 `MOLO-HRDW`. Parts A and B were run on 2026-11-05. `request --register`, `OPX intake` and
 `OPX onboard` (Part C) are covered by tests with local repositories and a fake `gh`; they
 have **not** been run yet on the real repositories with real newcomers. Where a step is
@@ -76,22 +76,46 @@ These ten are the repositories of `examples/cgs-opx.cgs`, the tree you installed
 them with `grep -o 'repository = "[^"]*"' examples/cgs-opx.cgs`, and give each the role `OPX`.
 
 **Before creating a new user, verify your credentials.** Your rights are written in several
-registers: the master register of the workspace, and one per project tree. Your private keys are
-in your GLYPH, `~/.cgs/.glyph/<uid>.glyph`. A login works only where a grant **and** its key in the
-GLYPH meet. Until `pixi run cgs OPX user-credential` exists (ticket UserCredential), check by hand,
-from any directory:
+registers (the master register of the workspace, and one per project tree) and your private keys
+are in your GLYPH, `~/.cgs/.glyph/<uid>.glyph`. A login works only where a grant **and** its key in
+the GLYPH meet. One command, from any directory, shows all of it:
 
 ```bash
-ls ~/.cgs/.glyph/                                    # your GLYPH: one file per identity on this machine
-for r in ~/.cgs/*/.cgitsync/.memory/.register/access.jsonl; do
-  echo "== ${r%/.cgitsync/*}"
-  python3 -c "import json,sys;[print(' ', e['uid'][:12], e['body']['repo'], e['body'].get('role','revoked')) for e in map(json.loads, open(sys.argv[1]))]" "$r"
-done
+pixi run cgs OPX user-credential
 ```
 
-Each block is one register: the workspace (`cgs-<timestamp>`) and each installed project. The
-first column is the uid: yours is the start of the `uid` that `OPX init` printed. No GLYPH file
-means no login will work on this machine, whatever the registers say.
+It asks your login and password once, writes nothing, and prints:
+
+```text
+uid      35c65c66…d104   (atCGS OPX: the pinned key)
+glyph    10 key(s), 4310 of 8159 bytes used
+
+register                  identity    grants  published
+master cgs-20261105…      enrolled    10      -
+MOLO-HRDW                 enrolled    4       listed
+
+repository                          role  fingerprint             granted in / verdict
+flipoyo/atcgs                       OPX   SHA256:HqwTmd…          master, MOLO-HRDW  ok
+flipoyo/molonari-hardware           OPX   SHA256:Y31s0f…         MOLO-HRDW  ok
+```
+
+One row per repository and role, with a verdict:
+
+| Verdict | Means | Do |
+|---|---|---|
+| `ok` | granted, and its key is in your GLYPH | nothing |
+| `no key` | granted, but the key is not in your GLYPH (or there is no GLYPH: `glyph MISSING`) | no login can work for it. Recover the GLYPH, or `request` new keys, `admit` them and install the deploy keys again (C5) |
+| `not admitted` | the key is in your GLYPH, granted nowhere (an orphan, it takes room for nothing) | `admit` it, or ignore it |
+| `revoked` | the identity was revoked | ask the Owner |
+| `refused by GitHub` | with `--probe`: the deploy key is not (or no longer) on GitHub | install it (C5) |
+
+Options: `--probe` tries each key on GitHub (one `git ls-remote` per key, through the session, never
+`~/.ssh`); `--json` prints the same as data; `--tree PATH` reads only that tree. The exit status is
+0 when every grant is `ok`, 1 otherwise. Any user runs it with their own level
+(`DEV user-credential`); the word only labels the prompts.
+
+**`OPX onboard` runs this check on you first** and stops if the GLYPH is missing or a grant of the
+memory or omniscience repositories has no key. Run it yourself before you start.
 
 From now on, "your workspace" means `~/.cgs/cgs-<timestamp>`.
 
@@ -324,6 +348,8 @@ fetched=4 skipped=0
 - The word after `cgs` now matters: it is the level you work at, and you must hold it.
 - `agent_keys: 4` means your four keys and only them. Your `~/.ssh` is never used.
 
+After your first `login`, `pixi run cgs <ROLE> user-credential` shows what the project knows of you.
+
 *Untested: no USR has logged in on a real project yet.*
 
 ## Part E — Work
@@ -381,6 +407,7 @@ Then delete their deploy keys on GitHub (`gh api repos/flipoyo/<repo>/keys`, the
 | `enrolling a new identity is done in the master register` at `admit` | Owner | the project has not read the new identity yet | `OPX login <PROJECT> pull`, then `admit` again |
 | `this UID holds no DEV grant` (or OPX, USR) | newcomer | wrong level, a login or password typo, or C5 not done before D | check the level, retype, ask the Owner for C5 |
 | `no key is granted for this repository in this session` | anyone | a repository of the project is missing from the request | `request` it; the Owner admits and installs it |
+| `no GLYPH for this login/password`, `the GLYPH holds no key` | anyone | the GLYPH is missing or lacks a key | `pixi run cgs <ROLE> user-credential` shows which; see its `no key` row |
 | `Permission denied (publickey)` at `login` | anyone | the deploy key is not on GitHub | C5: read the report, run `OPX onboard` again |
 | `DEV may not run 'tag' through login` | anyone | not allowed at your level | the table in Part E |
 | `branch misalignment … .memory` | Owner | the memory is still on `main` | `OPX login <PROJECT> checkout CGS-MOLO` |

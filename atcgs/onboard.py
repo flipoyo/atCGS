@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Iterator
 
-from atcgs import PRIVATE, Authorization, registration
+from atcgs import PRIVATE, Authorization, credential, registration
 from atcgs import commands as cmd
 from atcgs.identity import Identity, uid_of
 from atcgs.journal import ssh_public
@@ -371,6 +371,28 @@ def _finish(plan: Plan, failed: set[str], results: Results, examples: Path) -> d
     return {"applied": True, "failed": sorted(failed), "report": str(report), "steps": results}
 
 
+def check_owner(plan: Plan, opx: Identity) -> bytes:
+    """Before creating anyone, verify the Owner's own credentials on the trees this run uses.
+
+    The GLYPH must exist and, for the memory and omniscience of the master and of each project tree,
+    every grant must have its key in it. Returns the GLYPH bytes.
+    """
+    path = cmd.glyph_path(opx.uid)
+    if not path.exists():
+        raise AccessRefused(f"no GLYPH for this OPX login/password on this machine ({path}): "
+                            "run `pixi run cgs OPX user-credential`")
+    glyph = path.read_bytes()
+    with in_tree(None):
+        trees = [("master", cmd.project_root()), *plan.trees.items()]
+    report = credential.collect(opx, glyph, trees, cmd.opx_pub())
+    needed = [r for r in report["rows"] if r["granted_in"] and r["repo"].rsplit("/", 1)[-1] in (".memory", "omniscience")]  # type: ignore[attr-defined]
+    bad = [f"{r['repo']} {r['role']}: {r['verdict']}" for r in needed if r["verdict"] != "ok"]
+    if bad:
+        raise AccessRefused("your own credentials are not in order, nothing was done: " + "; ".join(bad)
+                            + " (run `pixi run cgs OPX user-credential`)")
+    return glyph
+
+
 def run(authorization: Authorization, list_path: Path, plan_only: bool = False,
         gh: GitHub | None = None) -> dict[str, object]:
     authorization.require("OPX")
@@ -385,12 +407,10 @@ def run(authorization: Authorization, list_path: Path, plan_only: bool = False,
         return plan.table()
     print(json.dumps(plan.table(), indent=2, ensure_ascii=False))
     opx = cmd._opx(cmd.register(), None)
+    glyph = check_owner(plan, opx)
     if confirm("Apply this plan? (y/N) ").strip().lower() not in ("y", "yes"):
         return {"applied": False, **plan.table()}
-    path = cmd.glyph_path(opx.uid)
-    if not path.exists():
-        raise AccessRefused("no GLYPH for this OPX login/password on this machine")
-    glyph, results, failed = path.read_bytes(), [], set()
+    results, failed = [], set()
     _master_phase(plan, authorization, opx, results)
     ready = [p for p in plan.projects()
              if _guarded(results, "-", p, "admit", lambda p=p: _admit_phase(plan, p, opx, glyph, results))]

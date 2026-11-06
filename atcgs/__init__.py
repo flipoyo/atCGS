@@ -23,7 +23,7 @@ from ComplexGitSync.orchestre.op_levels import LEVELS
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.10.0-alpha"
+__version__ = "1.11.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -75,7 +75,8 @@ CORE_OPERATIONS = frozenset(
     {"bootstrap", "initialise", "status", "view-tree", "env", "--version", "--help", "-h"}
 )
 CORE_RELEASE = frozenset({("release", "freeze"), ("release", "list"), ("release", "load")})
-IDENTITY_VERBS = frozenset({"init", "request", "enrol", "admit", "revoke", "login", "publish", "intake", "onboard"})
+ROLE_NAMES = ("OPX", "DEV", "USR")
+IDENTITY_VERBS = frozenset({"init", "request", "enrol", "admit", "revoke", "login", "publish", "intake", "onboard", "user-credential"})
 # The cgitsync commands `<LAYER> login TWIN <op ...>` may run, by level: the everyday
 # loop, so atCGS is developed through @cgs (Dogfooding). The keys a level gets decide
 # what the remote accepts; this list only keeps a level to the commands it needs.
@@ -113,6 +114,8 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
                                new ssh keys, sealed in your GLYPH; OUT is the request for OPX
   <layer> request --register PROJECT=ROLE [--register ...] [--name NAME] OUT.toml
                                the same for whole projects; OUT.toml is the registration file for the Owner
+  <layer> user-credential [--json] [--probe] [--tree PATH]
+                               your uid, your GLYPH, every register that knows you, a verdict per repository
   OPX intake [FOLDER]          build the day's list from the registration files (no password)
   OPX onboard LIST [--plan]    enrol, publish, admit, install deploy keys, push the registers: one run
   OPX enrol REQUEST            enrol the requester only (master register); no grant
@@ -225,6 +228,10 @@ def _identity_request(layer: str, args: Sequence[str]) -> bool:
         if rest and rest[0] in ("--register", "--name"):  # request --register P=R [--name N] OUT.toml
             return len(rest) >= 3 and "--register" in rest
         return len(rest) >= 3 and len(rest) % 2 == 1
+    if verb == "user-credential":
+        flags = [a for a in rest if a in ("--json", "--probe")]
+        return layer in ROLE_NAMES and len(flags) + 2 * rest.count("--tree") == len(rest) and \
+            all(rest[i + 1:i + 2] not in ([], ["--tree"]) for i, a in enumerate(rest) if a == "--tree")
     if verb == "intake":
         return layer == "OPX" and len(rest) <= 1
     if verb == "onboard":  # LIST [--plan]: exactly one path, at most one --plan
@@ -410,7 +417,13 @@ def main(request: Request) -> int:
     if request.args and request.args[0] in IDENTITY_VERBS:
         from atcgs.commands import dispatch  # the identity layer: REFERENCE.md § 6
 
-        return _emit(dispatch(request, authorization))
+        result = dispatch(request, authorization)
+        code = int(result.pop("__exit__", 0))  # type: ignore[arg-type]
+        if "__text__" in result:
+            print(result["__text__"])
+            return code
+        _emit(result)
+        return code
     if request.args and request.args[0] in MOUNT_POLICY:
         name = request.args[0]
         mount = table.resolve(name, request.layer, authorization)

@@ -64,6 +64,12 @@ class SshKey:
         return f"SshKey(repo={self.repo!r}, role={self.role!r})"
 
 
+def usage(keys: Sequence[SshKey]) -> tuple[int, int]:
+    """(bytes used, bytes available) of the plaintext for these keys: how full a GLYPH is."""
+    payload = json.dumps([{"repo": k.repo, "role": k.role, "private": k.private} for k in keys]).encode()
+    return _LENGTH.size + len(payload), PLAINTEXT
+
+
 def seal(identity: Identity, keys: Sequence[SshKey]) -> bytes:
     """Seal the ssh keys into a fresh GLYPH; a new nonce each time."""
     payload = json.dumps([{"repo": k.repo, "role": k.role, "private": k.private} for k in keys]).encode()
