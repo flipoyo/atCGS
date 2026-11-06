@@ -114,6 +114,7 @@ Run each command as `pixi run cgs <LAYER> ...`.
 | `<LAYER> request OUT REPO ROLE …` | Generates one ssh key per repo, seals them in the user's GLYPH, and writes `OUT` with the public keys and the proof. | any user |
 | `<LAYER> request --register P=R [--name N] OUT.toml` | The same for whole projects: the repositories come from the project's `.cgs` and the role template (atCGS and omniscience are USR). `OUT.toml` is the registration file for the Owner. | any user |
 | `<LAYER> user-credential [--json] [--probe] [--tree PATH]` | Reads your GLYPH (keys, fingerprints, room), every register under `~/.cgs` (or `--tree`) that knows your uid, and gives a verdict per (repository, role): `ok`, `no key`, `not admitted`, `revoked`, `refused by GitHub` (`--probe`). Read only. Exit 0 when every grant is `ok`. | any user |
+| `<LAYER> generate-glyph [--from PATH] [--tree PATH]... [--out FILE] [--plan]` | Gets a GLYPH back. `--from` takes a copy that opens with this login. Otherwise keeps the keys the GLYPH has that match a grant and makes new ones for the rest; the atCGS OPX then rekeys the registers (`Register.rekey`), installs the new deploy keys, pushes the registers and deletes the old deploy keys; anyone else gets a request file for `OPX admit`. A repository gone from GitHub gets no key and its grants are revoked. | any user |
 | `OPX intake [FOLDER]` | Verifies every registration file of `~/.cgs/registration/` (or `ATCGS_REGISTRATION`) and writes the day's list in `~/.cgs/intake/` (or `ATCGS_INTAKE`). No password. | OPX |
 | `OPX onboard LIST [--plan]` | For the confirmed persons of the list: enrol, publish, pull `.omniscience` in each project tree, admit, install the deploy keys with `gh`, commit and push the register alone. One password prompt. `--plan` writes nothing. | OPX, master register |
 | `OPX enrol OUT` | Enrols the user only, in the master register; grants nothing. | OPX, master register |
@@ -232,7 +233,7 @@ The 4-bit codes survive as the level codes of § 3.
 
 | Path | Contents |
 |---|---|
-| `atcgs/` | the package: `identity`, `journal`, `glyph`, `session`, `commands`, `registration`, `onboard`, `credential`; the `@cgs` entry point in `__init__` |
+| `atcgs/` | the package: `identity`, `journal`, `glyph`, `session`, `commands`, `registration`, `onboard`, `credential`, `glyphgen`; the `@cgs` entry point in `__init__` |
 | `spec/contracts.toml` | the BIOS, frontier, identity and GLYPH rows that `contract-inspect` checks |
 | `examples/cgs-{opx,dev,usr}.cgs` | the three level trees, named by level (§ 3) |
 | `examples/ComplexGraphSync.cgs` | the workspace tree this repository is developed in |

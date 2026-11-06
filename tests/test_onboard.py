@@ -41,27 +41,37 @@ repos = [
 ]
 """ % tuple(REPO.format(n) for n in NAMES.values())
 
-FAKE_GH = """#!/usr/bin/env python3
+FAKE_GH = r"""#!/usr/bin/env python3
 import os, pathlib, sys
 state, args = pathlib.Path(os.environ["FAKE_GH"]), sys.argv[1:]
 if args[:2] == ["auth", "status"]:
     sys.exit(0)
 if args[0] == "api":
-    path = args[1]
-    keys = state / (path.split("repos/")[1].split("/keys")[0].replace("/", "__") + ".keys")
+    path = next(a for a in args if a.startswith("repos/"))
+    repo = path.split("repos/")[1].split("/keys")[0]
+    keys = state / (repo.replace("/", "__") + ".keys")
+    lines = keys.read_text().splitlines() if keys.exists() else []
+    if "-X" in args and "DELETE" in args:
+        number = int(path.rsplit("/", 1)[1])
+        keys.write_text("".join(line + "\n" for i, line in enumerate(lines, 1) if i != number))
+        sys.exit(0)
     if path.endswith("/keys") and "-f" in args:
         if (state / "fail").exists():
             print("HTTP 422: key is already in use", file=sys.stderr); sys.exit(1)
         fields = dict(a.split("=", 1) for a in args if "=" in a and not a.startswith("repos/"))
         with keys.open("a") as handle:
-            handle.write(fields["key"] + "\\t" + fields["title"] + "\\t" + fields["read_only"] + "\\n")
+            handle.write(fields["key"] + "\t" + fields["title"] + "\t" + fields["read_only"] + "\n")
         sys.exit(0)
     if path.endswith("/keys"):
-        if keys.exists():
-            for line in keys.read_text().splitlines():
-                print(" ".join(line.split("\\t")[0].split()[:2]))
+        withid = any("(.id)" in a for a in args)
+        for i, line in enumerate(lines, 1):
+            material = " ".join(line.split("\t")[0].split()[:2])
+            print(f"{i} {material}" if withid else material)
         sys.exit(0)
-    print("false" if (state / "noadmin").exists() else "true"); sys.exit(0)
+    if (state / ("gone-" + repo.replace("/", "__"))).exists():
+        print("gh: Not Found (HTTP 404)", file=sys.stderr); sys.exit(1)
+    print("false" if (state / "noadmin").exists() and ".permissions" in " ".join(args) else
+          ("true" if ".permissions" in " ".join(args) else "1")); sys.exit(0)
 sys.exit(2)
 """
 

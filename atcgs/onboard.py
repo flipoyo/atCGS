@@ -67,6 +67,25 @@ class GitHub:
             self._keys[repo] = {" ".join(line.split()[:2]) for line in out.splitlines() if line.strip()}
         return self._keys[repo]
 
+    def exists(self, repo: str) -> bool:
+        """Whether the repository is still on GitHub (a 404 is False; any other failure is raised)."""
+        try:
+            self._run("api", f"repos/{repo_path(repo)}", "--jq", ".id")
+        except RuntimeError as exc:
+            if "404" in str(exc) or "Not Found" in str(exc):
+                return False
+            raise
+        return True
+
+    def key_ids(self, repo: str) -> dict[str, str]:
+        """key material -> deploy key id, for the repositories you administer."""
+        out = self._run("api", f"repos/{repo_path(repo)}/keys", "--paginate", "--jq", '.[] | "\(.id) \(.key)"')
+        return {" ".join(line.split()[1:3]): line.split()[0] for line in out.splitlines() if line.strip()}
+
+    def remove(self, repo: str, key_id: str) -> None:
+        self._run("api", "-X", "DELETE", f"repos/{repo_path(repo)}/keys/{key_id}")
+        self._keys.pop(repo, None)
+
     def add(self, repo: str, title: str, key: str, read_only: bool) -> None:
         self._run("api", f"repos/{repo_path(repo)}/keys", "-f", f"title={title}", "-f", f"key={key}",
                   "-F", f"read_only={'true' if read_only else 'false'}")
@@ -332,19 +351,24 @@ def _install_key(entry: Entry, project: str, key: dict[str, str], gh: GitHub, re
     return True
 
 
+def push_register(project: str, opx: Identity, glyph: bytes, message: str) -> tuple[str, str]:
+    """In the current tree: commit the register alone and push the memory branch. Never --all."""
+    memory = cmd.project_root() / PRIVATE / ".memory"
+    with Session(opx, cmd.register(), glyph, project, "OPX") as session:
+        cmd._git(session, "add", ".register", cwd=memory)
+        if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=memory).returncode == 0:
+            return "skipped", "register already pushed"
+        cmd._git(session, "commit", "-m", message, cwd=memory)
+        cmd._git(session, "push", "origin", "HEAD", cwd=memory)
+        return "done", str(memory)
+
+
 def _push_phase(plan: Plan, project: str, opx: Identity, glyph: bytes, results: Results) -> None:
     """Commit the register alone and push the memory branch. Never --all."""
     people = sum(project in e.grant for e in plan.entries)
     with in_tree(plan.trees[project]):
-        memory = cmd.project_root() / PRIVATE / ".memory"
-        with Session(opx, cmd.register(), glyph, project, "OPX") as session:
-            cmd._git(session, "add", ".register", cwd=memory)
-            if subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=memory).returncode == 0:
-                _step(results, "-", project, "push", "skipped", "register already pushed")
-                return
-            cmd._git(session, "commit", "-m", f"atcgs onboard {plan.date.isoformat()}: {people} person(s)", cwd=memory)
-            cmd._git(session, "push", "origin", "HEAD", cwd=memory)
-            _step(results, "-", project, "push", "done", str(memory))
+        status, detail = push_register(project, opx, glyph, f"atcgs onboard {plan.date.isoformat()}: {people} person(s)")
+    _step(results, "-", project, "push", status, detail)
 
 
 def _guarded(results: Results, who: str, project: str, step: str, call: Callable[[], object]) -> bool:

@@ -23,7 +23,7 @@ from ComplexGitSync.orchestre.op_levels import LEVELS
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.11.0-alpha"
+__version__ = "1.12.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -76,7 +76,7 @@ CORE_OPERATIONS = frozenset(
 )
 CORE_RELEASE = frozenset({("release", "freeze"), ("release", "list"), ("release", "load")})
 ROLE_NAMES = ("OPX", "DEV", "USR")
-IDENTITY_VERBS = frozenset({"init", "request", "enrol", "admit", "revoke", "login", "publish", "intake", "onboard", "user-credential"})
+IDENTITY_VERBS = frozenset({"init", "request", "enrol", "admit", "revoke", "login", "publish", "intake", "onboard", "user-credential", "generate-glyph"})
 # The cgitsync commands `<LAYER> login TWIN <op ...>` may run, by level: the everyday
 # loop, so atCGS is developed through @cgs (Dogfooding). The keys a level gets decide
 # what the remote accepts; this list only keeps a level to the commands it needs.
@@ -116,6 +116,8 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
                                the same for whole projects; OUT.toml is the registration file for the Owner
   <layer> user-credential [--json] [--probe] [--tree PATH]
                                your uid, your GLYPH, every register that knows you, a verdict per repository
+  <layer> generate-glyph [--from PATH] [--tree PATH]... [--out FILE] [--plan]
+                               get a GLYPH back: take a copy you still have, or regenerate the keys
   OPX intake [FOLDER]          build the day's list from the registration files (no password)
   OPX onboard LIST [--plan]    enrol, publish, admit, install deploy keys, push the registers: one run
   OPX enrol REQUEST            enrol the requester only (master register); no grant
@@ -219,33 +221,41 @@ class OpFrontier:
         raise ValueError(f"unsupported @cgs {layer} argument: {args[0]!r}")
 
 
+def _flags_ok(rest: Sequence[str], switches: Sequence[str], valued: Sequence[str]) -> bool:
+    """Only the given `--switch` flags (each at most once) and `--valued VALUE` pairs."""
+    seen, i = [], 0
+    while i < len(rest):
+        if rest[i] in switches:
+            seen.append(rest[i])
+            i += 1
+        elif rest[i] in valued and i + 1 < len(rest) and not rest[i + 1].startswith("--"):
+            i += 2
+        else:
+            return False
+    return len(seen) == len(set(seen))
+
+
+def _request_arity(rest: Sequence[str]) -> bool:
+    if rest and rest[0] in ("--register", "--name"):  # request --register P=R [--name N] OUT.toml
+        return len(rest) >= 3 and "--register" in rest
+    return len(rest) >= 3 and len(rest) % 2 == 1
+
+
 def _identity_request(layer: str, args: Sequence[str]) -> bool:
     """The identity verbs and their arity (REFERENCE.md § 6); the arguments are never secrets."""
     verb, rest = args[0], args[1:]
-    if verb == "init":
-        return layer == "OPX" and not rest
+    opx_only = {"init": not rest, "intake": len(rest) <= 1, "admit": len(rest) == 1, "enrol": len(rest) == 1,
+                "revoke": len(rest) in (1, 2), "publish": not rest,
+                "onboard": len([a for a in rest if not a.startswith("--")]) == 1
+                and _flags_ok([a for a in rest if a.startswith("--")], ("--plan",), ())}
+    if verb in opx_only:
+        return layer == "OPX" and opx_only[verb]
     if verb == "request":
-        if rest and rest[0] in ("--register", "--name"):  # request --register P=R [--name N] OUT.toml
-            return len(rest) >= 3 and "--register" in rest
-        return len(rest) >= 3 and len(rest) % 2 == 1
+        return _request_arity(rest)
     if verb == "user-credential":
-        flags = [a for a in rest if a in ("--json", "--probe")]
-        return layer in ROLE_NAMES and len(flags) + 2 * rest.count("--tree") == len(rest) and \
-            all(rest[i + 1:i + 2] not in ([], ["--tree"]) for i, a in enumerate(rest) if a == "--tree")
-    if verb == "intake":
-        return layer == "OPX" and len(rest) <= 1
-    if verb == "onboard":  # LIST [--plan]: exactly one path, at most one --plan
-        paths = [a for a in rest if not a.startswith("--")]
-        return layer == "OPX" and len(paths) == 1 and all(a == "--plan" for a in rest if a.startswith("--")) \
-            and rest.count("--plan") <= 1
-    if verb == "admit":
-        return layer == "OPX" and len(rest) == 1
-    if verb == "enrol":
-        return layer == "OPX" and len(rest) == 1
-    if verb == "revoke":
-        return layer == "OPX" and len(rest) in (1, 2)
-    if verb == "publish":
-        return layer == "OPX" and not rest
+        return layer in ROLE_NAMES and _flags_ok(rest, ("--json", "--probe"), ("--tree",))
+    if verb == "generate-glyph":
+        return layer in ROLE_NAMES and _flags_ok(rest, ("--plan",), ("--from", "--out", "--tree"))
     if verb == "login":
         return layer in LOGIN_OPS and len(rest) >= 1 and (len(rest) == 1 or rest[1] in LOGIN_OPS[layer])
     return False

@@ -259,8 +259,12 @@ def admit_doc(reg: Register, opx: Identity, doc: Mapping[str, object], env: Mapp
     granted = []
     for key in (doc["keys"] if keys is None else keys):  # type: ignore[union-attr]
         held = reg.state().roles(uid).get(key["repo"])
-        if held is None or (held.role, held.ssh) != (key["role"], ssh_public(key["ssh"])):
+        if held is None:
             reg.grant(opx, uid, key["repo"], key["role"], key["ssh"])
+        elif (held.role, held.ssh) != (key["role"], ssh_public(key["ssh"])):
+            if held.role != key["role"]:
+                raise JournalError(f"{key['repo']}: already granted as {held.role}; revoke it first to change the role")
+            reg.rekey(opx, uid, key["repo"], key["role"], key["ssh"])  # same role, a new key: a regenerated GLYPH
         granted.append({"repo": key["repo"], "role": key["role"], "fingerprint": fingerprint(key["ssh"])})
     return granted
 
@@ -497,6 +501,9 @@ def dispatch(req: Request, authorization: Authorization) -> dict[str, object]:
         return publish(authorization)
     if verb == "user-credential":
         return user_credential(req.layer, args)
+    if verb == "generate-glyph":
+        from atcgs import glyphgen
+        return glyphgen.run(req.layer, args)
     if verb == "intake":
         from atcgs import registration
         return registration.intake(_folder(REGISTRATION_ENV, "registration", args[:1]), _folder(INTAKE_ENV, "intake"),

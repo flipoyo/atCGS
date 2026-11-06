@@ -1,6 +1,6 @@
 # TUTO 1 — Operate a new project: who does what
 
-**atCGS 1.11.0-alpha, 2026-11-06.** The running example is the MOLONARI hardware twin,
+**atCGS 1.12.0-alpha, 2026-11-06.** The running example is the MOLONARI hardware twin,
 `MOLO-HRDW`. Parts A and B were run on 2026-11-05. `request --register`, `OPX intake` and
 `OPX onboard` (Part C) are covered by tests with local repositories and a fake `gh`; they
 have **not** been run yet on the real repositories with real newcomers. Where a step is
@@ -116,6 +116,36 @@ Options: `--probe` tries each key on GitHub (one `git ls-remote` per key, throug
 
 **`OPX onboard` runs this check on you first** and stops if the GLYPH is missing or a grant of the
 memory or omniscience repositories has no key. Run it yourself before you start.
+
+**Your GLYPH is lost (`glyph MISSING`, every row `no key`).** A GLYPH cannot be rebuilt from the
+repositories: your private keys were only ever in that file. The registers and GitHub hold public
+halves, which open nothing. Two ways out:
+
+```bash
+# 1. you still have a copy (a backup, a USB key, another machine): take it back
+pixi run cgs OPX generate-glyph --from /path/to/copy-or-folder
+# 2. you do not: make new keys, for exactly the access you already have
+pixi run cgs OPX generate-glyph --plan      # shows what it would do, writes nothing
+pixi run cgs OPX generate-glyph
+```
+
+The second asks your login and password once, prints the plan, and on `y`:
+
+1. keeps any key your GLYPH still holds that matches a grant, and makes a new one for each other
+   (repository, role) you hold a grant for, in any register of `~/.cgs`;
+2. seals them in a new GLYPH (an older one is kept next to it as `.bak`);
+3. **atCGS OPX only:** replaces the key in each register that carries the old one (a revoke and a
+   grant, signed by you), installs the new deploy key on GitHub, commits and pushes each register, and
+   only then deletes the old deploy keys from GitHub, so nothing is lost if a step fails: run the same
+   command again, it picks up where it stopped;
+4. **anyone else:** writes `~/glyph-request-<uid>.json`, public keys only. Send it to the Owner, who runs
+   `OPX admit` on it from the project's gate (it replaces the key of a grant you already have), installs
+   the deploy keys (C5) and pushes the register.
+
+A repository that is no longer on GitHub gets no key; its grant is revoked in the registers. A GLYPH
+that this login and password cannot open is never overwritten.
+
+Run `user-credential` again: every row should read `ok`.
 
 From now on, "your workspace" means `~/.cgs/cgs-<timestamp>`.
 

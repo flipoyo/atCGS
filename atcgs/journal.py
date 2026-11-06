@@ -304,5 +304,13 @@ class Register:
         body = {"repo": repo, "role": role, "ssh": ssh_public(ssh)}
         return self._append(self.access, "grant", uid, body, opx)
 
+    def rekey(self, opx: Identity, uid: str, repo: str, role: str, ssh: str) -> None:
+        """Replace the key of an existing grant: a revoke and a grant, written together or not at all."""
+        entries = self.access.entries()
+        for op, body in (("revoke", {"repo": repo}), ("grant", {"repo": repo, "role": role, "ssh": ssh_public(ssh)})):
+            entries.append(self.access.draft(entries, op, uid, body, opx))
+        _replay_access(entries, self.opx_pub, _replay_identity(self.identity.entries(), self.opx_pub))
+        self.access.write(entries)
+
     def revoke_access(self, opx: Identity, uid: str, repo: str) -> dict:
         return self._append(self.access, "revoke", uid, {"repo": repo}, opx)
