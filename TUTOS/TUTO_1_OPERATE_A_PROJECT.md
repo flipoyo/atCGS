@@ -52,13 +52,41 @@ operator, allow this OPX command on this machine". It is not a password.
    pixi run cgitsync bootstrap examples/cgs-opx.cgs cgs
    cd ~/.cgs/cgs-<timestamp>
    ```
-2. Create the OPX key. It prints `idpub`, your public key:
+2. **Create your key.** Run `OPX init` for the first time. It asks your OPX login and password
+   twice (see C2 for how to choose them), and prints your public key:
    ```bash
+   cd ~/.cgs/cgs-<timestamp>
    ATCGS_AUTHORIZE=OPX pixi run cgs OPX init
    ```
-3. Copy `idpub` into `spec/contracts.toml`, `[identity] opx_pub = "…"`. Run `OPX init`
-   again with the **same** login and password. It prints `"enrolled": true`.
-   This workspace now holds the **master register**: the only place where people are enrolled.
+   ```json
+   { "layer": "OPX", "uid": "35c65c66…d104", "idpub": "qL1FhYN4yQrRd6/cOa92zPG6rsu2t8JXirlntzsYDMo=",
+     "pinned": false,
+     "next": "copy idpub into spec/contracts.toml [identity] opx_pub, then run OPX init again" }
+   ```
+   `idpub` is your **public** key: safe to show and to commit. Nothing is written yet.
+3. **Pin it, then confirm.** "Pinning" means writing your public key in the one place every atCGS
+   reads to know who the Owner is. Every gate and every project trusts a register line only if it
+   is signed by that key.
+   - Open `spec/contracts.toml` in this workspace (`~/.cgs/cgs-<timestamp>/spec/contracts.toml`)
+     and put your `idpub` between the quotes of `opx_pub`:
+     ```toml
+     [identity]
+     opx_pub = "qL1FhYN4yQrRd6/cOa92zPG6rsu2t8JXirlntzsYDMo="
+     ```
+   - Commit and push that file (it is the repository atCGS, branch `CGS-ALPHA`): projects install
+     atCGS from there, so they learn your key from it.
+   - Run `OPX init` a **second time**, with exactly the same login and password:
+     ```bash
+     ATCGS_AUTHORIZE=OPX pixi run cgs OPX init
+     # { "layer": "OPX", "uid": "35c65c66…d104", "pinned": true, "enrolled": true }
+     ```
+     `"pinned": true` says the key you typed is the one written in the file; `"enrolled": true`
+     says you are now the first line of the register. A different login or password gives
+     `does not match the pinned OPX key`: retype the pair of step 2.
+
+   From now on this workspace holds the **master register**,
+   `.cgitsync/.memory/.register/identity.jsonl`: the one list of everybody atCGS knows, and the only
+   place where people are enrolled. A project has its own register but only copies this list.
 4. Ask for your own keys on the workspace's repositories, admit yourself, install the keys:
    ```bash
    pixi run cgs OPX request ~/opx-cgs.json \
