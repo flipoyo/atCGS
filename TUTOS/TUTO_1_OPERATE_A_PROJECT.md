@@ -74,11 +74,24 @@ operator, allow this OPX command on this machine". It is not a password.
 
 These ten are the repositories of `examples/cgs-opx.cgs`, the tree you installed in step 1: list
 them with `grep -o 'repository = "[^"]*"' examples/cgs-opx.cgs`, and give each the role `OPX`.
-To see what your register already holds, from the workspace:
+
+**Before creating a new user, verify your credentials.** Your rights are written in several
+registers: the master register of the workspace, and one per project tree. Your private keys are
+in your GLYPH, `~/.cgs/.glyph/<uid>.glyph`. A login works only where a grant **and** its key in the
+GLYPH meet. Until `pixi run cgs OPX user-credential` exists (ticket UserCredential), check by hand,
+from any directory:
 
 ```bash
-python3 -c "import json;[print(e['body']['repo'], e['body']['role']) for e in map(json.loads, open('.cgitsync/.memory/.register/access.jsonl')) if e['op']=='grant']"
+ls ~/.cgs/.glyph/                                    # your GLYPH: one file per identity on this machine
+for r in ~/.cgs/*/.cgitsync/.memory/.register/access.jsonl; do
+  echo "== ${r%/.cgitsync/*}"
+  python3 -c "import json,sys;[print(' ', e['uid'][:12], e['body']['repo'], e['body'].get('role','revoked')) for e in map(json.loads, open(sys.argv[1]))]" "$r"
+done
 ```
+
+Each block is one register: the workspace (`cgs-<timestamp>`) and each installed project. The
+first column is the uid: yours is the start of the `uid` that `OPX init` printed. No GLYPH file
+means no login will work on this machine, whatever the registers say.
 
 From now on, "your workspace" means `~/.cgs/cgs-<timestamp>`.
 
