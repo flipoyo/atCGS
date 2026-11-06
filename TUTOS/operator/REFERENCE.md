@@ -112,8 +112,10 @@ Run each command as `pixi run cgs <LAYER> ...`.
 |---|---|---|
 | `OPX init` | Enrols OPX with the key pinned in `spec/contracts.toml [identity] opx_pub`. Until a key is pinned, the first run only prints the key to pin. | OPX, with `ATCGS_AUTHORIZE=OPX` |
 | `<LAYER> request OUT REPO ROLE …` | Generates one ssh key per repo, seals them in the user's GLYPH, and writes `OUT` with the public keys and the proof. | any user |
-| `OPX admit OUT` | Enrols the user if new, then grants each requested repo and role. | OPX |
-| `OPX revoke UID [REPO]` | Revokes a UID, or one grant. | OPX |
+| `OPX enrol OUT` | Enrols the user only, in the master register; grants nothing. | OPX, master register |
+| `OPX publish` | Copies the master `identity.jsonl` to `.omniscience/atcgs/` (branch `CGS-MOLO`). | OPX, master register |
+| `OPX admit OUT` | Enrols the user if new (master register only), then grants each requested repo and role in this project's register. | OPX |
+| `OPX revoke UID [REPO]` | Revokes a UID (master register only), or one grant (any register). | OPX |
 | `<LAYER> login TWIN [op …]` | Opens a session and runs `cgitsync op …` through it. | by grant |
 
 `login` allows these cgitsync operations per level (`atcgs/__init__.py`, `LOGIN_OPS`):
@@ -121,7 +123,20 @@ Run each command as `pixi run cgs <LAYER> ...`.
 - USR: `status`, `view-tree`, `fetch`, `pull`, `validate`.
 - DEV: the USR list, plus `add`, `rm`, `commit`, `push`, `branch`, `checkout`, `merge`, `autofix`.
 - OPX: the DEV list, plus `tag`, `release`, `bootstrap`, `initialise`, `omniscience`,
-  `memory`, `env`, `verify`, `unlock`, `self-history`.
+  `memory`, `promote`, `env`, `verify`, `unlock`, `self-history`.
+
+"OPX" in the table above (`enrol`, `publish`, `admit`, `revoke`, `init`) means **atCGS OPX**:
+the login and password whose key is pinned in `spec/contracts.toml`. There is one. A UID
+granted the role `OPX` in a project runs that project's OPX `login` operations, but every
+register line is signed by the pinned key, so it cannot admit or revoke.
+
+**Selectors.** `@cgs` accepts four selectors, `OPX`, `DEV`, `USR`, `PUB`; anything else exits
+with code 2. With no argument a selector prints its OpFrontier transition (`.gts OPX DEV .cgs`,
+`.cgs DEV USR .toml`, `.toml USR PUB .omniscience`; `"evidence"` is always `unverified`).
+A bare cgitsync verb (`@cgs DEV status`) or a private mount (`@cgs DEV .cgitsync`) needs
+`ATCGS_AUTHORIZE`, which may name only `OPX` and/or `DEV`; so do `init`, `enrol`, `admit`,
+`revoke` and `publish`. `request` and `login` do not. Mounts resolve from `ATCGS_MOUNTS`
+(a TOML of `[[mount]]` with pinned commits); without it they answer `"evidence": "unavailable"`.
 
 Anything else is refused. `login` writes `TWIN.cgs` only for a bare login or for
 `bootstrap`/`initialise`, never inside a tracked repository.
@@ -211,7 +226,7 @@ The 4-bit codes survive as the level codes of § 3.
 | `POEX.cgs` | the PUB install: the public root and nothing private |
 | `scripts/` | `contract_check.py`, `identity_demo.py`, `local_remote.py`, `deploy_keys.py` |
 | `tests/` | the suite; `pixi run test` runs only these |
-| `TUTOS/` | step-by-step tutorials; each states what it covers and whether it is current |
+| `TUTOS/` | the two tutorials (operate a project; omniscience) and this reference |
 
 `.cgitsync/` and `.omniscience/` are mounts of the workspace tree. They are not part
 of this repository's history.

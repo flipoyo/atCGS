@@ -73,7 +73,7 @@ in; you never choose it.
 **One atCGS OPX, many project OPX.** atCGS has exactly one OPX: the key pinned in
 `spec/contracts.toml`, held by the owner. Only that key enrols identities, publishes them,
 and admits or revokes anyone in any twin. Being OPX *of a project* is a grant like DEV or
-USR: it lets you run that twin, not admit people. See [TUTO 04](TUTOS/TUTO_04_PROJECT_ENROL.md).
+USR: it lets you run that twin, not admit people. See [TUTO 1](TUTOS/TUTO_1_OPERATE_A_PROJECT.md).
 
 **Identity is global, rights are local.** You register once with atCGS: every twin then
 knows who you are. But you have no right on a twin until the operator grants it *in that
@@ -85,31 +85,29 @@ kills it afterwards; it never uses `~/.ssh`.
 
 ## 4. Quick start
 
-You need [Pixi](https://pixi.sh). Everything is `pixi run cgs …`, from a twin's `.atcgs`
-folder.
+You need [Pixi](https://pixi.sh) and git. The repositories are public: anyone reads them,
+only atCGS keys write. Everything is `pixi run cgs …`.
 
 ```bash
-# from nothing: no account, no key (TUTO 01 step 0)
 git clone --branch CGS-ALPHA https://github.com/flipoyo/atCGS.git ~/atCGS
 cd ~/atCGS
 pixi install
 pixi run cgs --help
+# then, in an installed project's gate:
 pixi run cgs DEV login MOLO-HRDW status     # asks your login and password
 ```
 
-The three tutorials take you from nothing to your first push on a MOLONARI twin:
+Two tutorials:
 
-1. **[Register](TUTOS/TUTO_01_REGISTER.md)**: from nothing (no profile, no key), become a user atCGS knows.
-2. **[Emulate a twin](TUTOS/TUTO_02_TWIN.md)**: install MOLO-HRDW and MOLO-TWX, open their gates, get admitted.
-3. **[Work through subtwins](TUTOS/TUTO_03_SUBTWINS.md)**: change MOLO-HRDW as a DEV, and see it in MOLO-TWX.
-4. **[Enrol a team in a project](TUTOS/TUTO_04_PROJECT_ENROL.md)**: a MOLONARI OPX, a DEV and a USR, admitted by atCGS OPX.
+1. **[Operate a new project](TUTOS/TUTO_1_OPERATE_A_PROJECT.md)**: who does what, from the
+   Owner of the repositories to a project OPX, a DEV and a USR, each with its command.
+2. **[Omniscience](TUTOS/TUTO_2_OMNISCIENCE.md)**: how a project knows who you are, and what
+   to check before you connect.
 
 ## 5. For operators and developers
 
-- **[OPX 01](TUTOS/operator/OPX_01_FIRST_MISSION.md)**: found atCGS's own Operating Space and its master register.
-- **[OPX 05](TUTOS/operator/OPX_05_SECOND_MISSION.md)**: the first run of a project under the gate (historical).
-- **[OPX 02](TUTOS/operator/OPX_02_OPFRONTIER.md)**, **[OPX 03](TUTOS/operator/OPX_03_IDENTITY.md)**, **[OPX 04](TUTOS/operator/OPX_04_INTEGRATION.md)**: the levels, the identity internals, the checks.
-- **[Reference](TUTOS/operator/REFERENCE.md)**: what runs, sessions, journals, GLYPH, what is not built, repository layout.
+- **[Reference](TUTOS/operator/REFERENCE.md)**: levels, selectors, sessions, journals, GLYPH,
+  what is not built, repository layout.
 
 Developing atCGS itself happens in a workspace where `./ComplexGitSync` is checked out
 next to it. There, `pixi run cgs` uses that live checkout (`@cgs/pixi.toml`); everywhere
