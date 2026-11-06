@@ -180,3 +180,21 @@ github:flipoyo/.claude              OPX   SHA256:…           —      grant   
 - `OPX onboard` refuses to start while the Owner's own rows on the run's trees are not `ok`.
 - TUTO 1 step A starts with the check; `pixi run test` and `pixi run lint` pass.
 - On closing: stamp `YYYYMMDD_UserCredential_DevPlanTicket.md`, move it to `.archive/`.
+
+## Closing — 2026-11-06
+
+Done in 1.11.0-alpha:
+
+- **S1–S3.** `atcgs/credential.py` and `user-credential [--json] [--probe] [--tree PATH]` (any level, read
+  only, exit 1 when a grant is not `ok`); `glyph.usage`; verdicts `ok`, `no key`, `not admitted`, `revoked`,
+  `refused by GitHub`; `discover` finds the master and every project tree under `~/.cgs` (`ATCGS_TREES`).
+- **S4.** `--probe`: one `git ls-remote` per key through a session of its own, `~/.ssh` never used.
+- **S5.** `OPX onboard` runs the check on the Owner after the password and before the `y`: no GLYPH, or a
+  memory or omniscience grant without its key, stops it before anything is created.
+- **S6.** TUTO 1 step A starts with the check and the verdict table; `tests/test_credential.py`.
+- **Deviations.** Room is reported in bytes (the GLYPH is sized in bytes: the "17 keys" is only an
+  estimate), not in places. `--plan` shows no Owner rows: it asks no password, so the check runs after it.
+  Not done: `--github` (keys on GitHub no register grants), D2 `user-credential UID` without a password.
+  `--probe` is tested with a stubbed `ls-remote`; no real GitHub call was made.
+- **First finding on the Owner's machine:** no GLYPH file exists under `/home`, `/tmp` or `/var/tmp`
+  although two registers hold the Owner's grants. Recovery is D5, a ticket of its own.
