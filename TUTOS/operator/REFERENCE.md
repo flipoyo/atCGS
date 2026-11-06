@@ -112,6 +112,9 @@ Run each command as `pixi run cgs <LAYER> ...`.
 |---|---|---|
 | `OPX init` | Enrols OPX with the key pinned in `spec/contracts.toml [identity] opx_pub`. Until a key is pinned, the first run only prints the key to pin. | OPX, with `ATCGS_AUTHORIZE=OPX` |
 | `<LAYER> request OUT REPO ROLE …` | Generates one ssh key per repo, seals them in the user's GLYPH, and writes `OUT` with the public keys and the proof. | any user |
+| `<LAYER> request --register P=R [--name N] OUT.toml` | The same for whole projects: the repositories come from the project's `.cgs` and the role template (atCGS and omniscience are USR). `OUT.toml` is the registration file for the Owner. | any user |
+| `OPX intake [FOLDER]` | Verifies every registration file of `~/.cgs/registration/` (or `ATCGS_REGISTRATION`) and writes the day's list in `~/.cgs/intake/` (or `ATCGS_INTAKE`). No password. | OPX |
+| `OPX onboard LIST [--plan]` | For the confirmed persons of the list: enrol, publish, pull `.omniscience` in each project tree, admit, install the deploy keys with `gh`, commit and push the register alone. One password prompt. `--plan` writes nothing. | OPX, master register |
 | `OPX enrol OUT` | Enrols the user only, in the master register; grants nothing. | OPX, master register |
 | `OPX publish` | Copies the master `identity.jsonl` to `.omniscience/atcgs/` (branch `CGS-MOLO`). | OPX, master register |
 | `OPX admit OUT` | Enrols the user if new (master register only), then grants each requested repo and role in this project's register. | OPX |
@@ -140,6 +143,15 @@ A bare cgitsync verb (`@cgs DEV status`) or a private mount (`@cgs DEV .cgitsync
 
 Anything else is refused. `login` writes `TWIN.cgs` only for a bare login or for
 `bootstrap`/`initialise`, never inside a tracked repository.
+
+**Onboarding** (`atcgs/registration.py`, `atcgs/onboard.py`). `onboard` runs in the workspace and acts on a
+project tree by setting `ATCGS_PROJECT` and `CGSHOME` to it for the length of each step (restored after);
+`ATCGS_PROJECT` is read by `project_root`, so the register, the published identities and the `login` check
+are those of that tree. Project trees are found in `ATCGS_TREES` (default `~/.cgs`), newest
+`<PROJECT>-*` first, unless the list names one. It reads the Owner's login and password once and passes the
+identity down; every step is repeatable. Only `.cgitsync/.memory/.register` is committed, and a tree whose
+memory has other changes is refused. The cgitsync memory fold is not run: the register commit is a plain git
+commit on the memory branch the tree is on.
 
 A session runs these steps in order (`atcgs/session.py`):
 1. Recomputes the UID from the typed login and password. Nothing is looked up.
@@ -219,7 +231,7 @@ The 4-bit codes survive as the level codes of § 3.
 
 | Path | Contents |
 |---|---|
-| `atcgs/` | the package: `identity`, `journal`, `glyph`, `session`, `commands`; the `@cgs` entry point in `__init__` |
+| `atcgs/` | the package: `identity`, `journal`, `glyph`, `session`, `commands`, `registration`, `onboard`; the `@cgs` entry point in `__init__` |
 | `spec/contracts.toml` | the BIOS, frontier, identity and GLYPH rows that `contract-inspect` checks |
 | `examples/cgs-{opx,dev,usr}.cgs` | the three level trees, named by level (§ 3) |
 | `examples/ComplexGraphSync.cgs` | the workspace tree this repository is developed in |

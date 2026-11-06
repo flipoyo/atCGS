@@ -1,8 +1,9 @@
 # TUTO 1 — Operate a new project: who does what
 
-**atCGS 1.9.1-alpha, 2026-11-06.** The running example is the MOLONARI hardware twin,
-`MOLO-HRDW`. Parts A and B were run on 2026-11-05. The other parts use the same
-commands, but they have **not** been run yet with three new people. Where a step is
+**atCGS 1.10.0-alpha, 2026-11-06.** The running example is the MOLONARI hardware twin,
+`MOLO-HRDW`. Parts A and B were run on 2026-11-05. `request --register`, `OPX intake` and
+`OPX onboard` (Part C) are covered by tests with local repositories and a fake `gh`; they
+have **not** been run yet on the real repositories with real newcomers. Where a step is
 untested, it says so.
 
 **The repositories are public: anyone can read them, only keys can write.** So a newcomer
@@ -29,11 +30,10 @@ Rights are per project: a DEV on MOLO-HRDW has no right on MOLO-DATA.
 | B2 | Owner | installs the project and opens its gate | `cgitsync bootstrap`, `pixi install` |
 | B3 | Owner | gives themself rights in the project | `OPX request`, `OPX admit`, `deploy-keys` |
 | C1 | Newcomer | gets atCGS (public, no key) | `git clone`, `pixi install` |
-| C2 | Newcomer | chooses a login and password, asks for keys | `<ROLE> request` |
-| C3 | Owner | enrols the newcomer and publishes | `OPX enrol`, `OPX publish` |
-| C4 | Owner | admits the newcomer in the project | `OPX admit` |
-| C5 | Owner | installs the newcomer's keys on GitHub | `deploy-keys`, then `gh api …` |
-| C6 | Owner | pushes the project's register | `commit --all`, `push --all` |
+| C2 | Newcomer | chooses a login and password, writes the registration file | `<ROLE> request --register` |
+| C3 | Newcomer | sends the file, unchanged, and gives the uid by phone | e-mail, a call |
+| C4 | Owner | saves the files, builds the day's list, confirms each uid | `OPX intake`, edit `confirmed = true` |
+| C5 | Owner | **one run**: enrol, publish, admit, deploy keys, push the register | `OPX onboard LIST` |
 | D | Newcomer | installs the project and logs in | `cgitsync bootstrap`, `<ROLE> login` |
 | E | Everyone | works, each at their level | `<ROLE> login <PROJECT> <op>` |
 | F | Owner | removes a right or a person | `OPX revoke` |
@@ -137,7 +137,7 @@ pixi install
 pixi run cgs --help           # prints the usage: you are ready
 ```
 
-### C2. Newcomer: choose a login and password, then ask for keys
+### C2. Newcomer: choose a login and password, then write the registration file
 
 **Choose them once and write them in your password manager.** atCGS has no account and no
 "forgot password". The same pair always gives the same identity; a different pair is a
@@ -146,88 +146,136 @@ different person.
 - **Login:** any text, e.g. `ada.lovelace`. Not secret. Case and spaces count.
 - **Password:** a long passphrase (4 unrelated words, or about 20 characters). This is the
   secret. Nobody can recover it. If you lose it, you start again as a new person.
-- Nothing shows while you type. `request` asks the password twice; later commands ask once,
-  and a typo there gives you **another** identity (`this UID holds no … grant`).
+- Nothing shows while you type. The command asks the password twice; later commands ask
+  once, and a typo there gives you **another** identity (`this UID holds no … grant`).
 
-Ask for one key per repository of the project, with the role the Owner agreed with you:
-
-| Repository | Project OPX | DEV | USR |
-|---|---|---|---|
-| `github:flipoyo/MOLONARI-hardware` | OPX | DEV | USR |
-| `github:flipoyo/.memory` | OPX | DEV | USR |
-| `github:flipoyo/atCGS` | USR | USR | USR |
-| `github:flipoyo/omniscience` | USR | USR | USR |
-
-Ask for all four, even as USR: a session reaches only the repositories it has a key for.
-atCGS and omniscience are USR for everyone but the Owner.
+Say which project you work on and at which level. atCGS knows the repositories and the
+keys to ask for, so you type no repository:
 
 ```bash
 cd ~/atCGS
-pixi run cgs DEV request ~/bruno-hrdw.json \
-  github:flipoyo/MOLONARI-hardware DEV  github:flipoyo/.memory DEV \
-  github:flipoyo/atCGS USR              github:flipoyo/omniscience USR
+pixi run cgs DEV request --register MOLO-HRDW=DEV --name "Bruno" ~/bruno.toml
+# several projects: --register MOLO-HRDW=DEV --register MOLO-TWX=USR
 ```
 
-It prints your `uid`. **Write it down.** Your private keys stay in `~/.cgs/.glyph/`, never
-send them. Send the request file (`~/bruno-hrdw.json`) to the Owner by any channel: it holds
-only public keys. Tell the Owner your `uid` by a second channel, a call for instance, so
-they know the file is yours.
+It prints your `uid` (**write it down**) and writes `~/bruno.toml`. Your private keys stay
+sealed in `~/.cgs/.glyph/`, never send them. The word after `cgs` only labels the prompts;
+the level you ask is the one after `=`.
 
-`request` needs the output file **and** at least one `REPOSITORY ROLE` pair. The word after
-`cgs` (`DEV` here) only labels the prompts.
+For each repository of the project, the level is the one you asked, except `atCGS` and
+`omniscience`, which are always USR: the gate and the published identities are written by
+the Owner only.
 
-### C3. Owner: enrol and publish
+The file is this one, with your own values (`examples/registration.toml`):
 
-In **your workspace** (the master register):
+```toml
+# atCGS registration. Send this file, unchanged, to the Owner.
+# It holds only public data: your uid, your public key, the public halves of your ssh keys.
+# Tell the Owner your uid by another channel (a call): it is how they know this file is yours.
+format  = "atcgs-registration/1"         # the format version; do not change
+name    = "Ada"                          # your name, for the Owner's report only; never written to a register
+uid     = "0000000000000000000000000000000000000000000000000000000000000000"   # sha256 of your public key
+created = 2026-11-06T10:42:00Z
+
+[ask]                                    # what you ask for, per project; the Owner decides
+MOLO-HRDW = "DEV"
+
+[request]                                # what the Owner's `admit` needs
+pub   = "…base64…"                       # your public key
+proof = "…base64…"                       # proof that you hold the private key
+keys  = [                                # one ssh public key per repository and role; the private halves stay in your GLYPH
+  { repo = "github:flipoyo/MOLONARI-hardware", role = "DEV", ssh = "ssh-ed25519 AAAA…" },
+  { repo = "github:flipoyo/.memory", role = "DEV", ssh = "ssh-ed25519 AAAA…" },
+  { repo = "github:flipoyo/atCGS", role = "USR", ssh = "ssh-ed25519 AAAA…" },
+  { repo = "github:flipoyo/omniscience", role = "USR", ssh = "ssh-ed25519 AAAA…" },
+]
+```
+
+It holds only public data. Do not edit it: the Owner's tool checks it.
+
+### C3. Newcomer: send the file, and your uid by another channel
+
+Send `~/bruno.toml`, unchanged, to the Owner (e-mail, a chat, a USB key). Then **tell the Owner
+your uid by phone or in person.** The uid in the file only proves the file is consistent;
+your voice proves it is yours.
+
+### C4. Owner: save the files, build the list, confirm each uid
+
+Save each received file in `~/.cgs/registration/`. No renaming, no editing.
 
 ```bash
-ATCGS_AUTHORIZE=OPX pixi run cgs OPX enrol ~/requests/bruno-hrdw.json   # check the uid
+pixi run cgs OPX intake
+# { "list": "~/.cgs/intake/2026-11-06.toml", "persons": 3, "confirmed": 0, "problems": [] }
+```
+
+`intake` needs no password. It verifies every file (format, the uid is the hash of the key,
+the proof of possession, the keys match what was asked) and writes the day's list. A file it
+cannot verify is named in `problems` and left out. Open the list:
+
+```toml
+[[person]]
+name         = "Bruno"
+registration = "~/.cgs/registration/bruno.toml"
+sha256       = "…"          # of the file as intake read it
+uid          = "e9b6c66e…"  # read it to Bruno on the phone
+confirmed    = false        # → true once he confirmed it
+grant        = { MOLO-HRDW = "DEV" }   # what he asked; you may change a level
+```
+
+Set `confirmed = true` for each person whose uid you checked. That is your only manual edit.
+If the project tree is not the newest `~/.cgs/<PROJECT>-*/`, add
+`[project.MOLO-HRDW]` with `tree = "…"` at the end of the list.
+
+### C5. Owner: one run
+
+```bash
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX onboard ~/.cgs/intake/2026-11-06.toml --plan   # read, check, print: writes nothing
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX onboard ~/.cgs/intake/2026-11-06.toml
+```
+
+The first command prints a table (person, project, level, what is still to do) and every
+problem it found: a changed file, a missing tree, uncommitted changes in the project's
+memory, you not being admin of a repository. Fix them and run it again.
+
+The second asks **your OPX login and password once**, then `Apply this plan? (y/N)`. On `y` it,
+for everyone confirmed: enrols them (master register), publishes the identities, pulls
+`.omniscience` into each project tree, admits them there, installs their keys on GitHub as
+deploy keys (write for OPX and DEV, read-only for USR, skipping those already there), and
+commits and pushes the project's register alone (never `--all`).
+
+It then writes, in `~/.cgs/intake/`: `2026-11-06-<name>.txt`, the message to send to each
+newcomer (Part D with their own project and level), and `2026-11-06-report.json`, one line
+per step. Registration files whose steps all went well move to
+`~/.cgs/registration/done/2026-11-06/`. A step that failed stays in the report and its file
+stays in the folder: fix the cause and run the same command again, every step is safe to repeat.
+
+Send each newcomer their message. Go to Part D.
+
+*Untested on the real repositories.*
+
+<details>
+<summary>By hand, what the run does (one person, one project)</summary>
+
+```bash
+# in your workspace
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX enrol ~/.cgs/registration/bruno.json   # a request in the old JSON form
 ATCGS_AUTHORIZE=OPX pixi run cgs OPX publish
-```
-
-`enrol` makes the person known to atCGS and grants **nothing**. `publish` puts the new
-identity in omniscience, where every project reads it ([TUTO 2](TUTO_2_OMNISCIENCE.md)).
-
-### C4. Owner: admit in the project
-
-From **the project's gate**, in your copy of the project:
-
-```bash
+# in the project's gate
 cd ~/.cgs/MOLO-HRDW-<timestamp>/.atcgs
-pixi run cgs OPX login MOLO-HRDW pull                         # gets what you just published
-ATCGS_AUTHORIZE=OPX pixi run cgs OPX admit ~/requests/bruno-hrdw.json
-```
-
-It prints the four grants, written in this project's register only.
-
-### C5. Owner: install the keys on GitHub
-
-```bash
+pixi run cgs OPX login MOLO-HRDW pull
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX admit ~/.cgs/registration/bruno.json
 pixi run deploy-keys --repo github:flipoyo/MOLONARI-hardware --repo github:flipoyo/.memory \
-  --repo github:flipoyo/atCGS --repo github:flipoyo/omniscience
-```
-
-It **prints** one `gh api …/keys` line per grant and runs nothing. Keep the newcomer's lines
-(title `atCGS <ROLE> <first 12 characters of the uid>`), read them, run them.
-
-- Only an **admin** of the GitHub repository can run them: on `flipoyo/*`, the Owner only.
-  Running them, or not, is how the Owner accepts or refuses someone.
-- OPX and DEV keys can push. USR keys are read-only: GitHub refuses their push.
-
-### C6. Owner: push the register
-
-The grants are only in your copy. Push them, so the newcomer's copy will see them:
-
-```bash
+  --repo github:flipoyo/atCGS --repo github:flipoyo/omniscience     # prints gh lines: read, run
 pixi run cgs OPX login MOLO-HRDW commit --all "admit Bruno as DEV on MOLO-HRDW"
 pixi run cgs OPX login MOLO-HRDW push --all
 ```
 
-Write commit messages on one line, without `'`.
+`request OUT REPO ROLE …` still writes the JSON form these commands read.
+</details>
 
 ## Part D — Newcomer: install the project and log in
 
-**After C6.** `bootstrap` clones over ssh (`git@github.com:`) and you have no GitHub key, so
+**After C5.** `bootstrap` clones over ssh (`git@github.com:`) and you have no GitHub key, so
 for this one command git reads the public repositories over https. The clones keep their
 ssh address: your atCGS keys use it from then on.
 
@@ -276,12 +324,12 @@ What each level may run through `login`:
 
 **Subtwins.** MOLO-TWX contains MOLO-HRDW as `hardware/`: the same repository, the same
 branch. What you push in MOLO-HRDW, MOLO-TWX gets with `pull`. But it is another project
-with its own register: you need to be admitted there too (C4 to C6 from MOLO-TWX's gate).
+with its own register: you need to be admitted there too (list it under MOLO-TWX in the same `OPX onboard`).
 
 ## Part F — Owner: remove someone
 
 ```bash
-# one right in one project: from that project's gate, then C6
+# one right in one project: from that project's gate, then commit and push as in the annex of C5
 ATCGS_AUTHORIZE=OPX pixi run cgs OPX revoke <uid> github:flipoyo/MOLONARI-hardware
 # the person, everywhere: from your workspace, then OPX publish
 ATCGS_AUTHORIZE=OPX pixi run cgs OPX revoke <uid>
@@ -297,14 +345,17 @@ Then delete their deploy keys on GitHub (`gh api repos/flipoyo/<repo>/keys`, the
 | You see | Who | Why | Do |
 |---|---|---|---|
 | `Permission denied (publickey)` at `bootstrap` | newcomer | git used ssh, and you have no key | Part D: the https line in front |
-| `DEV request needs OUT then at least one REPOSITORY ROLE pair` | newcomer | `request` without the pairs | C2 |
+| `DEV request needs OUT then at least one REPOSITORY ROLE pair` | newcomer | `request` without the pairs | use `request --register PROJECT=ROLE OUT.toml` (C2) |
+| `the plan has N problem(s), nothing was done` | Owner | `onboard` found something wrong | read the list it printed, fix, run again (C5) |
+| `no person is confirmed` | Owner | every `confirmed` is still `false` | check the uids, set `confirmed = true` (C4) |
+| `the registration file changed since intake` | Owner | a file was edited or replaced after `intake` | `OPX intake`, confirm again |
 | `the two passwords differ` | newcomer | a typo in the confirmation | run `request` again |
 | `does not match the pinned OPX key` / `is not OPX's pinned key` | anyone but the Owner | only the Owner enrols and admits | send the request file to the Owner |
 | `… is done in the master register` | Owner | `enrol`, `publish` or `revoke <uid>` run from a project's gate | run it in your workspace |
 | `enrolling a new identity is done in the master register` at `admit` | Owner | the project has not read the new identity yet | `OPX login <PROJECT> pull`, then `admit` again |
-| `this UID holds no DEV grant` (or OPX, USR) | newcomer | wrong level, a login or password typo, or C6 not done before D | check the level, retype, ask the Owner for C6 |
+| `this UID holds no DEV grant` (or OPX, USR) | newcomer | wrong level, a login or password typo, or C5 not done before D | check the level, retype, ask the Owner for C5 |
 | `no key is granted for this repository in this session` | anyone | a repository of the project is missing from the request | `request` it; the Owner admits and installs it |
-| `Permission denied (publickey)` at `login` | anyone | the deploy key is not on GitHub | C5 |
+| `Permission denied (publickey)` at `login` | anyone | the deploy key is not on GitHub | C5: read the report, run `OPX onboard` again |
 | `DEV may not run 'tag' through login` | anyone | not allowed at your level | the table in Part E |
 | `branch misalignment … .memory` | Owner | the memory is still on `main` | `OPX login <PROJECT> checkout CGS-MOLO` |
 | `failed to parse shell script … single quote` | anyone | a `'` in a commit message | write it without `'` |

@@ -1,0 +1,20 @@
+# atCGS registration. Send this file, unchanged, to the Owner.
+# It holds only public data: your uid, your public key, the public halves of your ssh keys.
+# Tell the Owner your uid by another channel (a call): it is how they know this file is yours.
+format  = "atcgs-registration/1"         # the format version; do not change
+name    = "Ada"                          # your name, for the Owner's report only; never written to a register
+uid     = "0000000000000000000000000000000000000000000000000000000000000000"   # sha256 of your public key
+created = 2026-11-06T10:42:00Z
+
+[ask]                                    # what you ask for, per project; the Owner decides
+MOLO-HRDW = "DEV"
+
+[request]                                # what the Owner's `admit` needs
+pub   = "…base64…"                       # your public key
+proof = "…base64…"                       # proof that you hold the private key
+keys  = [                                # one ssh public key per repository and role; the private halves stay in your GLYPH
+  { repo = "github:flipoyo/MOLONARI-hardware", role = "DEV", ssh = "ssh-ed25519 AAAA…" },
+  { repo = "github:flipoyo/.memory", role = "DEV", ssh = "ssh-ed25519 AAAA…" },
+  { repo = "github:flipoyo/atCGS", role = "USR", ssh = "ssh-ed25519 AAAA…" },
+  { repo = "github:flipoyo/omniscience", role = "USR", ssh = "ssh-ed25519 AAAA…" },
+]

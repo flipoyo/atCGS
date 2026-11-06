@@ -1,6 +1,6 @@
 # TUTO 2 — Omniscience: how a project knows who you are
 
-**atCGS 1.9.1-alpha, 2026-11-06.** This describes omniscience as it works today. Read
+**atCGS 1.10.0-alpha, 2026-11-06.** This describes omniscience as it works today. Read
 [TUTO 1](TUTO_1_OPERATE_A_PROJECT.md) first: it says when each command below is run.
 
 ## What it is, in three lines
@@ -39,9 +39,9 @@ public keys only, no names).
 
 | Who | Does | Command | When |
 |---|---|---|---|
-| Owner | writes the identities into omniscience | `ATCGS_AUTHORIZE=OPX pixi run cgs OPX publish` | after every `enrol` or `revoke <uid>` (TUTO 1, C3 and F) |
+| Owner | writes the identities into omniscience | `ATCGS_AUTHORIZE=OPX pixi run cgs OPX publish` | after every `enrol` or `revoke <uid>` (TUTO 1, C5 and F) |
 | atCGS (automatic) | copies them into a project's register | inside every `login` and `admit` | each time someone logs in or is admitted |
-| Owner | brings a project's copy up to date before admitting | `pixi run cgs OPX login <PROJECT> pull` | just before `admit` (TUTO 1, C4) |
+| Owner | brings a project's copy up to date before admitting | `pixi run cgs OPX login <PROJECT> pull` | just before `admit` (TUTO 1, C5: `onboard` does it) |
 | Newcomer | checks that they are published | `grep` (below) | before asking to be admitted |
 | Nobody else | writes omniscience | — | every key on it is read-only, except the Owner's |
 
@@ -85,7 +85,7 @@ published, update the two folders. They are public: read them over https, as at 
 ```bash
 export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=url.https://github.com/.insteadOf GIT_CONFIG_VALUE_0=git@github.com:
 git -C ~/.cgs/MOLO-HRDW-<timestamp>/.omniscience pull
-git -C ~/.cgs/MOLO-HRDW-<timestamp>/.cgitsync/.memory pull       # the grants (TUTO 1, C6)
+git -C ~/.cgs/MOLO-HRDW-<timestamp>/.cgitsync/.memory pull       # the grants (TUTO 1, C5)
 ```
 
 Once you can log in, `pixi run cgs <ROLE> login MOLO-HRDW pull` keeps both up to date.

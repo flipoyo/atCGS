@@ -360,3 +360,22 @@ registers. Proposed as a follow-up once S1–S6 are proven.
 - On closing: stamp `YYYYMMDD_OwnerOnboarding_DevPlanTicket.md`, move it to
   `.archive/`, and update the short ticket `github-deploy-keys` (M7 done for
   onboarding; revoke side in S8).
+
+## Closing — 2026-11-06
+
+Done in 1.9.1-alpha (not yet run on the real repositories):
+
+- **S0.** `atcgs/registration.py`: format `atcgs-registration/1`, the role template, `intake`;
+  `request --register` in `commands.py`; `examples/registration.toml`; a test checks that the
+  example, the tutorial's block and what `request` writes have the same shape.
+- **S1–S6.** `atcgs/onboard.py`: `OPX onboard LIST [--plan]`. `ATCGS_PROJECT` lets the workspace
+  act on a project tree (B1, B3); the OPX identity is derived once and passed to `enrol`, `publish`,
+  `admit` (B2); the pull of `.omniscience` is part of the run (B5); `gh` installs the deploy keys, idempotent (B4);
+  the register alone is committed (B6); the plan checks roles against the template (B7) and the
+  confirmed uid (B8).
+- **S7.** TUTO 1 Part C, REFERENCE § 5, `tests/test_onboard.py` (fake `gh`, local bare remotes).
+- **Not done:** S8 `offboard`. Deviations: the "no change outside .register" check looks at the
+  project's `.memory` only (the one repository the run commits); the register commit is a plain
+  git commit on the memory branch, without the cgitsync memory fold; `--plan` needs
+  `ATCGS_AUTHORIZE=OPX` like every OPX verb.
+- **Next:** run it for real with one newcomer, then archive.

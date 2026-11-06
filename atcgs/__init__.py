@@ -23,7 +23,7 @@ from ComplexGitSync.orchestre.op_levels import LEVELS
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.9.1-alpha"
+__version__ = "1.10.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -75,7 +75,7 @@ CORE_OPERATIONS = frozenset(
     {"bootstrap", "initialise", "status", "view-tree", "env", "--version", "--help", "-h"}
 )
 CORE_RELEASE = frozenset({("release", "freeze"), ("release", "list"), ("release", "load")})
-IDENTITY_VERBS = frozenset({"init", "request", "enrol", "admit", "revoke", "login", "publish"})
+IDENTITY_VERBS = frozenset({"init", "request", "enrol", "admit", "revoke", "login", "publish", "intake", "onboard"})
 # The cgitsync commands `<LAYER> login TWIN <op ...>` may run, by level: the everyday
 # loop, so atCGS is developed through @cgs (Dogfooding). The keys a level gets decide
 # what the remote accepts; this list only keeps a level to the commands it needs.
@@ -111,6 +111,10 @@ USAGE = """usage: @cgs {OPX,DEV,USR,PUB} [argument ...]
   OPX init                     enrol OPX itself, with the key pinned in spec/contracts.toml
   <layer> request OUT REPO ROLE [REPO ROLE ...]
                                new ssh keys, sealed in your GLYPH; OUT is the request for OPX
+  <layer> request --register PROJECT=ROLE [--register ...] [--name NAME] OUT.toml
+                               the same for whole projects; OUT.toml is the registration file for the Owner
+  OPX intake [FOLDER]          build the day's list from the registration files (no password)
+  OPX onboard LIST [--plan]    enrol, publish, admit, install deploy keys, push the registers: one run
   OPX enrol REQUEST            enrol the requester only (master register); no grant
   OPX admit REQUEST            enrol the requester and grant what it asks
   OPX revoke UID [REPO]        revoke a UID, or only its grant on REPO
@@ -207,7 +211,8 @@ class OpFrontier:
                              f"{', '.join(sorted(LOGIN_OPS[layer]))}")
         if args[0] == "request":
             raise ValueError(f"{layer} request needs OUT then at least one REPOSITORY ROLE pair: "
-                             f"{layer} request OUT github:owner/repo DEV [REPO ROLE ...]")
+                             f"{layer} request OUT github:owner/repo DEV [REPO ROLE ...], "
+                             f"or {layer} request --register PROJECT=ROLE [--name NAME] OUT.toml")
         raise ValueError(f"unsupported @cgs {layer} argument: {args[0]!r}")
 
 
@@ -217,7 +222,15 @@ def _identity_request(layer: str, args: Sequence[str]) -> bool:
     if verb == "init":
         return layer == "OPX" and not rest
     if verb == "request":
+        if rest and rest[0] in ("--register", "--name"):  # request --register P=R [--name N] OUT.toml
+            return len(rest) >= 3 and "--register" in rest
         return len(rest) >= 3 and len(rest) % 2 == 1
+    if verb == "intake":
+        return layer == "OPX" and len(rest) <= 1
+    if verb == "onboard":  # LIST [--plan]: exactly one path, at most one --plan
+        paths = [a for a in rest if not a.startswith("--")]
+        return layer == "OPX" and len(paths) == 1 and all(a == "--plan" for a in rest if a.startswith("--")) \
+            and rest.count("--plan") <= 1
     if verb == "admit":
         return layer == "OPX" and len(rest) == 1
     if verb == "enrol":

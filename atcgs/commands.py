@@ -32,11 +32,13 @@ from atcgs.journal import (
     canonical,
     enrol_statement,
     fingerprint,
+    ssh_public,
 )
 from atcgs.session import AccessRefused, Session, repo_path
 
 OPX_PUB_ENV = "ATCGS_OPX_PUB"  # overrides the pin, for the lab and the tests
 GLYPHS_ENV = "ATCGS_GLYPHS"  # where a user's GLYPHs live; default ~/.cgs/.glyph
+PROJECT_ENV = "ATCGS_PROJECT"  # act on this project tree from the workspace (OPX onboard); never a user input
 # A level's 4-bit code is its PoE vector over (NAME, NODE, EDGE, OP), from ComplexGitSync:
 # OPX 0000, DEV 1000, USR 1100, PUB 1111. OPX is POE.
 ROLE_CODES: Mapping[str, str] = {
@@ -81,6 +83,9 @@ def project_root(env: Mapping[str, str] | None = None) -> Path:
     Where atCGS is the project's own root that is atCGS itself; where it is a read-only mount
     inside another project's tree, it is that project's root, and the register is that project's.
     """
+    forced = _env(env).get(PROJECT_ENV)
+    if forced:
+        return Path(forced)
     for directory in (ROOT, *ROOT.parents):
         if (directory / PRIVATE).is_dir():
             return directory
@@ -152,8 +157,9 @@ def _write_private(path: Path, data: bytes) -> None:
     os.replace(draft, path)
 
 
-def _opx(reg: Register) -> Identity:
-    opx = ask_identity("OPX")
+def _opx(reg: Register, given: Identity | None = None) -> Identity:
+    """OPX's identity: the one already derived in this run, else asked (login and password)."""
+    opx = given or ask_identity("OPX")
     if opx.pub != reg.opx_pub:
         raise Unauthorized("this login/password is not OPX's pinned key")
     return opx
@@ -181,7 +187,49 @@ def init(authorization: Authorization, env: Mapping[str, str] | None = None) -> 
     return {"layer": "OPX", "uid": opx.uid, "pinned": True, "enrolled": True}
 
 
+def _register_form(args: tuple[str, ...]) -> tuple[Path, str, dict[str, str]]:
+    """`--register PROJECT=ROLE ... [--name NAME] OUT.toml` -> (OUT, NAME, {PROJECT: ROLE})."""
+    ask: dict[str, str] = {}
+    name, out, rest = "", None, list(args)
+    while rest:
+        word = rest.pop(0)
+        if word == "--register" and rest:
+            project, _, role = rest.pop(0).partition("=")
+            if not project or role not in ROLES:
+                raise ValueError(f"--register PROJECT=ROLE, with a role of {', '.join(ROLES)}")
+            ask[project] = role
+        elif word == "--name" and rest:
+            name = rest.pop(0)
+        elif not word.startswith("--") and out is None:
+            out = Path(word)
+        else:
+            raise ValueError(f"unexpected argument {word!r}: request --register PROJECT=ROLE [--name NAME] OUT.toml")
+    if out is None or not ask:
+        raise ValueError("request --register PROJECT=ROLE [--register ...] [--name NAME] OUT.toml")
+    return out, name, ask
+
+
+def request_registration(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = None) -> dict[str, object]:
+    """Ask for the keys of whole projects and write the registration file for the Owner."""
+    from atcgs import registration
+
+    out, name, ask = _register_form(args)
+    wanted = registration.asked_pairs(ask, ROOT / "examples")
+    me = ask_identity(layer, confirm=True)
+    keys = [SshKey.generate(repo, role) for repo, role in wanted]
+    path = glyph_path(me.uid, env)
+    _write_private(path, reseal(me, path.read_bytes() if path.exists() else None, keys))
+    proof = me.sign(enrol_statement(me.pub))
+    listed = [{"repo": k.repo, "role": k.role, "ssh": k.public} for k in keys]
+    out.write_text(registration.render(name, me.uid, me.pub, proof, ask, listed), encoding="utf-8")
+    return {"uid": me.uid, "glyph": str(path), "registration": str(out), "ask": ask,
+            "keys": [{"repo": k["repo"], "role": k["role"], "fingerprint": fingerprint(k["ssh"])} for k in listed],
+            "next": f"send {out} to the Owner, unchanged, and tell them your uid by another channel"}
+
+
 def request(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = None) -> dict[str, object]:
+    if args and args[0] == "--register" or (args and args[0] == "--name"):
+        return request_registration(layer, args, env)
     out, pairs = Path(args[0]), list(zip(args[1::2], args[2::2]))
     for _, role in pairs:
         if role not in ROLES:
@@ -197,25 +245,37 @@ def request(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = N
             "keys": [{"repo": k["repo"], "role": k["role"], "fingerprint": fingerprint(k["ssh"])} for k in listed]}
 
 
+def admit_doc(reg: Register, opx: Identity, doc: Mapping[str, object], env: Mapping[str, str] | None = None,
+              keys: list[Mapping[str, str]] | None = None) -> list[dict[str, str]]:
+    """Enrol (master only) if new, then grant *keys* (default: all of the request) in this register.
+
+    A grant already in the register, same role and same key, is skipped: running it again changes nothing.
+    """
+    sync_identities(reg, env)
+    uid = str(doc["uid"])
+    if not reg.state().known(uid):
+        _master_only("enrolling a new identity", env)
+        reg.enrol(opx, base64.b64decode(str(doc["pub"]), validate=True), base64.b64decode(str(doc["proof"]), validate=True))
+    granted = []
+    for key in (doc["keys"] if keys is None else keys):  # type: ignore[union-attr]
+        held = reg.state().roles(uid).get(key["repo"])
+        if held is None or (held.role, held.ssh) != (key["role"], ssh_public(key["ssh"])):
+            reg.grant(opx, uid, key["repo"], key["role"], key["ssh"])
+        granted.append({"repo": key["repo"], "role": key["role"], "fingerprint": fingerprint(key["ssh"])})
+    return granted
+
+
 def admit(authorization: Authorization, args: tuple[str, ...],
-          env: Mapping[str, str] | None = None) -> dict[str, object]:
+          env: Mapping[str, str] | None = None, who: Identity | None = None) -> dict[str, object]:
     authorization.require("OPX")
     doc = json.loads(Path(args[0]).read_text(encoding="utf-8"))
     reg = register(env)
-    opx = _opx(reg)
-    sync_identities(reg, env)
-    if not reg.state().known(doc["uid"]):
-        _master_only("enrolling a new identity", env)
-        reg.enrol(opx, base64.b64decode(doc["pub"], validate=True), base64.b64decode(doc["proof"], validate=True))
-    granted = []
-    for key in doc["keys"]:
-        reg.grant(opx, doc["uid"], key["repo"], key["role"], key["ssh"])
-        granted.append({"repo": key["repo"], "role": key["role"], "fingerprint": fingerprint(key["ssh"])})
-    return {"uid": doc["uid"], "granted": granted}
+    opx = _opx(reg, who)
+    return {"uid": doc["uid"], "granted": admit_doc(reg, opx, doc, env)}
 
 
 def enrol(authorization: Authorization, args: tuple[str, ...],
-          env: Mapping[str, str] | None = None) -> dict[str, object]:
+          env: Mapping[str, str] | None = None, who: Identity | None = None) -> dict[str, object]:
     """Enrol the identity of a request in the master register, and grant nothing.
 
     A user's access belongs to each twin's own register: `OPX publish`, then `OPX admit REQUEST`
@@ -225,7 +285,7 @@ def enrol(authorization: Authorization, args: tuple[str, ...],
     _master_only("enrolling an identity", env)
     doc = json.loads(Path(args[0]).read_text(encoding="utf-8"))
     reg = register(env)
-    opx = _opx(reg)
+    opx = _opx(reg, who)
     if reg.state().known(doc["uid"]):
         return {"uid": doc["uid"], "enrolled": False, "reason": "already known"}
     reg.enrol(opx, base64.b64decode(doc["pub"], validate=True), base64.b64decode(doc["proof"], validate=True))
@@ -233,10 +293,10 @@ def enrol(authorization: Authorization, args: tuple[str, ...],
 
 
 def revoke(authorization: Authorization, args: tuple[str, ...],
-           env: Mapping[str, str] | None = None) -> dict[str, object]:
+           env: Mapping[str, str] | None = None, who: Identity | None = None) -> dict[str, object]:
     authorization.require("OPX")
     reg = register(env)
-    opx = _opx(reg)
+    opx = _opx(reg, who)
     if len(args) == 1:
         _master_only("revoking an identity", env)
         reg.revoke_identity(opx, args[0], "revoked by OPX")
@@ -340,7 +400,8 @@ def _repo_of(url: str) -> str:
     return path.strip("/").removesuffix(".git").lower()
 
 
-def publish(authorization: Authorization, env: Mapping[str, str] | None = None) -> dict[str, object]:
+def publish(authorization: Authorization, env: Mapping[str, str] | None = None,
+            who: Identity | None = None) -> dict[str, object]:
     """Copy the master identity journal to .omniscience, branch CGS-MOLO, from a throwaway worktree.
 
     The tree's own .omniscience checkout never moves: the branch is written in a worktree that lives
@@ -349,7 +410,7 @@ def publish(authorization: Authorization, env: Mapping[str, str] | None = None) 
     authorization.require("OPX")
     _master_only("publishing the identities", env)
     reg = register(env)
-    opx = _opx(reg)
+    opx = _opx(reg, who)
     entries = reg.identity.entries()
     reg.verify_identities(entries)
     head = hashlib.sha256(canonical(entries[-1])).hexdigest()
@@ -386,6 +447,16 @@ def publish(authorization: Authorization, env: Mapping[str, str] | None = None) 
     return {"published": True, "branch": PUBLISH_BRANCH, "lines": len(entries), "head": head}
 
 
+REGISTRATION_ENV = "ATCGS_REGISTRATION"  # the Owner's folder of received registration files
+INTAKE_ENV = "ATCGS_INTAKE"  # where `OPX intake` writes the day's list
+
+
+def _folder(variable: str, name: str, given: tuple[str, ...] = ()) -> Path:
+    if given:
+        return Path(given[0]).expanduser()
+    return Path(os.environ.get(variable) or Path.home() / ".cgs" / name)
+
+
 def dispatch(req: Request, authorization: Authorization) -> dict[str, object]:
     verb, args = req.args[0], tuple(req.args[1:])
     if verb == "init":
@@ -400,6 +471,14 @@ def dispatch(req: Request, authorization: Authorization) -> dict[str, object]:
         return revoke(authorization, args)
     if verb == "publish":
         return publish(authorization)
+    if verb == "intake":
+        from atcgs import registration
+        return registration.intake(_folder(REGISTRATION_ENV, "registration", args[:1]), _folder(INTAKE_ENV, "intake"),
+                                   ROOT / "examples")
+    if verb == "onboard":
+        from atcgs import onboard
+        listed = next(a for a in args if not a.startswith("--"))
+        return onboard.run(authorization, Path(listed), plan_only="--plan" in args)
     if verb == "login":
         return login(req.layer, args)
     raise ValueError(f"unknown identity verb: {verb!r}")
