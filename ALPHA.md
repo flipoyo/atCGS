@@ -7,7 +7,7 @@ Its `OpFrontier` accepts exactly four case-sensitive System Layer selectors,
 selector, then passed unchanged to `ComplexGitSync.cli.main`, which routes
 mutating operations via `RoutedClient -> Op`.
 
-Inner version: `1.12.0-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
+Inner version: `1.13.0-alpha` (SemVer 2.0.0; the ALPHA stage is the `-alpha`
 prerelease). Its single source is `atcgs.__version__`; `@cgs --version` prints it.
 
 **Build name.** The project is `CGS`; its build is the executable in the Pixi
@@ -25,7 +25,7 @@ rules, so `@cgs` and `cgitsync` share one environment. Every command is a task:
 ```bash
 pixi install
 pixi run cgs --help
-pixi run cgs --version    # ComplexGraphSync 1.12.0-alpha (local, no cgitsync)
+pixi run cgs --version    # ComplexGraphSync 1.13.0-alpha (local, no cgitsync)
 pixi run cgs OPX          # emits .gts OPX DEV .cgs (evidence: unverified)
 pixi run cgs DEV          # emits .cgs DEV USR .toml
 pixi run cgs USR          # emits .toml USR PUB .omniscience
@@ -36,7 +36,7 @@ ATCGS_AUTHORIZE=OPX pixi run cgs OPX bootstrap example.cgs
 ATCGS_AUTHORIZE=DEV pixi run cgs DEV status
 ATCGS_AUTHORIZE=DEV pixi run cgs DEV release freeze "ALPHA release" --dry-run
 ATCGS_AUTHORIZE=OPX,DEV pixi run cgs DEV .cgitsync   # resolve the PRIVATE mount
-ATCGS_AUTHORIZE=DEV pixi run cgs DEV env check --cgs examples/cgs-dev.cgs
+ATCGS_AUTHORIZE=DEV pixi run cgs DEV env check --cgs examples/cgs-alpha.cgs
 # Identity and access (REFERENCE.md § 6); logins and passwords are asked, never passed:
 pixi run identity-demo                      # the whole flow on throwaway data
 pixi run local-remote                       # the same against a local sshd: DEV pushes, USR only fetches
@@ -76,33 +76,35 @@ asking for `.cgitsync`).
 ## The environment feature
 
 `cgitsync env show|check` reaches cgitsync through OpFrontier like any other
-verb (`OPX`/`DEV`, with `ATCGS_AUTHORIZE`). Each `cgs-*.cgs` tree declares the
-same `[environment]` (Python from `pixi.toml`, Git, Pixi, manifest `pixi.toml`,
+verb (`OPX`/`DEV`, with `ATCGS_AUTHORIZE`). `examples/cgs-alpha.cgs` declares the
+`[environment]` (Python from `pixi.toml`, Git, Pixi, manifest `pixi.toml`,
 `environment_root = "root"`), so the drift `env check` reports for @cgs is the
-one cgitsync reports for itself. `tests/test_layers.py` keeps them in step.
+one cgitsync reports for itself. `tests/test_layers.py` keeps it in step.
 
-## Layer trees: cgs-opx.cgs, cgs-dev.cgs, cgs-usr.cgs
+## The workspace tree: cgs-alpha.cgs
 
 `POEX.cgs` at the root is the **PUB** install, the `install.cgs` of atCGS, and
-mounts nothing private. `examples/cgs-{opx,dev,usr}.cgs` install the other
-levels, mirroring ComplexGitSync's `complexgitsync-{opx,dev,usr}.cgs` and the
-gate pattern of `gx4g-*.cgs`. Every level is project `cgs`. The files are named `cgs-<level>.cgs` and each names its level's branch first, then `CGS-ALPHA` (LinkAtCGS §7): `cgs-dev.cgs` says `default_branch = "dev"`, `fallback_branch = "CGS-ALPHA"`.
+mounts nothing private. `examples/cgs-alpha.cgs` is the one tree the Owner installs: project
+`cgs` on `CGS-ALPHA`, the one branch of the whole alpha series. There is no level branch (`opx`,
+`dev`, `usr`) and no level file: what a DEV or a USR gets is the role template of
+`request --register` (TUTO 1 C2). The name is not a level file for ComplexGitSync, which reads
+`cgs-<xxx>.cgs` as branch `xxx` only for a three-character `xxx`.
 
-| Mount | OPX | DEV | USR |
-| --- | --- | --- | --- |
-| `.omniscience`: `github:flipoyo/omniscience`, the ledger, branch `cgs_CGS-ALPHA` | writable | no | never |
-| `.cgitsync/.memory`: `.register`, atCGS's private register (`ATCGS_REGISTER` overrides it) | writable | no | never |
-| `.agent/.distant`: `.ticketing`, `DevSpec`, `DocSpec` | read-only | read-only | no |
-| `.agent/.local`: `.dev`, `.localSpec`, `.claude`, branch `cgs_CGS-ALPHA` | writable | writable | no |
+| Mount | Owner |
+| --- | --- |
+| `.omniscience`: `github:flipoyo/omniscience`, the ledger, branch `cgs_CGS-ALPHA` | writable |
+| `.cgitsync/.memory`: `.register`, atCGS's master register (`ATCGS_REGISTER` overrides it) | writable |
+| `.agent/.distant`: `.ticketing`, `DevSpec`, `DocSpec` | read-only |
+| `.agent/.local`: `.dev`, `.localSpec`, `.claude`, branch `cgs_CGS-ALPHA` | writable |
 
 ```bash
-pixi run cgitsync bootstrap examples/cgs-dev.cgs cgs
+pixi run cgitsync bootstrap examples/cgs-alpha.cgs cgs
 ```
 
 The Operating Space reads `.omniscience` and `.cgitsync`. `.cgitsync` is not a
 mount: it is cgitsync's own directory, which no tree mounts ComplexGitSync into.
-OPX and DEV mount ComplexGitSync at `./ComplexGitSync` instead, on `CGS-ALPHA`:
-it is the editable checkout of `@cgs/pixi.toml`, the development manifest. USR does not mount it.
+The tree mounts ComplexGitSync at `./ComplexGitSync` instead, on `CGS-ALPHA`:
+it is the editable checkout of `@cgs/pixi.toml`, the development manifest.
 `.omniscience` holds the ledger at the tree's root, the way the gate holds the
 register in a GX4G Operating Space. The mount points are separate Git
 repositories, listed in `.gitignore` with `.cgitsync/`.

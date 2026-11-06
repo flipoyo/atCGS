@@ -197,11 +197,44 @@ class GlyphTests(unittest.TestCase):
     def test_fresh_nonce(self):
         self.assertNotEqual(seal(ALICE, self.keys), seal(ALICE, self.keys))
 
-    def test_capacity(self):
-        many = [SshKey.generate(f"github:o/r{i}", "DEV") for i in range(17)]
-        seal(ALICE, many)
+    def test_the_glyph_grows_by_four_when_the_keys_no_longer_fit(self):
+        from atcgs import glyph as g
+
+        small = [SshKey.generate(f"github:o/r{i}", "DEV") for i in range(15)]
+        self.assertEqual(len(seal(ALICE, small)), g.glyph_bytes(0))  # 8 KiB, as before
+        more = [*small, *(SshKey.generate(f"github:o/x{i}", "DEV") for i in range(10))]
+        sealed = seal(ALICE, more)
+        self.assertEqual(len(sealed), g.glyph_bytes(1))  # 32 KiB
+        self.assertEqual(len(open_glyph(ALICE, sealed)), 25)
+        many = [*more, *(SshKey.generate(f"github:o/y{i}", "DEV") for i in range(60))]
+        self.assertEqual(len(seal(ALICE, many)), g.glyph_bytes(2))  # 128 KiB
+        self.assertEqual(g.glyph_bytes(1), 4 * g.GLYPH_BYTES)
+        self.assertEqual((g.side(0), g.side(1), g.side(2)), (256, 512, 1024))
+
+    def test_a_glyph_never_shrinks_and_an_old_one_opens_unchanged(self):
+        from atcgs import glyph as g
+
+        many = [SshKey.generate(f"github:o/r{i}", "DEV") for i in range(25)]
+        big = seal(ALICE, many)
+        again = seal(ALICE, many[:2], min_level=g.level_of(big))  # fewer keys, same level: the size hides the count
+        self.assertEqual(len(again), len(big))
+        self.assertEqual(len(reseal(ALICE, big, [SshKey.generate("github:o/z", "USR")])), len(big))
+        old = seal(ALICE, self.keys)  # the format of 2026-11-05
+        self.assertEqual((len(old), len(open_glyph(ALICE, reseal(ALICE, old, [])))), (g.GLYPH_BYTES, 2))
+
+    def test_a_file_of_no_level_is_refused_and_a_grown_one_resists_a_bit_flip(self):
+        from atcgs import glyph as g
+
+        glyph = seal(ALICE, [SshKey.generate(f"github:o/r{i}", "DEV") for i in range(25)])
         with self.assertRaises(GlyphError):
-            seal(ALICE, [*many, *(SshKey.generate(f"github:o/x{i}", "DEV") for i in range(3))])
+            open_glyph(ALICE, glyph[:-1])  # truncated
+        with self.assertRaises(GlyphError):
+            open_glyph(ALICE, glyph + b"\0")
+        bad = bytearray(glyph)
+        bad[g.glyph_bytes(1) - 1] ^= 1
+        with self.assertRaises(GlyphError):
+            open_glyph(ALICE, bytes(bad))
+        self.assertTrue(to_pbm(glyph).startswith(b"P4\n512 512\n"))
 
     def test_reseal_adds(self):
         glyph = reseal(ALICE, seal(ALICE, self.keys[:1]), self.keys[1:])
@@ -370,7 +403,7 @@ class CommandTests(unittest.TestCase):
     def test_full_cycle(self):
         opx = ["opx", "opx passphrase"]
         alice = ["alice", "alice passphrase"]
-        self.assertEqual(self.cgs(opx + opx[1:], "OPX", "init")[0], 0)
+        Register(self.dir / "register", OPX.pub).init(OPX)
         code, out, _ = self.cgs(alice + alice[1:], "DEV", "request", "req.json", REPO, "DEV")
         self.assertEqual((code, out["uid"]), (0, ALICE.uid))
         request = (self.dir / "req.json").read_text()
@@ -394,17 +427,8 @@ class CommandTests(unittest.TestCase):
         self.assertEqual(code, 3)
         self.assertNotIn("alice passphrase", err)
 
-    def test_init_without_a_pin_prints_the_key_to_pin(self):
-        del self.env["ATCGS_OPX_PUB"]
-        with mock.patch.object(cmd, "ROOT", self.dir):
-            (self.dir / "spec").mkdir()
-            (self.dir / "spec/contracts.toml").write_text('[identity]\nopx_pub = ""\n')
-            code, out, _ = self.cgs(["opx", "opx passphrase", "opx passphrase"], "OPX", "init")
-        self.assertEqual((code, out["pinned"], out["idpub"]), (0, False, base64.b64encode(OPX.pub).decode()))
-        self.assertFalse((self.dir / "register").exists())
-
     def test_admit_needs_the_pinned_opx(self):
-        self.cgs(["opx", "opx passphrase", "opx passphrase"], "OPX", "init")
+        Register(self.dir / "register", OPX.pub).init(OPX)
         self.cgs(["bob", "bob passphrase", "bob passphrase"], "USR", "request", "req.json", REPO, "USR")
         code, _, err = self.cgs(["bob", "bob passphrase"], "OPX", "admit", "req.json")
         self.assertEqual(code, 3)

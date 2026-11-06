@@ -23,7 +23,7 @@ from ComplexGitSync.orchestre.op_levels import LEVELS
 # Inner SemVer 2.0.0 of ComplexGraphSync/@cgs: the single source of truth that
 # pixi.toml, spec/contracts.toml and the docs must match.
 # The ALPHA stage is the `-alpha` prerelease; it is not the CGS-ALPHA engine pin.
-__version__ = "1.12.0-alpha"
+__version__ = "1.13.0-alpha"
 SYSTEM = f"ComplexGraphSync {__version__}"
 
 # PRIME G is an ontology, not an alternate implementation of CGS invariants.
@@ -244,7 +244,10 @@ def _request_arity(rest: Sequence[str]) -> bool:
 def _identity_request(layer: str, args: Sequence[str]) -> bool:
     """The identity verbs and their arity (REFERENCE.md § 6); the arguments are never secrets."""
     verb, rest = args[0], args[1:]
-    opx_only = {"init": not rest, "intake": len(rest) <= 1, "admit": len(rest) == 1, "enrol": len(rest) == 1,
+    opx_only = {"init": len([a for a in rest if not a.startswith("--")]) <= 1
+                and _flags_ok([a for a in rest if a.startswith("--")] if "--from" not in rest else
+                              [a for a in rest if a.startswith("--") and a != "--from"], ("--plan",), ()),
+                "intake": len(rest) <= 1, "admit": len(rest) == 1, "enrol": len(rest) == 1,
                 "revoke": len(rest) in (1, 2), "publish": not rest,
                 "onboard": len([a for a in rest if not a.startswith("--")]) == 1
                 and _flags_ok([a for a in rest if a.startswith("--")], ("--plan",), ())}

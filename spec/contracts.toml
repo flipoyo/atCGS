@@ -1,7 +1,7 @@
-# atCGS 1.12.0-alpha — ordered literal tuples; not .cgs grammar.
+# atCGS 1.13.0-alpha — ordered literal tuples; not .cgs grammar.
 [contract]
 project = "ComplexGraphSync"
-version = "1.12.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.13.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 state = "DECLARED_ONLY"
 prime_g = ["NAME", "NODE", "EDGE", "OP"]
 prime_cgs = ["OPX", "DEV", "USR", "PUB"]
@@ -58,21 +58,21 @@ prototype = [
  ["PUB", "DELTA", "POEX", "KEY"],
  ["KEY", "OPX", "CGS", "PUB"],
 ]
-[glyph]  # the GLYPH covers a user's ssh keys: a sealed 256x256-bit envelope (REFERENCE.md § 6)
+[glyph]  # the GLYPH covers a user's ssh keys: a sealed envelope, 256x256 bits at least, x4 in size when full (REFERENCE.md § 6)
 sequence = [
  ["NAME", "GLYPH", "POEX", "OPX"],
  ["NAME", "GLYPH", "PUB", ".toml"],
 ]
-shape = [256, 256]
-bytes = 8192
+shape = [256, 256]  # level 0, the smallest
+bytes = 8192  # level 0
+growth = 4  # level n holds 4**n times as many bytes; read from the file length, never shrinks
 layout = ["CGSG", "version", "nonce", "ciphertext", "tag"]
 sizes = [4, 1, 12, 8159, 16]
 aead = "ChaCha20-Poly1305"
 key = "HKDF-SHA256(IDSEED, info = atCGS/glyph/v1)"
 published = false  # a GLYPH is never published, even sealed
 [identity]  # login, password -> Ed25519; only the public key is registered (REFERENCE.md § 6)
-# OPX's IDPUB, base64: the root of trust. Empty until the owner runs `@cgs OPX init`.
-opx_pub = "qL1FhYN4yQrRd6/cOa92zPG6rsu2t8JXirlntzsYDMo="
+# OPX's IDPUB, the root of trust, is not here: `@cgs OPX init` pins it in spec/opx.toml (append-only).
 kdf = "Argon2id"
 kdf_salt = "atCGS/id/v1/<profile>/<login>"
 kdf_cost = { memory_kib = 262144, iterations = 3, lanes = 1 }

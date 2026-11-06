@@ -147,9 +147,9 @@ class GateTests(Project):
     def answers(self, *answers):
         return mock.patch.object(cmd, "ask", side_effect=list(answers))
 
-    def test_a_project_register_never_enrols_or_revokes(self):
+    def test_a_project_register_never_revokes_an_identity_or_publishes(self):
         self.master(ALICE)
-        for call in (lambda: cmd.init(AUTH), lambda: cmd.revoke(AUTH, (ALICE.uid,)),
+        for call in (lambda: cmd.revoke(AUTH, (ALICE.uid,)),
                      lambda: cmd.publish(AUTH)):
             with self.subTest(call=call), self.answers("opx", "opx passphrase", "opx passphrase"), \
                     self.assertRaises(Unauthorized):

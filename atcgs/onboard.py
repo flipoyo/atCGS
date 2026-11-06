@@ -27,7 +27,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Callable, Iterator
 
-from atcgs import PRIVATE, Authorization, credential, registration
+from atcgs import PRIVATE, Authorization, credential, pin, registration
 from atcgs import commands as cmd
 from atcgs.identity import Identity, uid_of
 from atcgs.journal import ssh_public
@@ -163,15 +163,12 @@ def _repo_named(project: str, name: str, examples: Path) -> str:
 def _check_tree(project: str, tree: Path, examples: Path) -> list[str]:
     """Problems with one project tree; none means the Owner can act on it."""
     problems = []
-    pinned = tree / ".atcgs" / "spec" / "contracts.toml"
     try:
-        import base64
-        import tomllib
-        theirs = tomllib.loads(pinned.read_text(encoding="utf-8")).get("identity", {}).get("opx_pub", "")
-        if theirs != base64.b64encode(cmd.opx_pub()).decode():
+        theirs = pin.read(tree / ".atcgs")  # spec/opx.toml, else the legacy line of contracts.toml
+        if theirs != cmd.opx_pub():
             problems.append(f"{project}: its gate pins another OPX key than this workspace: update {tree}/.atcgs")
     except (OSError, ValueError):
-        problems.append(f"{project}: cannot read the OPX key pinned by {pinned}")
+        problems.append(f"{project}: cannot read the OPX key pinned by {tree}/.atcgs")
     with in_tree(tree):
         try:
             state = cmd.register().state()
@@ -259,6 +256,10 @@ def build_plan(list_path: Path, gh: GitHub, examples: Path) -> Plan:
     plan = Plan(date, Path(list_path).expanduser())
     if not cmd.is_master():
         plan.problems.append("onboard runs in the workspace (the master register), not in a project's gate")
+        return plan
+    if (branch := credential.retired_branch(cmd.project_root())) is not None:
+        plan.problems.append(f"this workspace is on the retired level branch {branch}: its register lags behind the "
+                             "master; install a new one with `pixi run cgs OPX init`")
         return plan
     try:
         known = cmd.register().state()

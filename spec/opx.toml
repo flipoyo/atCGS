@@ -1,0 +1,7 @@
+# atCGS OPX: the key every register trusts. Written by `@cgs OPX init`; never edited by hand.
+# Append-only: the last [[pin]] is in force, the earlier ones are history.
+
+[[pin]]
+opx_pub = "qL1FhYN4yQrRd6/cOa92zPG6rsu2t8JXirlntzsYDMo="
+uid     = "35c65c668cb895b0fff2e5ca094bbc465ee27f5cf43159a6ca72f33ed161d104"
+since   = 2026-11-05

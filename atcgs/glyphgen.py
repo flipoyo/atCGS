@@ -21,7 +21,7 @@ from typing import Callable, Sequence
 
 from atcgs import PRIVATE, credential, onboard
 from atcgs import commands as cmd
-from atcgs.glyph import GlyphError, SshKey, open_glyph, seal
+from atcgs.glyph import GlyphError, SshKey, level_of, open_glyph, seal
 from atcgs.identity import Identity
 from atcgs.journal import Register, fingerprint, ssh_public
 from atcgs.session import repo_path
@@ -160,7 +160,8 @@ def _install_glyph(me: Identity, target: Path, needs: Sequence[Need], old: Seque
     unique = {id(k): k for k in served.values()}.values()
     gone = {(repo_path(n.repo), n.role) for n in needs if n.gone}
     kept = [k for k in old if (repo_path(k.repo), k.role) not in served and (repo_path(k.repo), k.role) not in gone]
-    glyph = seal(me, [*unique, *kept])
+    previous = level_of(target.read_bytes()) if target.exists() else 0
+    glyph = seal(me, [*unique, *kept], min_level=previous)  # it grows, it never shrinks
     if target.exists():
         shutil.copy2(target, target.with_name(f"{target.name}.{datetime.datetime.now():%Y%m%d%H%M%S}.bak"))
     cmd._write_private(target, glyph)
@@ -179,13 +180,19 @@ def _request_file(me: Identity, work: Sequence[Need], out: Path | None) -> Path:
 def run(layer: str, args: tuple[str, ...], gh: onboard.GitHub | None = None) -> dict[str, object]:
     """`generate-glyph [--from PATH] [--tree PATH]... [--out FILE] [--plan]`."""
     source, out, extra, plan_only = _parse(args)
-    me = cmd.ask_identity(layer)
+    return regenerate(cmd.ask_identity(layer), source, out, [(p.name, p) for p in extra] or None, plan_only, gh)
+
+
+def regenerate(me: Identity, source: Path | None = None, out: Path | None = None,
+               trees: Sequence[tuple[str, Path]] | None = None, plan_only: bool = False,
+               gh: onboard.GitHub | None = None, assume_yes: bool = False) -> dict[str, object]:
+    """Get *me* a working GLYPH: take the copy at *source*, or keep and regenerate. *me* is already derived."""
     target = cmd.glyph_path(me.uid)
     if source is not None:
         return adopt(me, source, target)
     # never overwrite a GLYPH this login cannot open: it may be someone else's (open_glyph raises)
     keys = open_glyph(me, target.read_bytes()) if target.exists() else []
-    trees = [(p.name, p) for p in extra] if extra else credential.discover()
+    trees = list(trees or credential.discover())
     pinned = me.pub == cmd.opx_pub()
     gh = gh or (onboard.GitHub() if pinned else None)
     if gh is not None:
@@ -195,9 +202,10 @@ def run(layer: str, args: tuple[str, ...], gh: onboard.GitHub | None = None) -> 
     work = [n for n in needs if not n.gone and (n.new or _stale(n))]
     if plan_only or not (work or any(n.gone for n in needs)):
         return {**table, "applied": False, "reason": "plan only" if plan_only else "nothing to regenerate"}
-    print(json.dumps(table, indent=2, ensure_ascii=False))
-    if confirm("Apply this plan? (y/N) ").strip().lower() not in ("y", "yes"):
-        return {**table, "applied": False, "reason": "declined"}
+    if not assume_yes:  # the caller (`OPX init`) already showed a plan and got its `y`
+        print(json.dumps(table, indent=2, ensure_ascii=False))
+        if confirm("Apply this plan? (y/N) ").strip().lower() not in ("y", "yes"):
+            return {**table, "applied": False, "reason": "declined"}
     glyph, count = _install_glyph(me, target, needs, keys)
     steps: list[dict[str, str]] = [{"step": "glyph", "tree": "-", "detail": f"{count} key(s) in {target}"}]
     if pinned:

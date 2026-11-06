@@ -44,9 +44,9 @@ and the `cgs` task.
 | OpFrontier transitions `.gts OPX DEV .cgs`, `.cgs DEV USR .toml`, `.toml USR PUB .omniscience` | `pixi run cgs DEV` | `test_atcgs`, `contract-inspect` |
 | Identity key from login and password (Argon2id, Ed25519) | `@cgs … request`, `@cgs … login` | `test_identity_layer` |
 | Journals: who exists, and who holds which role on which repo | `@cgs OPX init`, `admit`, `revoke` | `test_identity_layer` |
-| GLYPH: a user's ssh keys sealed in 8 192 bytes | `@cgs … request` | `test_identity_layer` |
+| GLYPH: a user's ssh keys sealed in 8 192 bytes, growing x4 when full | `@cgs … request` | `test_identity_layer` |
 | Session: keys in a private ssh-agent, one key per repo, never `~/.ssh` | `@cgs DEV login TWIN <op>` | `test_identity_layer`, `local-remote` |
-| Level trees `examples/cgs-{opx,dev,usr}.cgs` | `pixi run cgitsync validate examples/cgs-dev.cgs` | `test_layers` |
+| Workspace tree `examples/cgs-alpha.cgs` (project `cgs`, branch `CGS-ALPHA`) | `pixi run cgitsync validate examples/cgs-alpha.cgs` | `test_layers` |
 | Workspace tree `examples/ComplexGraphSync.cgs` | `pixi run cgitsync validate examples/ComplexGraphSync.cgs` | `test_layers` |
 | GitHub deploy keys as commands (printed, not run), all or per repo | `pixi run deploy-keys [--repo github:o/n]` | `test_identity_layer` |
 | Identities published to `.omniscience` (branch `CGS-MOLO`) from a throwaway worktree | `@cgs OPX publish` | `test_project_register` |
@@ -71,10 +71,9 @@ four-bit vector over (NAME, NODE, EDGE, OP):
 
 PUB is the absence of a grant. A UID with no grant on a repo is PUB on that repo.
 
-Each level has a tree file named for its level, `cgs-<level>.cgs`. The file's
-project line sets the level's branch first and `CGS-ALPHA` second, as LinkAtCGS §7
-requires. For example, `cgs-dev.cgs` says `default_branch = "dev"`. A repository
-without a `dev` branch falls back to `CGS-ALPHA`.
+There is no level tree and no level branch: the whole alpha series is on `CGS-ALPHA`, and the one
+workspace file is `examples/cgs-alpha.cgs`. What a DEV or a USR gets is the role template of
+`request --register`.
 
 ## 4. The BIOS declaration
 
@@ -110,7 +109,7 @@ Run each command as `pixi run cgs <LAYER> ...`.
 
 | Command | Effect | Who may run it |
 |---|---|---|
-| `OPX init` | Enrols OPX with the key pinned in `spec/contracts.toml [identity] opx_pub`. Until a key is pinned, the first run only prints the key to pin. | OPX, with `ATCGS_AUTHORIZE=OPX` |
+| `OPX init [PROJECT] [--plan] [--from PATH]` | Makes this machine OPX, from any state, in one run: a new atCGS pins the key (`spec/opx.toml`, append only), enrols, makes and grants the workspace's keys, installs the deploy keys, pushes; a pinned machine without a GLYPH rebuilds it (`--from` takes a copy); `PROJECT` makes the Owner OPX of that project, reusing the keys the GLYPH holds. Refuses another login once a key is pinned, and an atCGS behind `origin/CGS-ALPHA`. | OPX, with `ATCGS_AUTHORIZE=OPX` |
 | `<LAYER> request OUT REPO ROLE …` | Generates one ssh key per repo, seals them in the user's GLYPH, and writes `OUT` with the public keys and the proof. | any user |
 | `<LAYER> request --register P=R [--name N] OUT.toml` | The same for whole projects: the repositories come from the project's `.cgs` and the role template (atCGS and omniscience are USR). `OUT.toml` is the registration file for the Owner. | any user |
 | `<LAYER> user-credential [--json] [--probe] [--tree PATH]` | Reads your GLYPH (keys, fingerprints, room), every register under `~/.cgs` (or `--tree`) that knows your uid, and gives a verdict per (repository, role): `ok`, `no key`, `not admitted`, `revoked`, `refused by GitHub` (`--probe`). Read only. Exit 0 when every grant is `ok`. | any user |
@@ -171,7 +170,7 @@ A session runs these steps in order (`atcgs/session.py`):
 - **Identity.** `IDSEED = Argon2id(password, "atCGS/id/v1/<profile>/<login>")`, from
   which an Ed25519 key pair is derived. `UID = sha256(IDPUB)`. The profile `real` uses
   256 MiB and 3 passes; `test` is used by the suite (`ATCGS_KDF_PROFILE=test`).
-  Login and password are Unicode-normalised (NFC) first.
+  Login and password are Unicode-normalised (NFC) first. The OPX key is pinned in `spec/opx.toml` (`atcgs.pin`): append-only `[[pin]]` blocks, the last in force; the older pin of `spec/contracts.toml [identity] opx_pub` is read only when there is none.
 - **Journals.** `identity.jsonl` (enrol, rotate, revoke) and `access.jsonl` (grant,
   revoke) live in the register: `.cgitsync/.memory/.register`, or the directory that
   `ATCGS_REGISTER` names. Each line is signed and chained by `prev = sha256(previous
@@ -185,7 +184,7 @@ A session runs these steps in order (`atcgs/session.py`):
   key. A project register that holds a line the published copy lacks is refused, never merged.
   Identity is global; `access.jsonl` is local to the project. `login` refuses when `CGSHOME` names
   another tree.
-- **GLYPH.** 8 192 bytes: `"CGSG" | version | nonce | ChaCha20-Poly1305 ciphertext | tag`,
+- **GLYPH.** 8 192 bytes at level 0 (`GLYPH_BYTES`); each further level is 4 times larger (32 KiB, 128 KiB, ... up to level 4), chosen by `seal` as the smallest the keys fit in, never smaller than the GLYPH it replaces, and read back from the file length. Level 0 layout: `"CGSG" | version | nonce | ChaCha20-Poly1305 ciphertext | tag`,
   keyed by HKDF of the IDSEED. It holds the user's private ssh keys, one per (repo, role),
   zero-padded to a fixed length. Without the login and password it is noise, and one
   flipped bit makes it refuse. It is written to `~/.cgs/.glyph/<UID>.glyph`
@@ -210,8 +209,7 @@ The 4-bit codes survive as the level codes of § 3.
 ## 8. Not implemented yet
 
 - **USR login is not proven on a real tree.** A DEV was registered and worked on MOLO-HRDW
-  on 2026-11-05 (TUTOS 01-03); no USR has logged in to a real twin yet, and no DEV or USR to
-  `cgs-dev.cgs` or `cgs-usr.cgs`.
+  on 2026-11-05 (TUTOS 01-03); no USR has logged in to a real twin yet.
 - **On one machine, a commit's author is the machine's git identity,** not the session's UID:
   atCGS decides who may push, it does not sign commits.
 - **`login` runs the level's command only for a bare `bootstrap`.** Any other verb
@@ -233,7 +231,7 @@ The 4-bit codes survive as the level codes of § 3.
 
 | Path | Contents |
 |---|---|
-| `atcgs/` | the package: `identity`, `journal`, `glyph`, `session`, `commands`, `registration`, `onboard`, `credential`, `glyphgen`; the `@cgs` entry point in `__init__` |
+| `atcgs/` | the package: `identity`, `journal`, `glyph`, `session`, `commands`, `registration`, `onboard`, `credential`, `glyphgen`, `ownerinit`, `pin`; the `@cgs` entry point in `__init__` |
 | `spec/contracts.toml` | the BIOS, frontier, identity and GLYPH rows that `contract-inspect` checks |
 | `examples/cgs-{opx,dev,usr}.cgs` | the three level trees, named by level (§ 3) |
 | `examples/ComplexGraphSync.cgs` | the workspace tree this repository is developed in |

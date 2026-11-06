@@ -40,8 +40,23 @@ def discover(base: Path | None = None) -> list[tuple[str, Path]]:
     """Every tree under *base* that holds a register: the master one(s) first, then the projects."""
     base = base or Path(os.environ.get(TREES_ENV) or Path.home() / ".cgs")
     found = sorted(d for d in base.glob("*") if (d / PRIVATE / ".memory" / ".register").is_dir())
-    master = [("master " + d.name, d) for d in found if (d / "atcgs" / "__init__.py").is_file()]
-    return master + [(d.name.rsplit("-", 1)[0], d) for d in found if not (d / "atcgs" / "__init__.py").is_file()]
+    # a project mounts atCGS read-only at .atcgs; the workspace, where atCGS is the root, does not
+    master = [("master " + d.name, d) for d in found if not (d / ".atcgs").is_dir()]
+    return master + [(d.name.rsplit("-", 1)[0], d) for d in found if (d / ".atcgs").is_dir()]
+
+
+RETIRED_SUFFIXES = ("_opx", "_dev", "_usr")  # the level branches of the alpha series before 1.13.0
+
+
+def retired_branch(tree: Path) -> str | None:
+    """The memory branch of *tree* when it is a retired level branch (`ComplexGitSync_cgs_opx`), else None.
+
+    A workspace installed on one holds a register that lags behind the master (`ComplexGitSync_cgs_CGS-ALPHA`):
+    nothing must be enrolled from it. The alpha series has one branch.
+    """
+    done = subprocess.run(["git", "branch", "--show-current"], cwd=tree / PRIVATE / ".memory", capture_output=True, text=True)
+    name = done.stdout.strip() if done.returncode == 0 else ""
+    return name if name.endswith(RETIRED_SUFFIXES) else None
 
 
 def _read_tree(label: str, tree: Path, identity: Identity, opx_pub: bytes) -> TreeReport:

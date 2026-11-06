@@ -3,7 +3,7 @@
 # spec this workspace is bootstrapped from. A plain project name, not a level file: the
 # dash rule of LinkAtCGS §7 would read a `-opx` suffix as a branch.
 #     pixi run cgitsync bootstrap examples/ComplexGraphSync.cgs ComplexGraphSync
-# ComplexGitSync/examples/cgs-opx.cgs is the same tree; tests/test_layers.py checks they agree.
+# ComplexGitSync/examples/cgs-opx.cgs was the same tree; tests/test_layers.py checks they agree.
 
 project = { name = "ComplexGraphSync", default_branch = "CGS-ALPHA" }
 

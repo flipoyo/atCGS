@@ -1,4 +1,4 @@
-"""The @cgs identity verbs: init, request, admit, revoke, login (REFERENCE.md § 6).
+"""The @cgs identity verbs: request, admit, revoke, login (REFERENCE.md § 6); `init` is atcgs.ownerinit.
 
 Logins and passwords are asked with getpass: never read from argv, the
 environment or a file, and never printed. Outputs carry UIDs, public keys,
@@ -14,14 +14,14 @@ import json
 import os
 import shutil
 import subprocess
+import sys
 import tempfile
-import tomllib
 from pathlib import Path
 from typing import Callable, Mapping
 
-from ComplexGitSync.orchestre.op_levels import LEVELS, LevelCommand
+from ComplexGitSync.orchestre.op_levels import LEVELS
 
-from atcgs import PRIVATE, REGISTER_ENV, ROOT, Authorization, Request, Unauthorized
+from atcgs import PRIVATE, REGISTER_ENV, ROOT, Authorization, Request, Unauthorized, pin
 from atcgs.glyph import SshKey, reseal
 from atcgs.identity import Identity, derive
 from atcgs.journal import (
@@ -54,15 +54,14 @@ def _env(env: Mapping[str, str] | None) -> Mapping[str, str]:
 
 
 def opx_pub(env: Mapping[str, str] | None = None) -> bytes:
-    """OPX's IDPUB: ATCGS_OPX_PUB, else spec/contracts.toml [identity] opx_pub."""
+    """OPX's IDPUB: ATCGS_OPX_PUB, else the key in force in spec/opx.toml (see atcgs.pin)."""
     text = _env(env).get(OPX_PUB_ENV)
-    if text is None:
-        with (ROOT / "spec/contracts.toml").open("rb") as handle:
-            text = tomllib.load(handle).get("identity", {}).get("opx_pub", "")
-    if not text:
-        raise ValueError("no OPX key is pinned: run `@cgs OPX init` and copy its idpub into "
-                         "spec/contracts.toml [identity] opx_pub")
-    pub = base64.b64decode(text, validate=True)
+    if text is not None:
+        pub = base64.b64decode(text, validate=True) if text else None
+    else:
+        pub = pin.read(ROOT)
+    if pub is None:
+        raise ValueError("no OPX key is pinned: run `pixi run cgs OPX init`, it pins your key")
     if len(pub) != 32:
         raise ValueError("the pinned OPX key is not a 32-byte Ed25519 key")
     return pub
@@ -170,21 +169,6 @@ def _master_only(what: str, env: Mapping[str, str] | None) -> None:
     if not is_master(env):
         raise Unauthorized(f"{what} is done in the master register (the cgs workspace), then "
                            "`@cgs OPX publish`; this project's register only copies identities")
-
-
-def init(authorization: Authorization, env: Mapping[str, str] | None = None) -> dict[str, object]:
-    authorization.require("OPX")
-    _master_only("OPX init", env)
-    opx = ask_identity("OPX", confirm=True)
-    try:
-        pinned = opx_pub(env)
-    except ValueError:
-        return {"layer": "OPX", "uid": opx.uid, "idpub": _b64(opx.pub), "pinned": False,
-                "next": "copy idpub into spec/contracts.toml [identity] opx_pub, then run OPX init again"}
-    if pinned != opx.pub:
-        raise Unauthorized("this login/password does not match the pinned OPX key")
-    register(env).init(opx)
-    return {"layer": "OPX", "uid": opx.uid, "pinned": True, "enrolled": True}
 
 
 def _register_form(args: tuple[str, ...]) -> tuple[Path, str, dict[str, str]]:
@@ -346,6 +330,19 @@ def _promote(session: Session, args: tuple[str, ...], env: Mapping[str, str] | N
     return {**done, "pushed": True, "commits": int(_git(session, "rev-list", "--count", f"{old}..{new}", cwd=repo))}
 
 
+def tests_before_push(root: Path, env: Mapping[str, str] | None = None) -> None:
+    """The alpha series has one branch: a push of atCGS itself is refused while its tests fail.
+
+    Only where atCGS is the root of the tree (the workspace) and has a tests/ folder; `ATCGS_SKIP_TESTS=1` skips it.
+    """
+    if _env(env).get("ATCGS_SKIP_TESTS") or not (root / "tests").is_dir() or root.resolve() != ROOT.resolve():
+        return
+    done = subprocess.run([sys.executable, "-m", "pytest", "-q", "-x", "tests"], cwd=root, capture_output=True, text=True)
+    if done.returncode:
+        tail = "\n".join((done.stdout + done.stderr).strip().splitlines()[-6:])
+        raise ValueError(f"push refused: the tests of atCGS fail on CGS-ALPHA (ATCGS_SKIP_TESTS=1 skips this)\n{tail}")
+
+
 def login(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = None) -> dict[str, object]:
     twin, op = args[0], args[1:]
     home = _env(env).get("CGSHOME")
@@ -373,15 +370,14 @@ def login(layer: str, args: tuple[str, ...], env: Mapping[str, str] | None = Non
             # The login only: which repos and keys a session holds is the register's business.
             "agent_keys": len(session.loaded()),
         }
+        if op and op[0] == "push":
+            tests_before_push(project_root(env), env)
         if op and op[0] == "promote":
             result["promote"] = _promote(session, op[1:], env)
             op = ()
         if op == ("bootstrap",):
-            # A bare bootstrap is the level's own command: one rule for the file name (op_levels).
-            named = LevelCommand.of(twin, layer)
-            if named is None:
-                raise ValueError(f"{layer} has no bootstrap command")
-            op = tuple(named.split()[1:])
+            # There is no level file any more: the workspace is examples/cgs-alpha.cgs, installed by `OPX init`.
+            raise ValueError("a bare bootstrap needs a file: pixi run cgs OPX login TWIN bootstrap examples/cgs-alpha.cgs TWIN")
         if op:
             cgitsync = shutil.which("cgitsync")
             if cgitsync is None:
@@ -488,7 +484,8 @@ def _folder(variable: str, name: str, given: tuple[str, ...] = ()) -> Path:
 def dispatch(req: Request, authorization: Authorization) -> dict[str, object]:
     verb, args = req.args[0], tuple(req.args[1:])
     if verb == "init":
-        return init(authorization)
+        from atcgs import ownerinit
+        return ownerinit.run(authorization, args)
     if verb == "request":
         return request(req.layer, args)
     if verb == "admit":

@@ -129,9 +129,8 @@ class CredentialTests(Setup):
         base = self.dir / "home"
         for name, master in (("cgs-1", True), ("PROJ-2", False)):
             (base / name / ".cgitsync" / ".memory" / ".register").mkdir(parents=True)
-            if master:
-                (base / name / "atcgs").mkdir()
-                (base / name / "atcgs" / "__init__.py").write_text("")
+            if not master:
+                (base / name / ".atcgs").mkdir()  # a project mounts atCGS read-only; the workspace does not
         self.assertEqual([label for label, _ in credential.discover(base)], ["master cgs-1", "PROJ"])
 
     def test_the_verb_is_accepted_at_every_level_with_known_flags_only(self):

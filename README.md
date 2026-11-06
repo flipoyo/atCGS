@@ -1,4 +1,4 @@
-# atCGS — ComplexGraphSync 1.12.0-alpha
+# atCGS — ComplexGraphSync 1.13.0-alpha
 
 **atCGS is the gate of an Operating Space synchronised by ComplexGitSync.** You give it
 a login and a password; it recognises who you are, which profile you hold, and which
@@ -71,7 +71,7 @@ in; you never choose it.
 | **PUB** (public) | `1111` | read what is public | log in |
 
 **One atCGS OPX, many project OPX.** atCGS has exactly one OPX: the key pinned in
-`spec/contracts.toml`, held by the owner. Only that key enrols identities, publishes them,
+`spec/opx.toml`, held by the owner. Only that key enrols identities, publishes them,
 and admits or revokes anyone in any twin. Being OPX *of a project* is a grant like DEV or
 USR: it lets you run that twin, not admit people. See [TUTO 1](TUTOS/TUTO_1_OPERATE_A_PROJECT.md).
 

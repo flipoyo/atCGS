@@ -2,7 +2,6 @@
 """Offline contract validator for atCGS (ComplexGraphSync SemVer), not a deployed gate."""
 
 import argparse
-import base64
 import json
 import sys
 import tomllib
@@ -10,7 +9,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from atcgs import __version__, glyph, identity, require_pixi  # noqa: E402  # single SemVer source of truth
+from atcgs import __version__, glyph, identity, pin, require_pixi  # noqa: E402  # single SemVer source of truth
 from atcgs.commands import ROLE_CODES  # noqa: E402
 from atcgs.journal import ROLES  # noqa: E402
 
@@ -126,7 +125,7 @@ def inspect(path=SPEC):
         "public_rows": 4,
         "key_rows": 2,
         "glyph_rows": 2,
-        "opx_pinned": bool(data["identity"]["opx_pub"]),
+        "opx_pinned": pin.read(path.parent.parent if path.parent.name == "spec" else path.parent) is not None,
         "published": False,
     }
 
@@ -137,6 +136,7 @@ def check_glyph(g):
     demand(g["shape"] == [glyph.SIDE, glyph.SIDE] and g["bytes"] == glyph.GLYPH_BYTES, "incorrect GLYPH size")
     demand(g["sizes"] == sizes and sum(sizes) == glyph.GLYPH_BYTES, "incorrect GLYPH layout")
     demand(g["layout"][0] == glyph.MAGIC.decode() and g["aead"] == "ChaCha20-Poly1305", "incorrect GLYPH seal")
+    demand(g["growth"] == glyph.GROWTH and glyph.glyph_bytes(1) == glyph.GROWTH * glyph.GLYPH_BYTES, "incorrect GLYPH growth")
     demand(g["published"] is False, "a GLYPH is never published")
 
 
@@ -149,8 +149,7 @@ def check_identity(i):
     demand(i["uid"] == "sha256(IDPUB)", "UID must be sha256(IDPUB)")
     demand(tuple(i["roles"]) == ROLES and i["codes"] == dict(ROLE_CODES), "incorrect roles or codes")
     demand(i["journals"] == ["identity.jsonl", "access.jsonl"], "incorrect journals")
-    pub = i["opx_pub"]
-    demand(pub == "" or len(base64.b64decode(pub, validate=True)) == 32, "opx_pub is not a 32-byte key")
+    demand("opx_pub" not in i, "the OPX key is pinned in spec/opx.toml, not in contracts.toml")
 
 
 def main():

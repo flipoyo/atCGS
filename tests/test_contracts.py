@@ -1,4 +1,3 @@
-import re
 import sys
 import unittest
 from pathlib import Path
@@ -8,7 +7,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 from contract_check import FIXTURES, inspect  # noqa: E402
 
 SPEC = Path(__file__).resolve().parents[1] / "spec/contracts.toml"
-PINNED = re.search(r"^opx_pub = \"[^\"]*\"$", SPEC.read_text(encoding="utf-8"), re.M).group(0)
 
 
 def refused(test: unittest.TestCase, old: str, new: str) -> None:
@@ -52,14 +50,23 @@ class TestContracts(unittest.TestCase):
         refused(self, "memory_kib = 262144", "memory_kib = 1024")
         refused(self, 'uid = "sha256(IDPUB)"', 'uid = "sha256(NAME)"')
         refused(self, 'DEV = "1000"', 'DEV = "1111"')
-        refused(self, PINNED, 'opx_pub = "c2hvcnQ="')
+        refused(self, 'kdf = "Argon2id"', 'opx_pub = "qL1FhYN4yQrRd6/cOa92zPG6rsu2t8JXirlntzsYDMo="\nkdf = "Argon2id"')
 
-    def test_a_pinned_opx_key_is_accepted(self):
-        text = SPEC.read_text(encoding="utf-8").replace(PINNED, f'opx_pub = "{"A" * 43}="')
+    def spec_with_pin(self, directory, pin_text):
+        spec = Path(directory) / "spec"
+        spec.mkdir()
+        (spec / "contracts.toml").write_text(SPEC.read_text(encoding="utf-8"), encoding="utf-8")
+        if pin_text is not None:
+            (spec / "opx.toml").write_text(pin_text, encoding="utf-8")
+        return spec / "contracts.toml"
+
+    def test_the_opx_key_is_pinned_in_spec_opx_toml_not_in_contracts(self):
+        self.assertTrue(inspect()["opx_pinned"])
+        self.assertNotIn("opx_pub", SPEC.read_text(encoding="utf-8").replace("opx_pub, the root", ""))
         with TemporaryDirectory() as d:
-            f = Path(d) / "contracts.toml"
-            f.write_text(text, encoding="utf-8")
-            self.assertTrue(inspect(f)["opx_pinned"])
+            self.assertFalse(inspect(self.spec_with_pin(d, None))["opx_pinned"])
+        with TemporaryDirectory() as d:
+            self.assertTrue(inspect(self.spec_with_pin(d, f'[[pin]]\nopx_pub = "{"A" * 43}="\n'))["opx_pinned"])
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 # TUTO 1 — Operate a new project: who does what
 
-**atCGS 1.12.0-alpha, 2026-11-06.** The running example is the MOLONARI hardware twin,
+**atCGS 1.13.0-alpha, 2026-11-06.** The running example is the MOLONARI hardware twin,
 `MOLO-HRDW`. Parts A and B were run on 2026-11-05. `request --register`, `OPX intake` and
 `OPX onboard` (Part C) are covered by tests with local repositories and a fake `gh`; they
 have **not** been run yet on the real repositories with real newcomers. Where a step is
@@ -13,7 +13,7 @@ needs no GitHub account and no key to start.
 
 | Who | What they are | What they do here |
 |---|---|---|
-| **Owner** | owns the GitHub repositories (today `flipoyo`) and is **atCGS OPX**: the one key pinned in `spec/contracts.toml` | opens projects, enrols people, admits them in a project, installs their keys on GitHub |
+| **Owner** | owns the GitHub repositories (today `flipoyo`) and is **atCGS OPX**: the one key pinned in `spec/opx.toml` | opens projects, enrols people, admits them in a project, installs their keys on GitHub |
 | **Project OPX** | a person with the `OPX` role in one project | runs the project: commit, push, tag, release, promote. **Cannot admit anyone.** |
 | **DEV** | a person with the `DEV` role in one project | changes code: commit, push, branch, merge |
 | **USR** | a person with the `USR` role in one project | reads: status, fetch, pull |
@@ -25,10 +25,10 @@ Rights are per project: a DEV on MOLO-HRDW has no right on MOLO-DATA.
 
 | Step | Who | Does | Command |
 |---|---|---|---|
-| A | Owner | becomes atCGS OPX (once, already done) | `OPX init` |
+| A | Owner | becomes atCGS OPX, on any machine | `OPX init` |
 | B1 | Owner | declares the project | writes `examples/<project>.cgs` |
 | B2 | Owner | installs the project and opens its gate | `cgitsync bootstrap`, `pixi install` |
-| B3 | Owner | gives themself rights in the project | `OPX request`, `OPX admit`, `deploy-keys` |
+| B3 | Owner | becomes OPX of the project | `OPX init PROJECT` |
 | C1 | Newcomer | gets atCGS (public, no key) | `git clone`, `pixi install` |
 | C2 | Newcomer | chooses a login and password, writes the registration file | `<ROLE> request --register` |
 | C3 | Newcomer | sends the file, unchanged, and gives the uid by phone | e-mail, a call |
@@ -43,65 +43,39 @@ operator, allow this OPX command on this machine". It is not a password.
 
 ---
 
-## Part A — Owner: become atCGS OPX (once)
+## Part A — Owner: become atCGS OPX, on this machine or another
 
-**Already done on 2026-11-05.** Skip this part unless you start atCGS from zero.
+One command, whatever the state of the machine. It reads the state and does what is missing; run
+again, it changes nothing. You edit no file.
 
-1. Install the Owner's workspace, the tree atCGS is developed in:
-   ```bash
-   pixi run cgitsync bootstrap examples/cgs-opx.cgs cgs
-   cd ~/.cgs/cgs-<timestamp>
-   ```
-2. **Create your key.** Run `OPX init` for the first time. It asks your OPX login and password
-   twice (see C2 for how to choose them), and prints your public key:
-   ```bash
-   cd ~/.cgs/cgs-<timestamp>
-   ATCGS_AUTHORIZE=OPX pixi run cgs OPX init
-   ```
-   ```json
-   { "layer": "OPX", "uid": "35c65c66…d104", "idpub": "qL1FhYN4yQrRd6/cOa92zPG6rsu2t8JXirlntzsYDMo=",
-     "pinned": false,
-     "next": "copy idpub into spec/contracts.toml [identity] opx_pub, then run OPX init again" }
-   ```
-   `idpub` is your **public** key: safe to show and to commit. Nothing is written yet.
-3. **Pin it, then confirm.** "Pinning" means writing your public key in the one place every atCGS
-   reads to know who the Owner is. Every gate and every project trusts a register line only if it
-   is signed by that key.
-   - Open `spec/contracts.toml` in this workspace (`~/.cgs/cgs-<timestamp>/spec/contracts.toml`)
-     and put your `idpub` between the quotes of `opx_pub`:
-     ```toml
-     [identity]
-     opx_pub = "qL1FhYN4yQrRd6/cOa92zPG6rsu2t8JXirlntzsYDMo="
-     ```
-   - Commit and push that file (it is the repository atCGS, branch `CGS-ALPHA`): projects install
-     atCGS from there, so they learn your key from it.
-   - Run `OPX init` a **second time**, with exactly the same login and password:
-     ```bash
-     ATCGS_AUTHORIZE=OPX pixi run cgs OPX init
-     # { "layer": "OPX", "uid": "35c65c66…d104", "pinned": true, "enrolled": true }
-     ```
-     `"pinned": true` says the key you typed is the one written in the file; `"enrolled": true`
-     says you are now the first line of the register. A different login or password gives
-     `does not match the pinned OPX key`: retype the pair of step 2.
+```bash
+git clone --branch CGS-ALPHA https://github.com/flipoyo/atCGS.git ~/atCGS     # a plain clone is enough
+cd ~/atCGS && pixi install
+pixi run cgs OPX init --plan        # shows what it would do, writes nothing
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX init
+```
 
-   From now on this workspace holds the **master register**,
-   `.cgitsync/.memory/.register/identity.jsonl`: the one list of everybody atCGS knows, and the only
-   place where people are enrolled. A project has its own register but only copies this list.
-4. Ask for your own keys on the workspace's repositories, admit yourself, install the keys:
-   ```bash
-   pixi run cgs OPX request ~/opx-cgs.json \
-     github:flipoyo/atCGS OPX          github:flipoyo/ComplexGitSync OPX \
-     github:flipoyo/omniscience OPX    github:flipoyo/.memory OPX \
-     github:flipoyo/.ticketing OPX     github:flipoyo/DevSpec OPX \
-     github:flipoyo/DocSpec OPX        github:flipoyo/.dev OPX \
-     github:flipoyo/.localSpec OPX     github:flipoyo/.claude OPX
-   ATCGS_AUTHORIZE=OPX pixi run cgs OPX admit ~/opx-cgs.json
-   pixi run deploy-keys          # prints gh commands: read them, run them
-   pixi run cgs OPX login ComplexGraphSync fetch
-   ```
+It asks your login and password (once; **twice** when the key is new, see C2 for how to choose them),
+prints its plan and asks `Apply this plan? (y/N)`. The plan depends on what it finds:
 
-These ten are the repositories of `examples/cgs-opx.cgs`, the tree you installed in step 1: list
-them with `grep -o 'repository = "[^"]*"' examples/cgs-opx.cgs`, and give each the role `OPX`.
+| The machine is | `OPX init` does |
+|---|---|
+| **a new atCGS, no key pinned** | installs the workspace if it is missing (`cgitsync bootstrap examples/cgs-alpha.cgs`, over https, no key needed); makes your key and **pins** it by appending it to `spec/opx.toml`; enrols you in the master register; makes one ssh key per repository of the workspace and seals them in your GLYPH; grants you OPX on each; installs the deploy keys on GitHub; commits and pushes the pin and the register; publishes the identities |
+| **another machine, you are already OPX** | says so, and rebuilds your GLYPH for the access you already hold (`--from PATH` takes a copy you still have; otherwise new keys, registers and GitHub updated, old deploy keys removed last). It never enrols you again |
+| **everything is in order** | prints the `user-credential` table below and changes nothing |
+| **a key is pinned, but this is another login** | refuses: there is one OPX |
+
+*Pinning* means writing your public key where every atCGS reads who the Owner is: a register line
+is trusted only if it is signed by that key. `init` writes it, in `spec/opx.toml`, by appending a block, never
+rewriting the file (earlier pins stay as history), and pushes it so every gate learns it. The master
+register it fills, `.cgitsync/.memory/.register/identity.jsonl`, is the one list of everybody atCGS knows
+and the only place where people are enrolled; a project's register only copies it.
+
+There is one branch for the whole alpha series, `CGS-ALPHA`. `init` refuses to run from an atCGS that is
+behind it (`git pull` first). A push of atCGS itself is refused while `pixi run test` fails
+(`ATCGS_SKIP_TESTS=1` skips it).
+
+### Verify your credentials: `user-credential`
 
 **Before creating a new user, verify your credentials.** Your rights are written in several
 registers (the master register of the workspace, and one per project tree) and your private keys
@@ -132,50 +106,40 @@ One row per repository and role, with a verdict:
 | Verdict | Means | Do |
 |---|---|---|
 | `ok` | granted, and its key is in your GLYPH | nothing |
-| `no key` | granted, but the key is not in your GLYPH (or there is no GLYPH: `glyph MISSING`) | no login can work for it. Recover the GLYPH, or `request` new keys, `admit` them and install the deploy keys again (C5) |
+| `no key` | granted, but the key is not in your GLYPH (or there is no GLYPH: `glyph MISSING`) | no login can work for it: `OPX init` rebuilds the GLYPH |
 | `not admitted` | the key is in your GLYPH, granted nowhere (an orphan, it takes room for nothing) | `admit` it, or ignore it |
 | `revoked` | the identity was revoked | ask the Owner |
-| `refused by GitHub` | with `--probe`: the deploy key is not (or no longer) on GitHub | install it (C5) |
+| `refused by GitHub` | with `--probe`: the deploy key is not (or no longer) on GitHub | `OPX init` installs it again |
 
 Options: `--probe` tries each key on GitHub (one `git ls-remote` per key, through the session, never
 `~/.ssh`); `--json` prints the same as data; `--tree PATH` reads only that tree. The exit status is
 0 when every grant is `ok`, 1 otherwise. Any user runs it with their own level
-(`DEV user-credential`); the word only labels the prompts.
+(`DEV user-credential`); the word only labels the prompts. **`OPX onboard` runs this check on you
+first** and stops if the GLYPH is missing or a grant of the memory or omniscience repositories has no key.
 
-**`OPX onboard` runs this check on you first** and stops if the GLYPH is missing or a grant of the
-memory or omniscience repositories has no key. Run it yourself before you start.
+### If your GLYPH is lost
 
-**Your GLYPH is lost (`glyph MISSING`, every row `no key`).** A GLYPH cannot be rebuilt from the
-repositories: your private keys were only ever in that file. The registers and GitHub hold public
-halves, which open nothing. Two ways out:
+A GLYPH cannot be rebuilt from the repositories: your private keys were only ever in that file. The
+registers and GitHub hold public halves, which open nothing. On the Owner's machine `OPX init` (above)
+makes new keys for exactly the access you hold; anyone else uses `generate-glyph`:
 
 ```bash
-# 1. you still have a copy (a backup, a USB key, another machine): take it back
-pixi run cgs OPX generate-glyph --from /path/to/copy-or-folder
-# 2. you do not: make new keys, for exactly the access you already have
-pixi run cgs OPX generate-glyph --plan      # shows what it would do, writes nothing
-pixi run cgs OPX generate-glyph
+pixi run cgs <ROLE> generate-glyph --from /path/to/copy-or-folder     # you still have a copy: take it back
+pixi run cgs <ROLE> generate-glyph --plan                             # you do not: what it would do
+pixi run cgs <ROLE> generate-glyph
 ```
 
-The second asks your login and password once, prints the plan, and on `y`:
+It keeps any key your GLYPH still holds that matches a grant, makes new ones for the rest, seals them (an
+older GLYPH is kept as `.bak`), and, for the Owner, replaces the key in each register, installs the new
+deploy key on GitHub, pushes the registers, and only then deletes the old deploy keys, so nothing is lost
+if a step fails: run the same command again. Anyone else gets `~/glyph-request-<uid>.json` (public keys
+only) to send to the Owner, whose `OPX admit` replaces the key of a grant already held. A repository that
+is no longer on GitHub gets no key and its grant is revoked. A GLYPH that this login cannot open is never
+overwritten.
 
-1. keeps any key your GLYPH still holds that matches a grant, and makes a new one for each other
-   (repository, role) you hold a grant for, in any register of `~/.cgs`;
-2. seals them in a new GLYPH (an older one is kept next to it as `.bak`);
-3. **atCGS OPX only:** replaces the key in each register that carries the old one (a revoke and a
-   grant, signed by you), installs the new deploy key on GitHub, commits and pushes each register, and
-   only then deletes the old deploy keys from GitHub, so nothing is lost if a step fails: run the same
-   command again, it picks up where it stopped;
-4. **anyone else:** writes `~/glyph-request-<uid>.json`, public keys only. Send it to the Owner, who runs
-   `OPX admit` on it from the project's gate (it replaces the key of a grant you already have), installs
-   the deploy keys (C5) and pushes the register.
-
-A repository that is no longer on GitHub gets no key; its grant is revoked in the registers. A GLYPH
-that this login and password cannot open is never overwritten.
-
-Run `user-credential` again: every row should read `ok`.
-
-From now on, "your workspace" means `~/.cgs/cgs-<timestamp>`.
+**The GLYPH grows by itself.** It starts at 8 KiB (about 17 keys); when the keys no longer fit it becomes
+32 KiB (about 69), then 128 KiB, and so on, always by a factor 4. It never shrinks, and its size never tells
+how many keys it holds. A GLYPH of the older, smaller size opens unchanged.
 
 ## Part B — Owner: open a new project
 
@@ -211,24 +175,19 @@ pixi install
 - This is the only step that uses your personal GitHub access. Everything after it goes
   through the gate.
 
-### B3. Give yourself rights in the project
+### B3. Make yourself OPX of the project
 
-A new project's register is empty. Even you have no right in it yet.
+A new project's register is empty: even you have no right in it yet.
 
 ```bash
-pixi run cgs OPX request ~/opx-hrdw.json \
-  github:flipoyo/MOLONARI-hardware OPX  github:flipoyo/.memory OPX \
-  github:flipoyo/atCGS OPX              github:flipoyo/omniscience OPX
-ATCGS_AUTHORIZE=OPX pixi run cgs OPX admit ~/opx-hrdw.json
-pixi run deploy-keys --repo github:flipoyo/MOLONARI-hardware    # read, then run the gh lines
-pixi run cgs OPX login MOLO-HRDW fetch                          # fetched=4  "agent_keys": 4
+pixi run cgs OPX init MOLO-HRDW --plan       # what it would do
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX init MOLO-HRDW
 ```
 
-Your GLYPH (the file holding your private keys) has room for 17 keys. If you already hold a
-key for a repository (atCGS, omniscience, .memory from Part A), you can reuse it: copy your
-earlier request file and keep only those keys in its `keys` list, then `admit` that file.
-
----
+It finds the project's tree (or installs it, as in B2), grants you OPX on every repository of its `.cgs`,
+**reusing the keys your GLYPH already holds** for the same repository and role (atCGS, omniscience and
+`.memory` are shared with the workspace, so MOLO-HRDW costs one new key, for MOLONARI-hardware), installs the
+deploy keys that are new, and pushes the project's register. One password, one `y`.
 
 ## Part C — Register a new person
 

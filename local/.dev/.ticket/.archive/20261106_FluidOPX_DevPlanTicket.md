@@ -266,3 +266,30 @@ after checking each is an ancestor of, or no newer than, its `CGS-ALPHA` counter
 - A GLYPH with 18 keys is 32 KiB and opens; the GLYPH of 2026-11-05's format (8 KiB) opens unchanged.
 - TUTO 1 Part A is three lines; `pixi run test` and `pixi run lint` pass.
 - On closing: stamp `YYYYMMDD_FluidOPX_DevPlanTicket.md`, move it to `.archive/`.
+
+## Closing — 2026-11-06
+
+Done in 1.13.0-alpha (not yet run on the real repositories; tested with local bare remotes and a fake `gh`):
+
+- **S0.** The master register is `ComplexGitSync_cgs_CGS-ALPHA` (checked: nothing to copy). The guard S0 asked
+  for is `credential.retired_branch`: a workspace whose memory branch ends in `_opx`, `_dev` or `_usr` is never
+  taken as the master, by `OPX init` or `OPX onboard`; the two local workspaces on `cgs_opx` are now ignored.
+- **S0b.** `examples/cgs-alpha.cgs` is the one workspace file; `cgs-{opx,dev,usr}.cgs` are removed; a bare
+  `login TWIN bootstrap` is refused with a message naming it; tests, ALPHA.md, REFERENCE follow.
+- **S1, S4, S5.** `atcgs/ownerinit.py`: `OPX init [PROJECT] [--plan] [--from PATH]` (cases 1, 2 and 3), one
+  login and password, one `y`; the workspace or the project is installed when missing (https, no key).
+  The error of the day (`identity entry 2: UID mismatch or already known`) cannot occur: an enrolled Owner is
+  never enrolled again, and a pinned machine without a GLYPH rebuilds it.
+- **S2.** `atcgs/pin.py`, `spec/opx.toml`: append-only `[[pin]]`, the last in force; the old line of
+  `contracts.toml` is migrated into it and still read when there is no pin file.
+- **S3.** `init` refuses an atCGS behind `origin/CGS-ALPHA`; a push of atCGS itself is refused while its
+  tests fail (`cmd.tests_before_push`, skip with `ATCGS_SKIP_TESTS=1`). Not done: the DEV and USR sides of that buffer.
+- **S6.** The GLYPH grows by 4 (8 KiB, 32 KiB, 128 KiB, up to level 4), never shrinks, same format and
+  version 1, read from the file length; old GLYPHs open unchanged.
+- **S7.** TUTO 1 Part A and B3, REFERENCE, README, ALPHA.md; `tests/test_ownerinit.py`, glyph growth tests.
+- **Deviations.** `init` pushes the register with a plain git commit on the memory branch (no cgitsync memory
+  fold), as `onboard`. `OPX init PROJECT` does not create a missing memory branch (the `Run it now?` of
+  `bootstrap` is left to the bootstrap). D6 stays for later.
+- **S8 not done: it needs the Owner.** Deleting the stale branches (`opx` of atCGS, `ComplexGitSync_cgs_opx`
+  of `.memory`, `cgs_opx` of ComplexGitSync if it exists) is an outward-facing GitHub change, to be confirmed
+  and run with the Owner's own access once a workspace installed from `examples/cgs-alpha.cgs` has pushed once.
