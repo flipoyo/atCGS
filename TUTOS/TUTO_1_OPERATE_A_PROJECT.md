@@ -57,8 +57,12 @@ ATCGS_AUTHORIZE=OPX pixi run cgs OPX init
 ```
 
 `gh` (the GitHub CLI) comes with `pixi install`. atCGS uses it, and only it, to install the deploy keys on
-GitHub; that is why the Owner logs it in. If it is missing or logged out, the plan says so under
-`problems` and the run stops before asking anything.
+GitHub. Your ssh key cannot do that job: it signs `git push` and `git pull`, while adding a deploy key is a
+call to GitHub's web API, which wants a token with admin rights on the repository. So the Owner logs `gh` in
+once per machine (`gh auth login --git-protocol ssh --web` reuses your ssh key for git and stores the token in
+`~/.config/gh`, shared with any `gh` already installed). Without a stored login, `GH_TOKEN=<token>` in front of
+the command does it for that run only. If `gh` is missing or logged out, the plan says so under `problems`
+and the run stops before asking anything.
 
 It asks your login and password (once; **twice** when the key is new, see C2 for how to choose them),
 prints its plan and asks `Apply this plan? (y/N)`. The plan depends on what it finds:
