@@ -51,9 +51,14 @@ again, it changes nothing. You edit no file.
 ```bash
 git clone --branch CGS-ALPHA https://github.com/flipoyo/atCGS.git ~/atCGS     # a plain clone is enough
 cd ~/atCGS && pixi install
-pixi run cgs OPX init --plan        # shows what it would do, writes nothing
+pixi run gh auth login                                  # once per machine: your own GitHub account, the repositories' owner
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX init --plan        # shows what it would do, writes nothing
 ATCGS_AUTHORIZE=OPX pixi run cgs OPX init
 ```
+
+`gh` (the GitHub CLI) comes with `pixi install`. atCGS uses it, and only it, to install the deploy keys on
+GitHub; that is why the Owner logs it in. If it is missing or logged out, the plan says so under
+`problems` and the run stops before asking anything.
 
 It asks your login and password (once; **twice** when the key is new, see C2 for how to choose them),
 prints its plan and asks `Apply this plan? (y/N)`. The plan depends on what it finds:
@@ -143,7 +148,13 @@ how many keys it holds. A GLYPH of the older, smaller size opens unchanged.
 
 ## Part B — Owner: open a new project
 
-### B1. Declare it
+Part A first: B3 reuses the GLYPH that A made, and refuses to start without it.
+
+### B1. Declare it (a new project only)
+
+**MOLO-HRDW is already declared** (`examples/molo_hrdw.cgs`, like the other MOLONARI twins): skip B1
+and go to B2. B1 is for a project atCGS does not know yet: it writes the file that every later step
+reads by the project's name.
 
 A project is one `.cgs` file in atCGS's `examples/`. Copy `examples/molo_hrdw.cgs`: it lists
 the project's repositories, plus three fixed mounts:
@@ -152,17 +163,21 @@ the project's repositories, plus three fixed mounts:
 - `.cgitsync/.memory`: the project's memory, holding its **register** (who may do what).
 - `.omniscience`: the identities you publish, read-only ([TUTO 2](TUTO_2_OMNISCIENCE.md)).
 
-Check it, then commit and push it from your workspace, so every gate gets it:
+Check it, then commit and push it from your workspace (the tree `OPX init` installed), so every gate gets it:
 
 ```bash
+cd ~/.cgs/cgs-<timestamp>
 pixi run cgitsync validate examples/<project>.cgs        # DECLARED
-pixi run cgs OPX login ComplexGraphSync commit --all "examples: <project>.cgs"
-pixi run cgs OPX login ComplexGraphSync push --all
+pixi run cgs OPX login cgs commit --all "examples: <project>.cgs"
+pixi run cgs OPX login cgs push --all
 ```
 
 Do not declare an `environment` in it: each repository keeps its own `pixi.toml`.
 
-### B2. Install it and open the gate
+### B2. Install it and open the gate (optional: B3 does it)
+
+B3 installs the project's tree itself, over https, when there is none. Do B2 by hand only to choose
+when the tree is installed.
 
 ```bash
 pixi run cgitsync bootstrap examples/molo_hrdw.cgs MOLO-HRDW
@@ -172,15 +187,16 @@ pixi install
 
 - If it asks `Run it now? (y/N)` about the memory branch, answer **`y`**. It creates the
   project's own memory branch. Only the Owner does this.
-- This is the only step that uses your personal GitHub access. Everything after it goes
+- Your personal GitHub access is used here and by `gh` (deploy keys). Everything else goes
   through the gate.
 
 ### B3. Make yourself OPX of the project
 
-A new project's register is empty: even you have no right in it yet.
+A new project's register is empty: even you have no right in it yet. Run it after Part A succeeded
+(`user-credential` shows `glyph … key(s)`, not `glyph MISSING`).
 
 ```bash
-pixi run cgs OPX init MOLO-HRDW --plan       # what it would do
+ATCGS_AUTHORIZE=OPX pixi run cgs OPX init MOLO-HRDW --plan       # what it would do
 ATCGS_AUTHORIZE=OPX pixi run cgs OPX init MOLO-HRDW
 ```
 
@@ -413,6 +429,10 @@ Then delete their deploy keys on GitHub (`gh api repos/flipoyo/<repo>/keys`, the
 
 | You see | Who | Why | Do |
 |---|---|---|---|
+| `OPX requires explicit owner authorization` | Owner | `ATCGS_AUTHORIZE=OPX` missing, `--plan` included | type it in front of the command |
+| `gh (GitHub CLI) is not on PATH` in `problems` | Owner | `pixi install` not run since `gh` joined `pixi.toml` (2026-11-08) | `pixi install` (A) |
+| `gh is not logged in to GitHub` in `problems` | Owner | `gh auth login` not done on this machine | `pixi run gh auth login` (A) |
+| `no GLYPH for this login on this machine` at `OPX init PROJECT` | Owner | B3 before A | `ATCGS_AUTHORIZE=OPX pixi run cgs OPX init` (A), then B3 |
 | `Permission denied (publickey)` at `bootstrap` | newcomer | git used ssh, and you have no key | Part D: the https line in front |
 | `DEV request needs OUT then at least one REPOSITORY ROLE pair` | newcomer | `request` without the pairs | use `request --register PROJECT=ROLE OUT.toml` (C2) |
 | `the plan has N problem(s), nothing was done` | Owner | `onboard` found something wrong | read the list it printed, fix, run again (C5) |

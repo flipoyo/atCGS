@@ -45,6 +45,8 @@ FAKE_GH = r"""#!/usr/bin/env python3
 import os, pathlib, sys
 state, args = pathlib.Path(os.environ["FAKE_GH"]), sys.argv[1:]
 if args[:2] == ["auth", "status"]:
+    if (state / "noauth").exists():
+        print("You are not logged into any GitHub hosts.", file=sys.stderr); sys.exit(1)
     sys.exit(0)
 if args[0] == "api":
     path = next(a for a in args if a.startswith("repos/"))

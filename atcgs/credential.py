@@ -159,6 +159,9 @@ def render(report: Mapping[str, object]) -> str:
     for reg in report["registers"]:  # type: ignore[attr-defined]
         note = reg["error"] or ("listed" if reg["listed"] else "-")
         lines += [f"{reg['label']:<26}{reg['identity']:<12}{reg['grants']:<8}{note}", f"  {reg['path']}"]
+    if not report["registers"]:
+        lines.append("(none: no tree of atCGS on this machine; the Owner's `OPX init` installs the workspace, "
+                     "anyone else installs a project, TUTO 1 Part D)")
     lines += ["", "repository".ljust(36) + "role  " + "fingerprint".ljust(24) + "granted in / verdict"]
     for row in report["rows"]:  # type: ignore[attr-defined]
         lines.append(f"{row['repo']:<36}{row['role']:<6}{row['fingerprint'][:22]:<24}"

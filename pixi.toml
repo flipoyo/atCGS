@@ -31,6 +31,8 @@ ruff = "*"
 hypothesis = "*"
 # Ed25519, Argon2id (>= 44), HKDF and ChaCha20-Poly1305 for the identity layer.
 cryptography = ">=44"
+# gh (GitHub CLI): the Owner's deploy keys (OPX init, generate-glyph, onboard); `pixi run gh auth login` once.
+gh = "*"
 
 # ComplexGitSync, pinned: what every install of atCGS runs, a project's read-only gate
 # (.atcgs) included. The development Operating Space, where ./ComplexGitSync is live,

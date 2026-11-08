@@ -2,6 +2,7 @@
 
 import base64
 import datetime
+import io
 import json
 import os
 import shutil
@@ -11,9 +12,10 @@ import unittest
 from pathlib import Path
 from unittest import mock
 
+import atcgs
 import atcgs.commands as cmd
 import atcgs.ownerinit as ownerinit
-from atcgs import OpFrontier, Unauthorized, credential, pin
+from atcgs import Authorization, OpFrontier, Unauthorized, credential, onboard, pin
 from atcgs.glyph import open_glyph
 from atcgs.journal import Register
 from tests.test_onboard import FAKE_GH
@@ -258,8 +260,12 @@ class CaseProjectTests(OwnerInit):
         self.run_init()
         self.make_project()
         self.glyph.unlink()
-        with self.assertRaisesRegex(ValueError, "no GLYPH"):
-            self.run_init("PROJ", answers=OWNER, yes=True)
+        self.assertIn("no GLYPH", " ".join(self.run_init("PROJ", "--plan", answers=OWNER)["problems"]))
+        with mock.patch.object(cmd, "ask", side_effect=OWNER), mock.patch.object(ownerinit, "confirm") as asked:
+            with self.assertRaisesRegex(ValueError, "1 problem"):
+                ownerinit.run(AUTH, ("PROJ",))
+        asked.assert_not_called()  # refused before the `y` (TUTO 1 B3 run before A, 2026-11-08)
+        self.assertFalse(self.glyph.exists())
 
     def test_the_verb_and_its_flags(self):
         for args in ([], ["--plan"], ["PROJ"], ["PROJ", "--plan"], ["--from", "x"]):
@@ -284,6 +290,36 @@ if __name__ == "__main__":
 
 
 class GuardTests(OwnerInit):
+    def test_a_missing_or_logged_out_gh_is_a_problem_of_the_plan_not_a_traceback_after_the_y(self):
+        # 2026-11-08: `OPX init` asked `y`, then raised `RuntimeError: gh is not on PATH`
+        empty = self.dir / "empty-bin"
+        empty.mkdir()
+        for path, needle in ((str(empty), "not on PATH"), (os.environ["PATH"], "gh auth login")):
+            if needle == "gh auth login":
+                (self.gh_state / "noauth").touch()
+            with mock.patch.dict(os.environ, {"PATH": path}):
+                gh = onboard.GitHub()
+            with mock.patch.object(cmd, "ask", side_effect=[*OWNER, OWNER[1]]):
+                plan = ownerinit.run(AUTH, ("--plan",), gh=gh)
+            self.assertIn(needle, " ".join(plan["problems"]))
+            with mock.patch.object(cmd, "ask", side_effect=[*OWNER, OWNER[1]]), \
+                    mock.patch.object(ownerinit, "confirm") as asked, self.assertRaisesRegex(ValueError, "nothing was done"):
+                ownerinit.run(AUTH, (), gh=gh)
+            asked.assert_not_called()
+            self.assertIsNone(pin.read(self.ws))
+            self.assertFalse(self.glyph.exists())
+
+    def test_a_failing_tool_is_one_line_and_exit_1(self):
+        err = io.StringIO()
+        with mock.patch.object(atcgs, "main", side_effect=RuntimeError("gh api repos failed: HTTP 500")), \
+                mock.patch("sys.stderr", err):
+            self.assertEqual(atcgs.run(["OPX", "init"]), 1)
+        self.assertEqual(err.getvalue(), "@cgs: gh api repos failed: HTTP 500\n")
+
+    def test_the_authorization_refusal_says_what_to_type(self):
+        with self.assertRaisesRegex(Unauthorized, "ATCGS_AUTHORIZE=OPX pixi run cgs OPX"):
+            Authorization(frozenset()).require("OPX")
+
     def test_init_refuses_an_atcgs_behind_cgs_alpha(self):
         self.assertIsNone(ownerinit.behind(self.ws))  # no CGS-ALPHA on that remote: it cannot be told, so no refusal
         seed = self.dir / "seed-atCGS"

@@ -301,13 +301,15 @@ def run(authorization: Authorization, args: tuple[str, ...], gh: onboard.GitHub 
         trees = _all_trees(ws)
         glyph = cmd.glyph_path(me.uid)
         return {"__text__": credential.render(credential.collect(me, glyph.read_bytes(), trees, me.pub)), "case": case}
+    gh = gh or onboard.GitHub()
+    plan["problems"] = _problems(case, me, gh)
     if plan_only:
         return {**plan, "applied": False, "reason": "plan only"}
     print(json.dumps(plan, indent=2, ensure_ascii=False))
+    if plan["problems"]:  # before the `y`: a run that cannot finish does not start
+        raise ValueError(f"the plan has {len(plan['problems'])} problem(s), nothing was done")
     if confirm("Apply this plan? (y/N) ").strip().lower() not in ("y", "yes"):
         return {**plan, "applied": False, "reason": "declined"}
-    gh = gh or onboard.GitHub()
-    gh.check()
     steps: list[dict[str, str]] = []
     if ws is None:  # no valid workspace on this machine (none, or only retired ones): install one first
         ws = install(cmd.ROOT / "examples" / WORKSPACE_FILE, WORKSPACE_NAME)
@@ -321,6 +323,19 @@ def run(authorization: Authorization, args: tuple[str, ...], gh: onboard.GitHub 
     else:
         _case_new(me, ws, gh, steps)
     return {**plan, "applied": True, "steps": steps, "case": case}
+
+
+def _problems(case: str, me: Identity, gh: onboard.GitHub) -> list[str]:
+    """What would stop the run halfway, found before anything is written."""
+    problems = []
+    try:
+        gh.check()
+    except RuntimeError as exc:
+        problems.append(str(exc))
+    if case == "project" and not cmd.glyph_path(me.uid).exists():
+        problems.append("no GLYPH for this login on this machine: run `ATCGS_AUTHORIZE=OPX pixi run cgs OPX init` "
+                        "first (TUTO 1 Part A), then this command again")
+    return problems
 
 
 def _try_pin(root: Path) -> bytes | None:

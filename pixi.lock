@@ -18,6 +18,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.11.18-py311hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/cryptography-50.0.2-py311hc91d8b8_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-64/gh-2.103.3-hfc2019e_1.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/hypothesis-6.170.13-py311hf77984d_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-64/keyutils-1.6.3-h7cc23a3_1.conda
@@ -72,6 +73,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.11.18-py311hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/cryptography-50.0.2-py311hc28ac56_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/osx-arm64/gh-2.103.3-h2ef8fd1_1.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/hypothesis-6.170.14-py311h1e0e963_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/osx-arm64/krb5-1.22.2-h34f8a20_2.conda
@@ -114,6 +116,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/cpython-3.11.18-py311hd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/cryptography-50.0.2-py311h67a9792_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/exceptiongroup-1.3.1-pyhd8ed1ab_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/win-64/gh-2.103.3-h11686cb_1.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/hypothesis-6.170.14-py311h66afae6_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/iniconfig-2.3.1-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/win-64/libexpat-2.9.0-hac47afa_0.conda
@@ -362,6 +365,30 @@ packages:
   - pkg:pypi/exceptiongroup?source=hash-mapping
   size: 21333
   timestamp: 1763918099466
+- conda: https://conda.anaconda.org/conda-forge/linux-64/gh-2.103.3-hfc2019e_1.conda
+  sha256: e0501c3bc3a542a206229ee2775394fa0da7656cde6387218fbab3bc93af6902
+  md5: ae95e65b071b27efb45fae7e0fc8bb5a
+  license: Apache-2.0
+  license_family: APACHE
+  purls: []
+  size: 13729420
+  timestamp: 1793777335793
+- conda: https://conda.anaconda.org/conda-forge/osx-arm64/gh-2.103.3-h2ef8fd1_1.conda
+  sha256: 7f2a2168290e1d373f7f14379390a5d62ddbb2dc2bba59d7ed48e06bca3e826f
+  md5: 9d1f8cb1c6976c3194e046345ef55747
+  license: Apache-2.0
+  license_family: APACHE
+  purls: []
+  size: 12339144
+  timestamp: 1793777370365
+- conda: https://conda.anaconda.org/conda-forge/win-64/gh-2.103.3-h11686cb_1.conda
+  sha256: 8af58c67dfebe6c9b040792c69e422ebc9e0fb473f992b11cf4710395cea36f7
+  md5: 7f75a9b66862c920a6567cf2e83803a8
+  license: Apache-2.0
+  license_family: APACHE
+  purls: []
+  size: 13159607
+  timestamp: 1793777336563
 - conda: https://conda.anaconda.org/conda-forge/linux-64/hypothesis-6.170.13-py311hf77984d_0.conda
   noarch: python
   sha256: 13d8df65e6d244fde9d37d0241f7df93a63940a04ba091051eee22a6d063a0ed

@@ -49,7 +49,8 @@ pixi run test
 pixi run lint
 ```
 
-Exit codes: `0` success, `2` rejected request (unknown selector, raw verb,
+Exit codes: `0` success, `1` a tool failed (`gh`, `git` or `cgitsync`; one line,
+no traceback), `2` rejected request (unknown selector, raw verb,
 override such as `level=PUBLIC`), `3` unauthorized (missing grant, or `USR`/`PUB`
 asking for `.cgitsync`).
 

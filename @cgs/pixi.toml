@@ -30,6 +30,8 @@ pytest = "*"
 ruff = "*"
 hypothesis = "*"
 cryptography = ">=44"
+# gh (GitHub CLI): the Owner's deploy keys, as in ../pixi.toml.
+gh = "*"
 
 [pypi-dependencies]
 complexgitsync = { path = "../ComplexGitSync", editable = true }

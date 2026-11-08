@@ -280,7 +280,8 @@ class Authorization:
 
     def require(self, layer: str) -> None:
         if layer not in PRIVATE_LAYERS or layer not in self.layers:
-            raise Unauthorized(f"{layer} requires explicit owner authorization ({AUTHORIZE_ENV})")
+            raise Unauthorized(f"{layer} requires explicit owner authorization ({AUTHORIZE_ENV}): "
+                               f"type {AUTHORIZE_ENV}={layer} in front, as in `{AUTHORIZE_ENV}={layer} pixi run cgs {layer} …`")
 
 
 _COMMIT = re.compile(r"[0-9a-f]{40}(?:[0-9a-f]{24})?")
@@ -476,4 +477,7 @@ def run(argv: Sequence[str] | None = None) -> int:
     except (ValueError, OSError, tomllib.TOMLDecodeError) as exc:
         print(f"@cgs: {exc}", file=sys.stderr)
         return 2
+    except RuntimeError as exc:  # gh, git or cgitsync failed: the request was right, the world was not
+        print(f"@cgs: {exc}", file=sys.stderr)
+        return 1
 

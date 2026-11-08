@@ -108,8 +108,8 @@ class EnvironmentAgreementTests(unittest.TestCase):
         workspace = self.pixi["workspace"]
         self.assertEqual(workspace["channels"], CGS_CHANNELS)
         self.assertEqual(workspace["platforms"], CGS_PLATFORMS)
-        # ComplexGitSync's dependencies, plus only the identity layer's cryptography.
-        self.assertEqual(self.pixi["dependencies"], {**CGS_DEPENDENCIES, "cryptography": ">=44"})
+        # ComplexGitSync's dependencies, plus only the identity layer's cryptography and the Owner's gh.
+        self.assertEqual(self.pixi["dependencies"], {**CGS_DEPENDENCIES, "cryptography": ">=44", "gh": "*"})
         self.assertEqual(self.pixi["target"], {"unix": {"dependencies": {"openssh": "*"}}})
         self.assertNotIn("feature", self.pixi)  # one source of ComplexGitSync per manifest
         self.assertNotIn("environments", self.pixi)

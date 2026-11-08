@@ -49,14 +49,19 @@ class GitHub:
 
     def _run(self, *argv: str) -> str:
         if self.path is None:
-            raise RuntimeError("gh is not on PATH")
+            raise RuntimeError("gh (GitHub CLI) is not on PATH: run `pixi install` in atCGS, then `pixi run gh auth login`")
         done = subprocess.run([self.path, *argv], capture_output=True, text=True)
         if done.returncode:
             raise RuntimeError(f"gh {' '.join(argv[:2])} failed: {(done.stderr or done.stdout).strip()}")
         return done.stdout
 
     def check(self) -> None:
-        self._run("auth", "status")
+        try:
+            self._run("auth", "status")
+        except RuntimeError as exc:
+            if self.path is None:
+                raise
+            raise RuntimeError(f"{exc}\n  gh is not logged in to GitHub: run `pixi run gh auth login` once") from None
 
     def admin(self, repo: str) -> bool:
         return self._run("api", f"repos/{repo_path(repo)}", "--jq", ".permissions.admin").strip() == "true"
