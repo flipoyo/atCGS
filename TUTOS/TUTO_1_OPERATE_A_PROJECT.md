@@ -1,6 +1,6 @@
 # TUTO 1 — Operate a new project: who does what
 
-**atCGS 1.13.0-alpha, 2026-11-06.** The running example is the MOLONARI hardware twin,
+**atCGS 1.13.1-alpha, 2026-11-08.** The running example is the MOLONARI hardware twin,
 `MOLO-HRDW`. Parts A and B were run on 2026-11-05. `request --register`, `OPX intake` and
 `OPX onboard` (Part C) are covered by tests with local repositories and a fake `gh`; they
 have **not** been run yet on the real repositories with real newcomers. Where a step is

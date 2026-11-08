@@ -1,6 +1,6 @@
 [workspace]
 name = "atCGS"
-version = "1.13.0-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
+version = "1.13.1-alpha"  # SemVer 2.0.0; must equal atcgs.__version__
 # Same channels, platforms and Python as the pinned ComplexGitSync pixi.toml,
 # so @cgs and cgitsync observe one environment (cgitsync env check).
 channels = ["conda-forge"]
@@ -22,7 +22,7 @@ contract-inspect = "python scripts/contract_check.py inspect"
 identity-demo = "python scripts/identity_demo.py"
 local-remote = "python scripts/local_remote.py"
 deploy-keys = "python scripts/deploy_keys.py"
-bump-version = "python .agent/.local/.dev/scripts/bump_version.py"  # orchestrator; the script lives in the private mount
+bump-version = "python scripts/bump_version.py"  # major/minor/patch [--pre STAGE], --release, --dry-run: every version mention, or none
 
 [dependencies]
 python = "3.11.*"
