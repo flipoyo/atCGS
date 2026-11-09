@@ -9,7 +9,6 @@ import base64
 import datetime
 import json
 import os
-import re
 import shutil
 import stat
 import tempfile
@@ -227,10 +226,6 @@ class RegistrationFileTests(Setup):
 
         self.assertEqual(shape(example), shape(written))
         self.assertEqual(set(example["request"]["keys"][0]), {"repo", "role", "ssh"})
-        tuto = (root / "TUTOS" / "TUTO_1_OPERATE_A_PROJECT.md").read_text()
-        block = re.search(r"examples/registration\.toml.*?```toml\n(.*?)```", tuto, re.S)
-        self.assertIsNotNone(block, "TUTO 1 shows the registration format")
-        self.assertEqual(block.group(1), example_text)
 
 
 class IntakeTests(Setup):

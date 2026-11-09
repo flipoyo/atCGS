@@ -249,3 +249,96 @@ of this repository's history.
 - atCGS #2: https://github.com/flipoyo/atCGS/issues/2
 - atCGS PR #1: https://github.com/flipoyo/atCGS/pull/1
 - Open planning tickets are in `local/.dev/.ticket/openTickets/` and are not published.
+
+## 11. Operating a project: the details behind TUTO 1
+
+### `gh` and deploy keys
+
+`gh` comes with `pixi install`; atCGS uses it, and only it, to install deploy keys. An ssh key signs
+`git push`/`git pull`; adding a deploy key is a GitHub API call that needs a token with admin rights on
+the repository. `gh auth login --git-protocol ssh --web` stores that token in `~/.config/gh` (shared with
+any other `gh`). `GH_TOKEN=<token>` in front of a command does it for one run. A missing or logged-out
+`gh` is listed under `problems` and the run stops before asking anything.
+
+### `OPX init`: what it does, by machine state
+
+It asks login and password (twice when the key is new), prints a plan, asks `Apply this plan? (y/N)`.
+Run again, it changes nothing.
+
+| The machine is | `OPX init` does |
+|---|---|
+| a new atCGS, no key pinned | installs the workspace if missing (`cgitsync bootstrap examples/cgs-alpha.cgs`, https); makes the key and pins it in `spec/opx.toml`; enrols it in the master register; one ssh key per repository, sealed in the GLYPH; OPX grants; deploy keys on GitHub; commits and pushes pin and register; publishes the identities |
+| another machine, already OPX | rebuilds the GLYPH for the access already held (`--from PATH` reuses a copy; otherwise new keys, registers and GitHub updated, old deploy keys removed last). Never enrols again |
+| everything in order | prints the `user-credential` table, changes nothing |
+| a key pinned, another login | refuses: there is one OPX |
+
+*Pinning* appends the public key to `spec/opx.toml` (earlier blocks stay as history) and pushes it, so every
+gate knows who the Owner is: a register line is trusted only if signed by that key. The master register,
+`.cgitsync/.memory/.register/identity.jsonl`, is the only place where people are enrolled; project
+registers copy it. `init` refuses from an atCGS behind `CGS-ALPHA` (`git pull` first). A push of atCGS
+itself is refused while `pixi run test` fails (`ATCGS_SKIP_TESTS=1` skips it).
+
+`OPX init PROJECT` installs the project tree when there is none (as `cgitsync bootstrap` would), grants
+OPX on every repository of its `.cgs`, reuses the GLYPH keys already held for the same repository and
+role (atCGS, omniscience and `.memory` are shared with the workspace), installs the new deploy keys and
+pushes the project register.
+
+### `user-credential`
+
+Read-only; one password. Prints the uid, the GLYPH fill, each register, then one row per repository and
+role:
+
+| Verdict | Means | Do |
+|---|---|---|
+| `ok` | granted, key in the GLYPH | nothing |
+| `no key` | granted, key not in the GLYPH (or `glyph MISSING`) | `OPX init` / `generate-glyph` |
+| `not admitted` | key in the GLYPH, granted nowhere | `admit` it, or ignore |
+| `revoked` | identity revoked | ask the Owner |
+| `refused by GitHub` | with `--probe`: deploy key not on GitHub | `OPX init` installs it again |
+
+`--probe` runs one `git ls-remote` per key through the session; `--json` prints data; `--tree PATH`
+reads one tree. Exit 0 when every grant is `ok`. `OPX onboard` runs it first and stops if the GLYPH is
+missing or a memory/omniscience grant has no key.
+
+### A lost GLYPH
+
+Private keys exist only in the GLYPH; registers and GitHub hold public halves. The Owner runs `OPX init`;
+anyone else `cgs <ROLE> generate-glyph [--from PATH | --plan]`. It keeps the keys that still match a
+grant, makes the rest, seals them (old file kept as `.bak`). For the Owner it replaces register keys and
+deploy keys, deleting old ones last, so a failed run is repeated as is. Others get
+`~/glyph-request-<uid>.json` to send to the Owner (`OPX admit` replaces the key). A repository gone from
+GitHub gets no key and its grant is revoked. A GLYPH this login cannot open is never overwritten. Sizes:
+§ 6.
+
+### Registration (`request --register`)
+
+The level asked applies to each repository of the project, except `atCGS` and `omniscience`, always
+USR. The file (`examples/registration.toml`) holds the uid, the public key, a proof of possession and one
+ssh public key per repository and role; it must not be edited. The uid is told by phone: the file proves
+it is consistent, the voice that it is the sender's. `request OUT REPO ROLE …` writes the older JSON form
+read by `enrol`/`admit`.
+
+### `intake` and `onboard`
+
+`intake` (no password) checks each file in `~/.cgs/registration/` (format, uid = hash of key, proof,
+keys matching the ask) and writes `~/.cgs/intake/<date>.toml`, one `[[person]]` per file with `uid`,
+`confirmed = false` and `grant`. Unverifiable files go to `problems`. A project tree that is not the
+newest `~/.cgs/<PROJECT>-*/` is named by `[project.<PROJECT>] tree = "…"`.
+
+`onboard --plan` lists persons, levels, what is left, and problems (changed file, missing tree,
+uncommitted memory, Owner not admin). The run, for every confirmed person: enrol, publish, pull
+`.omniscience` into each project tree, admit, deploy keys (write for OPX/DEV, read-only for USR), commit
+and push the project register only. It writes `<date>-<name>.txt` (the message for each newcomer) and
+`<date>-report.json`; finished files move to `~/.cgs/registration/done/<date>/`. Every step is safe to
+repeat.
+
+By hand, one person: `OPX enrol`, `OPX publish` (workspace); then in the project gate `OPX login
+PROJECT pull`, `OPX admit`, `pixi run deploy-keys --repo …` (prints `gh` lines), `OPX login PROJECT
+commit` and `push`.
+
+### Newcomer bootstrap
+
+`bootstrap` clones over ssh; without a GitHub key, the `GIT_CONFIG_*` prefix of TUTO 1 D makes git read
+over https for that one command; the clones keep their ssh address. A `Run it now? (y/N)` about the
+memory branch is answered `y` by the Owner only. `agent_keys: N` is the number of keys loaded; `~/.ssh` is
+never used.

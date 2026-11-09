@@ -182,9 +182,9 @@ def _check_tree(project: str, tree: Path, examples: Path) -> list[str]:
         owner = state.roles(uid_of(cmd.opx_pub()))
         memory, omniscience = (_repo_named(project, n, examples) for n in (".memory", "omniscience"))
         if owner.get(memory) is None or owner[memory].role != "OPX":
-            problems.append(f"{project}: you hold no OPX grant on {memory} (TUTO 1, B3)")
+            problems.append(f"{project}: you hold no OPX grant on {memory} (TUTO 1, B2)")
         if owner.get(omniscience) is None:
-            problems.append(f"{project}: you hold no grant on {omniscience} (TUTO 1, B3)")
+            problems.append(f"{project}: you hold no grant on {omniscience} (TUTO 1, B2)")
     mem = tree / PRIVATE / ".memory"
     status = subprocess.run(["git", "status", "--porcelain"], cwd=mem, capture_output=True, text=True)
     if status.returncode:

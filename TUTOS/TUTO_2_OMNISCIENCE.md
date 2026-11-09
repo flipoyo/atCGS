@@ -1,6 +1,6 @@
 # TUTO 2 — Omniscience: how a project knows who you are
 
-**atCGS 1.13.1-alpha, 2026-11-06.** This describes omniscience as it works today. Read
+**atCGS 1.13.2-alpha, 2026-11-06.** This describes omniscience as it works today. Read
 [TUTO 1](TUTO_1_OPERATE_A_PROJECT.md) first: it says when each command below is run.
 
 ## What it is, in three lines
